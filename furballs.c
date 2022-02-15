@@ -1,52 +1,73 @@
+/*
+ *
+ *  Frolicking Furballs Safari Resort
+ *  Game made by Sos within 48h
+ *  Made for Ludum Dare 20 ( http://www.ludumdare.com/ )
+ *
+ *  some small bits of code taken from LD16 entry
+ *
+ *  no changes to actual game code were made after the compo
+ *  except from comments and cleanup
+ *
+ */
 
+////////////////////////////////////////////////////
+//////////////////////////////////////////////////// INCLUDES
+////////////////////////////////////////////////////
 
-#include <allegro.h>
-#include <stdio.h>
-#include <winalleg.h>
-#include <windows.h>
+// standard includes
+// included allegro to get a kickstart for the tight deadline
+#include "alleggl.h"  // gl helper for allegro
+#include <SOIL.h>     // Simple OpenGL Image Loader
+#include <allegro.h>  // allegro - a game programming library
+#include <math.h>     // just math
+#include <stdio.h>    // standard
+#include <winalleg.h> // allegro vs windows redefinitions helper
+#include <windows.h>  // windows things
 
-#include "alleggl.h"
-#include <SOIL.h>
-#include <math.h>
+////////////////////////////////////////////////////
+//////////////////////////////////////////////////// DEFINES
+////////////////////////////////////////////////////
 
-#define LOFI 1
-#define TURN_SPEED .1
-#define MOVE_SPEED 1.0
-#define NUM_TREES 50000
-#define WORLD_SIZE 2000.0
-#define GRID 256
-#define HAYSTACK 100.0
+// tweakable defines
+#define LOFI 0            // this disables VBOs, reduces drawing distance and furball complexity
+                          // HiFi version runs smoothly on a modern PC or decent laptop
+                          // LoFi version runs smoothly on a 10yo PC
+#define TURN_SPEED .1     // camera/player control sensitivity
+#define MOVE_SPEED 1.0    // camera/player move speed
+#define WORLD_SIZE 2000.0 // side of scene square
+#define GRID 256          // number of floor grid cells
+#define HAYSTACK 100.0    // player height above the ground modifier
+
+// defines for calculation simplification
 #define FRAND(x) (((rand() % (int)x) * 1024.0) / 1024.0)
 #define DEG(n) ((n)*180.0 / M_PI)
-//#define ABS(n) ((n)>0 ? (n) : -(n))
-//#define SGN(n)  (n>=0 ? 1 : -1)
+
+// player states
 #define WALK 1
 #define IDLE 2
 #define STOP 3
-#define HEIGHT 10.0
-#define HEIGHTF 40.0
-#define MAXV 2048
-#define NUM_CLOUDS 20
-#define CURSOR_SIZE .04
-#define WIGGLE 4
-#define WORLD_BUFFERS 4096
-#define BUFFER_SIZE 300000
-#define BOUNCE_RATE 2.0f
-#define NUMSIZE .1f
 
-#define FUR_SLICE 8
+#define HEIGHT 10.0      // height of camera/player
+#define BOUNCE_RATE 2.0f // player jump rate
+#define NUMSIZE .1f      // size of onscreen numbers
+#define FUR_SLICE 8      // not used DELME
+
+// game state
 #define INTRO 1
 #define PLAY 2
 #define OUTRO 3
 
-#define IQ 2
-#define SPEED 1.5f
+#define IQ 2       // furball bounces between change of direction
+#define SPEED 1.5f // furball speed
+
+// graphics quality settings
 #if LOFI == 1
-#define DRAW_DIST 500.0f
-#define PARTICLES 128
-#define BALLZ 666
-#define TRAIL 1
-#define LINE_WIDTH 24.0f
+#define DRAW_DIST 500.0f // rendering / fog distance
+#define PARTICLES 128    // number of max onscreen particles
+#define BALLZ 666        // number of furballs
+#define TRAIL 1          // hair length for hairy furballs
+#define LINE_WIDTH 24.0f // line width for grass
 #else
 #define LINE_WIDTH 12.0f
 #define PARTICLES 256
@@ -54,121 +75,147 @@
 #define TRAIL 4
 #define DRAW_DIST 2000.0f
 #endif
-#define MAX_ENTITIES 1024
-#define SAMPS 8
-#define TALK_DELAY 100
 
+#define MAX_ENTITIES 1024 // max scene entities
+#define SAMPS 8           // number of furball voice samples
+#define TALK_DELAY 100    // delay between furball sample playback
+
+////////////////////////////////////////////////////
+//////////////////////////////////////////////////// TYPEDEFS
+////////////////////////////////////////////////////
+
+// basic vertex buffer struct
 typedef struct BUFFER
 {
-  float *vtx, *clr;
-  GLuint vtx_handle, clr_handle;
-  int size, hardware;
-  int frames;
-  int current_frame;
-  GLenum mode;
+  float *vtx, *clr;              // vertex and colour buffers
+  GLuint vtx_handle, clr_handle; // VBO handles for the above
+  int size,                      // number of vertices
+    hardware;                    // is it VBO or array
+  int frames;                    // number of frames
+  int current_frame;             // currently playing frame
+  GLenum mode;                   // lines or points
 } BUFFER;
 
+// blood particle struct
 typedef struct BLOOD
 {
-  float x, y, z;
-  float r, g, b, a;
-  float vx, vy, vz;
-  float s;
-  int alive;
+  float x, y, z;    // paritcle position
+  float r, g, b, a; // colour
+  float vx, vy, vz; // velocity
+  float s;          // size
+  int alive;        // update flag
 } BLOOD;
 
+// furball (a dynamic vertex buffer + AI)
 typedef struct FURBALL
 {
-  BUFFER *buf, *mine;
-  float x, y, z, scale, r, g, b, ultimate, a, bounce, speed, bounce_rate;
-  float trail[TRAIL + 1][3];
-  int density, exists, dying;
-  BLOOD blood[PARTICLES];
-  float iq, smart;
+  BUFFER *buf,               // base vertex buffer for augmentation
+    *mine;                   // actually drawn buffer
+  float x, y, z,             // position
+    scale,                   // size
+    r, g, b,                 // colour
+    ultimate,                // is it dynamic (the long-haired one
+    a,                       // angle of movement
+    bounce,                  // bounce rate
+    speed,                   // speed of movement
+    bounce_rate;             // base bounce rate
+  float trail[TRAIL + 1][3]; // 'hair' trail (only ultimate)
+  int density,               // points per voxel
+    exists,                  // render flag
+    dying;                   // blood render flag
+  BLOOD blood[PARTICLES];    // blood particles
+  float iq,                  // directiona change interval
+    smart;                   // iq base value
 } FURBALL;
 
+// a buffer with position
 typedef struct ENTITY
 {
-  float x, y, z, s, a;
-  BUFFER* buf;
+  float x, y, z, s, a; // position, size, yaw (angle)
+  BUFFER* buf;         // vertex buffer
 } ENTITY;
 
-int frames = 0, state = IDLE;
-volatile int tim;
-float playerx, playery, playerz, lookx, looky, lookz, lookf;
-BUFFER *ultimate_furball, *casual_furball;
-BUFFER *grass, *tall_tree, *withered_bush, *cactus, *palm, *stick, *pine, *hut, *fence, *church, *brickhouse;
-BITMAP* ground_bmp;
-float bounce = BOUNCE_RATE;
-FURBALL* ballz[BALLZ];
-int mx, my;
-BLOOD blood[PARTICLES];
-ENTITY ents[MAX_ENTITIES];
-int num_ents = 0;
-int game_state = INTRO;
-GLuint numbers, intro, outro;
-SAMPLE *youknow, *furtalk[SAMPS], *die[SAMPS], *slash, *music, *shot, *whistle;
-int talk_counter = TALK_DELAY, talking = 1;
-int whistle_timeout = 100;
+////////////////////////////////////////////////////
+//////////////////////////////////////////////////// GLOBALS
+////////////////////////////////////////////////////
 
+int frames = 0,   // frames rendered
+  state = IDLE;   // player state
+volatile int tim; // threaded timing variable
+
+float playerx, playery, playerz, // player position
+  lookx, looky, lookz, lookf;    // player look direction
+
+BUFFER *ultimate_furball, // base buffer for ultimate furball (with ahir)
+  *casual_furball;        // base buffer for simple furball
+
+// vertex buffers for world entities
+BUFFER *grass, *tall_tree, *withered_bush, *cactus, *palm,
+  *stick, *pine, *hut, *fence, *church, *brickhouse;
+
+BITMAP* ground_bmp;           // ground colour
+float bounce = BOUNCE_RATE;   // player bounce rate
+FURBALL* ballz[BALLZ];        // furballs
+int mx, my;                   // mouse delta position
+BLOOD blood[PARTICLES];       // particles
+ENTITY ents[MAX_ENTITIES];    // entities (map objects) array
+int num_ents = 0;             // number of entities
+int game_state = INTRO;       // game state
+GLuint numbers, intro, outro; // textures
+
+SAMPLE *youknow, *furtalk[SAMPS], *die[SAMPS],
+  *slash, *music, *shot, *whistle; // sounds
+
+int talk_counter = TALK_DELAY, talking = 1; // furball talk timers
+int whistle_timeout = 100;                  // furball whistle timeout
+
+////////////////////////////////////////////////////
+//////////////////////////////////////////////////// HELPER FUNCTIONS
+////////////////////////////////////////////////////
+
+// checks if GL extension is supported (stolen)
 #include <string.h>
 int
 isExtensionSupported(const char* extension)
-
 {
-
   const GLubyte* extensions = NULL;
-
   const GLubyte* start;
-
   GLubyte *where, *terminator;
   /* Extension names should not have spaces. */
-
   where = (GLubyte*)strchr(extension, ' ');
-
   if (where || *extension == '\0')
-
     return 0;
-
   extensions = glGetString(GL_EXTENSIONS);
-
   /* It takes a bit of care to be fool-proof about parsing the
-
      OpenGL extensions string. Don't be fooled by sub-strings,
-
      etc. */
-
   start = extensions;
-
   for (;;)
     {
-
       where = (GLubyte*)strstr((const char*)start, extension);
-
       if (!where)
-
         break;
-
       terminator = where + strlen(extension);
-
       if (where == start || *(where - 1) == ' ')
-
         if (*terminator == ' ' || *terminator == '\0')
-
           return 1;
-
       start = terminator;
     }
-
   return 0;
 }
 
+////////////////////////////////////////////////////
+//////////////////////////////////////////////////// MATH FUNCTIONS
+////////////////////////////////////////////////////
+
+// vector length
 float
 length3v(float* a)
 {
   return sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);
 }
 
+// 2 point distance
 float
 dist3v(float* a, float* b)
 {
@@ -179,98 +226,21 @@ dist3v(float* a, float* b)
   return sqrt(x * x + y * y + z * z);
 }
 
+// dot product
 float
 dot3v(float* a, float* b)
 {
   return (a[0] * b[0] + a[1] * b[1] + a[2] * b[2]);
 }
 
-void
-explode(BLOOD* b, int num, float x, float y, float z)
-{
-  int c;
-  float ax, ay, az;
-  for (c = 0; c < num; c++)
-    {
-      b[c].x = x;
-      b[c].y = y;
-      b[c].z = z;
-      b[c].vx = ((((rand() % 512) / 256.0f) - 1.0f) * 4.0f);
-      b[c].vy = ((((rand() % 512) / 256.0f) - 1.0f) * 8.0f);
-      b[c].vz = ((((rand() % 512) / 256.0f) - 1.0f) * 4.0f);
-      b[c].r = .6 + ((((rand() % 512) / 256.0f) - 1.0f) * .4f);
-      b[c].g = 0;
-      b[c].b = 0;
-      b[c].alive = 1;
-    }
-}
+////////////////////////////////////////////////////
+//////////////////////////////////////////////////// RENDERING FUNCTIONS
+////////////////////////////////////////////////////
 
-int
-shoot()
-{
-  int c, h = 0;
-  FURBALL* hitball = 0;
-  float p[3], b[3], m[3], p_minus_b[3], t0, hit[3], pdist, rdist, rhit[3];
-  play_sample(shot, 255, 128, 1000, 0);
-  b[0] = playerx;
-  b[1] = playery;
-  b[2] = playerz;
-  m[0] = cos(looky) * cos(lookx);
-  m[1] = -sin(lookx);
-  m[2] = sin(looky) * cos(lookx);
-  pdist = 999999.0f;
-  for (c = 0; c < BALLZ; c++)
-    {
-      if (ballz[c]->exists)
-        {
-          p[0] = ballz[c]->x;
-          p[1] = ballz[c]->y;
-          p[2] = ballz[c]->z;
-          p_minus_b[0] = p[0] - b[0];
-          p_minus_b[1] = p[1] - b[1];
-          p_minus_b[2] = p[2] - b[2];
-          t0 = dot3v(m, p_minus_b) / dot3v(m, m);
-          if (t0 > 0)
-            {
-              rhit[0] = p[0] - (b[0] + t0 * m[0]);
-              rhit[1] = p[1] - (b[1] + t0 * m[1]);
-              rhit[2] = p[2] - (b[2] + t0 * m[2]);
-              rdist = length3v(rhit);
-              if (rdist < 10.0f) //(ballz[c]->scale *(ballz[c]->ultimate ? 1 : 8)))
-                {
-                  printf("hit with rdist: %f\n", rdist);
-                  if (dist3v(b, p) < pdist)
-                    {
-                      pdist = dist3v(b, p);
-                      hit[0] = p[0];
-                      hit[1] = p[1];
-                      hit[2] = p[2];
-                      h = 1;
-                      hitball = ballz[c];
-                    }
-                }
-            }
-        }
-    }
-  if (h && pdist < 300.0f)
-    {
-      printf("Hit at %f %f %f dist: %f\n", hit[0], hit[1], hit[2], pdist);
-      // explode(blood,PARTICLES,hit[0],hit[1],hit[2]);
-      hitball->exists = 0;
-      hitball->dying = 100;
-      explode(hitball->blood, PARTICLES, hitball->x, hitball->y, hitball->z);
-      play_sample(slash, 255, 128, 900 + (rand() % 200), 0);
-      play_sample(die[rand() % 8], 255, 128, 1000, 0);
-    }
-  else
-    printf("No hit!\n");
-  return h;
-}
-
+// creates VBO from vertex array
 void
 vboize(BUFFER* b)
 {
-  // return;
   if (LOFI)
     return;
   if (!isExtensionSupported("GL_ARB_vertex_buffer_object"))
@@ -292,21 +262,25 @@ vboize(BUFFER* b)
   printf("Done!\n");
 }
 
+// renders a BUFFER at desired position
 void
 draw_buffer_ex(BUFFER* b, float x, float y, float z, float sx, float sy, float sz, float point_size, float angle)
 {
   float dist, psize, scale;
   scale = sx;
   dist = sqrt((x - playerx) * (x - playerx) + (y - playery) * (y - playery) + (z - playerz) * (z - playerz));
+
+  // calculates point size from distance
   psize = SCREEN_W * (scale) / dist;
   if (psize < .01)
     return;
   glPointSize(psize * point_size);
-  // printf("Points: %f, dist: %f\n",psize,dist);
   glPushMatrix();
   glScalef(sx, sy, sz);
   glTranslatef(x / sx, y / sy, z / sz);
   glRotatef(angle, 0, 1, 0);
+
+  // draws a VBO or vertex array
   if (b->hardware)
     {
       glBindBuffer(GL_ARRAY_BUFFER, b->vtx_handle);
@@ -326,28 +300,35 @@ draw_buffer_ex(BUFFER* b, float x, float y, float z, float sx, float sy, float s
   glPopMatrix();
 }
 
+// simplified version of the above
 void
 draw_buffer(BUFFER* b, float x, float y, float z, float scale, float angle)
 {
   draw_buffer_ex(b, x, y, z, scale, scale, scale, 1.0f, angle);
 }
 
+// draws eyes for a furball
 void
 draw_eyes(FURBALL* f)
 {
   float x1 = 1.2, y = 10, z1 = 1, x2 = 1.2, z2 = 1, s;
+  // haired furballs are bigger
   x1 *= cos(f->a) * (f->ultimate ? 1 : 10);
   z1 *= sin(f->a) * (f->ultimate ? 1 : 8);
 
   x2 *= cos(-f->a) * (f->ultimate ? 1 : 10);
   z2 *= sin(-f->a) * (f->ultimate ? 1 : 8);
   y = (f->ultimate ? 1.5 : 10);
+
+  // gets point size for this furball
   glGetFloatv(GL_POINT_SIZE, &s);
   if (f->ultimate)
     {
+      // gets line width if it's a hairy one
       glGetFloatv(GL_LINE_WIDTH, &s);
       s *= .25;
     }
+  // if the size is too small, no use drawing eyes
   if (s < 2.0f)
     return;
   glPointSize(s * 4);
@@ -355,6 +336,7 @@ draw_eyes(FURBALL* f)
   glScalef(f->scale, f->scale, f->scale);
   glTranslatef(f->x / f->scale, f->y / f->scale, f->z / f->scale);
 
+  // draws eyes
   glBegin(GL_POINTS);
   glColor3f(1, 1, 1);
   glVertex3f(x1, y, z1);
@@ -369,17 +351,24 @@ draw_eyes(FURBALL* f)
   glPopMatrix();
 }
 
+// draws a long-haired furball
+// pretty much more CPU intensive than it seems
+// thus ultimate furballs are disabled in LOFI mode
 void
 draw_furball_ultimate(FURBALL* f)
 {
   int c, x, y, z, v;
-  float *vertex, *basevertex, hair, dir[3], dist, lsize, deviation, *colour, *basecolour, colour_deviation;
+  float *vertex, *basevertex, dir[3], dist, lsize, deviation, *colour, *basecolour, colour_deviation;
   deviation = 1;
   colour_deviation = .2;
+
+  // fetches base vertex buffer for augmentation
   vertex = f->mine->vtx;
   basevertex = f->buf->vtx;
   colour = f->mine->clr;
   basecolour = f->buf->clr;
+
+  // augments the buffer
   for (x = 0; x < f->density; x++)
     {
       for (y = 0; y < f->density; y++)
@@ -388,30 +377,17 @@ draw_furball_ultimate(FURBALL* f)
             {
               for (c = 0; c < TRAIL; c++)
                 {
-                  // if (!c)
-                  //{
-                  dir[0] = (f->trail[c][0] - f->x); /// f->scale;
-                  dir[1] = (f->trail[c][1] - f->y); /// f->scale;
-                  dir[2] = (f->trail[c][2] - f->z); /// f->scale;
-                  //} else {
-                  // for (v=0;v<3;v++)
-                  // {
-                  //   dir[v]=f->trail[c][v]-x;
-                  // }
-                  // }
-                  // hair=(c*1.0)/(cuts-1);
+                  dir[0] = (f->trail[c][0] - f->x);
+                  dir[1] = (f->trail[c][1] - f->y);
+                  dir[2] = (f->trail[c][2] - f->z);
                   for (v = 0; v < 3; v++)
-                    vertex[v] = basevertex[v] + (dir[v]); //+((((rand()%512)/256.0f)-1.0f)*deviation);
-                  // for (v=0;v<3;v++)
-                  // {
-                  // dir[v]=x-f->trail[c][v];
-                  // }
+                    vertex[v] = basevertex[v] + (dir[v]);
+
                   dir[0] = f->trail[c + 1][0] - f->x;
                   dir[1] = f->trail[c + 1][1] - f->y;
                   dir[2] = f->trail[c + 1][2] - f->z;
                   for (v = 0; v < 3; v++)
-                    vertex[3 + v] = basevertex[3 + v] + (dir[v]); //+((((rand()%512)/256.0f)-1.0f)*deviation);
-                  // for (v=0;v<2;v++) colour[v]=basecolour[v]+((((rand()%512)/256.0f)-1.0f)*colour_deviation);
+                    vertex[3 + v] = basevertex[3 + v] + (dir[v]);
                   vertex += 6;
                   basevertex += 6;
                   colour += 6;
@@ -421,23 +397,20 @@ draw_furball_ultimate(FURBALL* f)
         }
     }
 
-  // printf("Drawing furball at %f %f %f\n",dir[0],dir[1],dir[2]);
+  // calculates line width and draws
+
   dist = sqrt((f->x - playerx) * (f->x - playerx) + (f->y - playery) * (f->y - playery) + (f->z - playerz) * (f->z - playerz));
   lsize = 640 / dist;
-  // printf("Drawing furball at %f %f %f : %f - %f\n",f->x,f->y,f->z,lsize,dist);
+  // if it's too small, no use drawing
   if (lsize < .01)
     return;
   glLineWidth(lsize);
   draw_buffer(f->mine, f->x, f->y, f->z, f->scale, 0);
-  /*
-    for ( c=0;c<TRAIL;c++)
-        {
-          draw_buffer(f->buf,f->trail[c][0],f->trail[c][1],f->trail[c][2],3);
-        }
-        draw_buffer(f->buf,f->x,f->y,f->z,3);
-        */
 }
 
+// draws a simple furball from a vertex buffer
+// stretches it a bit according to vertical velocity
+// and displaces a bit (actually eyes look displaced this way)
 void
 draw_furball_normal(FURBALL* f)
 {
@@ -445,14 +418,13 @@ draw_furball_normal(FURBALL* f)
 
   stretch = 1.0 + pow(ABS(f->y - f->trail[1][1]) * .1, 2);
   displace = f->y - f->trail[1][1];
-  // printf("Stretch: %f displace: %f at %08x\n",stretch,displace,f->mine);
   if (stretch > 3.0f)
     stretch = 3.0f;
-  // if (displace>3.0f) displace=3.0f;
-  // printf
+
   draw_buffer_ex(f->mine, f->x, f->y - displace, f->z, f->scale, f->scale * stretch, f->scale, 1.0f, 0.0f);
 }
 
+// draws a blood particles array and makes coffee
 void
 draw_blood(BLOOD* b, int num)
 {
@@ -467,6 +439,7 @@ draw_blood(BLOOD* b, int num)
   glEnd();
 }
 
+// draws a furball (picks one of the above and checks distance)
 void
 draw_furball(FURBALL* f)
 {
@@ -486,53 +459,56 @@ draw_furball(FURBALL* f)
         }
       if (f->dying)
         {
-          // printf("Dying: %i\n",f->dying);
           draw_blood(f->blood, PARTICLES);
         }
     }
 }
 
+// draws all furballs
 void
 draw_ballz()
 {
   int c;
-  // printf("drawing ballz!\n");
   for (c = 0; c < BALLZ; c++)
     {
-      //  printf("drawing ball %i\n",c);
       draw_furball(ballz[c]);
     }
   glLineWidth(LINE_WIDTH);
 }
 
+// draws all entities
+// actually draws only the ones that are close enough
 void
 draw_ents()
 {
   int c;
-  float x, y, z, dist;
+  float x, z, dist;
   for (c = 0; c < num_ents; c++)
     {
       x = ents[c].x - playerx;
-      // y=ents[c].y-playery;
       z = (ents[c].z) - playerz;
       dist = (x * x + z * z) - 32 * 32 * ents[c].s * ents[c].s;
-      // printf("Distance of entity %i is %f\n",c,sqrt(dist));
-      // printf("Entity %f %f player %f %f\n",ents[c].x,ents[c].z,playerx,playerz);
       if (dist < DRAW_DIST * DRAW_DIST)
         {
-          // printf("Drawing entity %i\n",c);
           draw_buffer(ents[c].buf, ents[c].x, ents[c].y, ents[c].z, ents[c].s, ents[c].a);
         }
     }
 }
 
+// apparently, this draws ground.
+// ground changes colour dynamically, and is not a textured quad
+// but a series of quads, drawn only near the player
+// this saves cpu and gpu from dynamic texture updates
+// it also draws everything else :P
 void
 draw_tree()
 {
   clock_t clk;
-  int c, n, x, y, pix, s_x, s_y, e_x, e_y;
+  int c, x, y, pix;
   float fx, fy, fs, r, g, b, xx, yy;
   clk = clock();
+
+  // draws array of ground quads
   glBegin(GL_QUADS);
   for (x = 0; x < ground_bmp->w; x++)
     {
@@ -543,6 +519,8 @@ draw_tree()
           fs = WORLD_SIZE / ground_bmp->w;
           xx = fx - playerx;
           yy = fy - playerz;
+
+          // if close enough, draws
           if (xx * xx + yy * yy < DRAW_DIST * DRAW_DIST)
             {
               c = (x + y) & 1;
@@ -556,9 +534,8 @@ draw_tree()
                   g *= .8;
                   b *= .8;
                 }
-              // else glColor3f(.4,.4,.4);
-              glColor3f(r, g, b);
 
+              glColor3f(r, g, b);
               glVertex3f(fx, 0.0, fy);
               glVertex3f(fx, 0.0, fy + fs);
               glVertex3f(fx + fs, 0.0, fy + fs);
@@ -566,55 +543,28 @@ draw_tree()
             }
         }
     }
-
   glEnd();
-  // printf("Tiles took %u msec\n",clock()-clk);clk = clock();
   glMatrixMode(GL_MODELVIEW);
 
+  // draws map object
   draw_ents();
-  // printf("Entities took %u msec\n",clock()-clk);clk = clock();
-  // draw_buffer(tall_tree,100,0,100,2);
 
+  // draws grass
   draw_buffer(grass, 0, 0, 0, 1, 0);
-  // printf("Grass took %u msec\n",clock()-clk);clk = clock();
-  // draw_furball(fur);
+
+  // draws furballs
   draw_ballz();
-  // printf("Balls took %u msec\n",clock()-clk);clk = clock();
+
+  // and particles
   draw_blood(blood, PARTICLES);
-  // printf("Blood took %u msec\n",clock()-clk);clk = clock();
 }
 
-void
-update_blood(BLOOD* b, int num)
-{
-  int c, pic_x, pic_y, pr, pg, pb, pix;
-  float ax, ay, az;
-  for (c = 0; c < num; c++)
-    {
-      if (b[c].alive)
-        {
-          b[c].x += b[c].vx;
-          b[c].y += b[c].vy;
-          b[c].z += b[c].vz;
-          b[c].vy -= .6;
-          if (b[c].y < 0)
-            {
-              b[c].alive = 0;
-              pic_x = (b[c].x * ground_bmp->w) / (WORLD_SIZE);
-              pic_y = (b[c].z * ground_bmp->h) / (WORLD_SIZE);
-              if (pic_x >= 0 && pic_y >= 0 && pic_x < ground_bmp->w && pic_y < ground_bmp->h)
-                {
-                  pix = getpixel(ground_bmp, pic_x, pic_y);
-                  pr = (getr(pix) + b[c].r * 128) / 1.5;
-                  pg = (getg(pix) + b[c].g * 128) / 1.5;
-                  pb = (getb(pix) + b[c].b * 128) / 1.5;
-                  putpixel(ground_bmp, pic_x, pic_y, makecol(pr, pg, pb));
-                }
-            }
-        }
-    }
-}
+////////////////////////////////////////////////////
+//////////////////////////////////////////////////// GENERATOR FUNCTIONS
+////////////////////////////////////////////////////
 
+// generates a mesh from one bitmap
+// by 'spinning it' around Y axis
 BUFFER*
 generate_cloud_single(const char* filename, int density)
 {
@@ -631,6 +581,7 @@ generate_cloud_single(const char* filename, int density)
   size_z = bmp->w;
   printf("Dimensions are: %i x %i x %i\n", size_x, size_y, size_z);
 
+  // allocates a too large buffer, or too small, if of higher density
   b = malloc(sizeof(BUFFER));
   b->vtx = malloc(size_x * size_y * size_z * 3 * sizeof(float));
   b->clr = malloc(size_x * size_y * size_z * 3 * sizeof(float));
@@ -650,7 +601,9 @@ generate_cloud_single(const char* filename, int density)
             {
               for (d = 0; d < density; d++)
                 {
-
+                  // tests a voxel against image, where y is y
+                  // and x is distance from centre
+                  // if ok, sets colour and displaces a bit
                   img_x = floor(sqrt((x - c_x) * (x - c_x) + (z - c_z) * (z - c_z))) + c_x;
                   img_y = bmp->h - y - 1;
                   col = getpixel(bmp, img_x, img_y);
@@ -675,10 +628,11 @@ generate_cloud_single(const char* filename, int density)
   vboize(b);
   printf("Created cloud of %i points!\n", point_counter);
   destroy_bitmap(bmp);
-
   return b;
 }
 
+// generates a mesh from two images
+// these are axis projections from front and side
 BUFFER*
 generate_cloud_double(const char* filename_x, const char* filename_z, int density)
 {
@@ -687,7 +641,6 @@ generate_cloud_double(const char* filename_x, const char* filename_z, int densit
   int x, y, z, d, size_x, size_y, size_z, point_counter, img_x, img_y;
   int img_z, col1, col2, c_x, c_y, c_z;
   float deviation, *vertex, *colour, colour_deviation;
-  // printf("Creating cloud from %s...\n",filename);
   deviation = .4f;
   colour_deviation = .03f;
   bmpx = load_bmp(filename_x, 0);
@@ -696,6 +649,7 @@ generate_cloud_double(const char* filename_x, const char* filename_z, int densit
   size_y = bmpx->h;
   size_z = bmpz->w;
 
+  // another bad malloc
   b = malloc(sizeof(BUFFER));
   b->vtx = malloc(size_x * size_y * size_z * 3 * sizeof(float));
   b->clr = malloc(size_x * size_y * size_z * 3 * sizeof(float));
@@ -714,8 +668,9 @@ generate_cloud_double(const char* filename_x, const char* filename_z, int densit
             {
               for (d = 0; d < density; d++)
                 {
-
-                  img_x = x; // floor(sqrt((x-c_x)*(x-c_x)+(z-c_z)*(z-c_z)))+c_x;
+                  // this tests the pixel against two projection images
+                  // and sets the colour by averaging from those
+                  img_x = x;
                   img_z = z;
                   img_y = bmpx->h - y - 1;
                   col1 = getpixel(bmpx, img_x, img_y);
@@ -742,10 +697,10 @@ generate_cloud_double(const char* filename_x, const char* filename_z, int densit
   destroy_bitmap(bmpx);
   destroy_bitmap(bmpz);
   printf("Created cloud of %i points!\n", point_counter);
-
   return b;
 }
 
+// generates a mesh from 3 projection images (front, side, top)
 BUFFER*
 generate_cloud_triple(const char* filename_x, const char* filename_z, const char* filename_y, int density)
 {
@@ -764,6 +719,7 @@ generate_cloud_triple(const char* filename_x, const char* filename_z, const char
   size_z = bmpz->w;
   printf("Dimensions are: %i x %i x %i\n", size_x, size_y, size_z);
 
+  // bad malloc Mk.3
   b = malloc(sizeof(BUFFER));
   b->vtx = malloc(size_x * size_y * size_z * 3 * sizeof(float));
   b->clr = malloc(size_x * size_y * size_z * 3 * sizeof(float));
@@ -782,8 +738,9 @@ generate_cloud_triple(const char* filename_x, const char* filename_z, const char
             {
               for (d = 0; d < density; d++)
                 {
-
-                  img_x = x; // floor(sqrt((x-c_x)*(x-c_x)+(z-c_z)*(z-c_z)))+c_x;
+                  // similar to the above, tests against 3 images and
+                  // averages the colour
+                  img_x = x;
                   img_z = z;
                   img_y = bmpx->h - y - 1;
                   col1 = getpixel(bmpx, img_x, img_y);
@@ -815,24 +772,33 @@ generate_cloud_triple(const char* filename_x, const char* filename_z, const char
   return b;
 }
 
+//  this creates a furball instance
 FURBALL*
 spawn_furball(float x, float y, float z, BUFFER* b, int density, int ultimate, float red, float green, float blue)
 {
   FURBALL* f;
   int bufsize, c;
   float *colour, *basecolour;
+
+  // number of mesh vertices is specified through density
+  // it represents, slices, sectors and depth
   bufsize = density * density * density * TRAIL * (ultimate ? 12 : 3) * sizeof(float);
+
+  // allocates memory
   f = malloc(sizeof(FURBALL));
   f->buf = b;
   f->mine = malloc(sizeof(BUFFER));
-  // printf("Mine is %08x\n",f->mine);
   f->mine->vtx = malloc(bufsize);
   f->mine->clr = malloc(bufsize);
   f->mine->size = b->size;
   f->mine->hardware = 0;
   f->mine->mode = b->mode;
+
+  // copies the buffer from base for dynamic updates
   memcpy(f->mine->vtx, f->buf->vtx, bufsize);
   memcpy(f->mine->clr, f->buf->clr, bufsize);
+
+  // sets colour
   colour = f->mine->clr;
   basecolour = f->buf->clr;
   for (c = 0; c < f->mine->size; c++)
@@ -843,6 +809,8 @@ spawn_furball(float x, float y, float z, BUFFER* b, int density, int ultimate, f
       colour += 3;
       basecolour += 3;
     }
+
+  // sets position and other properties
   f->x = x;
   f->y = y;
   f->z = z;
@@ -856,6 +824,7 @@ spawn_furball(float x, float y, float z, BUFFER* b, int density, int ultimate, f
   return f;
 }
 
+// generates a base buffer for hairy furball
 BUFFER*
 generate_furball_ultimate(float size, int cuts, int density)
 {
@@ -864,10 +833,10 @@ generate_furball_ultimate(float size, int cuts, int density)
   float fx, fy, fz, *vertex, *colour;
   float deviation, colour_deviation;
   deviation = size * .1f;
-  // deviation=density*.333;
   colour_deviation = .03;
   float hair_colour, hair_distance;
-  // printf("Dimensions are: %i x %i x %i\n", size_x,size_y,size_z);
+
+  // allocates memory
   b = malloc(sizeof(BUFFER));
   b->vtx = malloc(density * density * density * cuts * 12 * sizeof(float));
   b->clr = malloc(density * density * density * cuts * 12 * sizeof(float));
@@ -881,14 +850,21 @@ generate_furball_ultimate(float size, int cuts, int density)
         {
           for (z = 0; z < density; z++)
             {
+              // generates a sphere of vertices
               fx = (x * M_PI * 2) / (density - 1);
               fy = (y * M_PI) / (density - 1);
               fz = (z * M_PI * 2) / (density - 1);
+
+              // generates protruding hair
               for (c = 0; c < cuts; c++)
                 {
 
                   hair_colour = (.5 + .5 * (c * 1) / (cuts));
                   hair_distance = size + (c * size) / (cuts);
+
+                  // generates position only for the hair beginning
+                  // rest is determined by velocity
+                  // this generates startpoint
                   if (!c)
                     {
                       vertex[0] = hair_distance * cos(fx) * sin(fy) + ((((rand() % 512) / 256.0f) - 1.0f) * deviation);
@@ -907,6 +883,9 @@ generate_furball_ultimate(float size, int cuts, int density)
                       colour[1] = *(colour - 2);
                       colour[2] = *(colour - 1);
                     }
+
+                  // sets up hair endpoint
+                  // hair is actually line list as opposed to a strip
                   hair_colour = ((c + 1) * 1.0f) / (cuts);
                   hair_distance = size + ((c + 1) * size) / (cuts);
                   vertex[3] = hair_distance * cos(fx) * sin(fy) + ((((rand() % 512) / 256.0f) - 1.0f) * deviation);
@@ -915,6 +894,8 @@ generate_furball_ultimate(float size, int cuts, int density)
                   colour[3] = hair_colour + ((((rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
                   colour[4] = hair_colour + ((((rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
                   colour[5] = hair_colour + ((((rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
+
+                  // witty pointer iterators
                   vertex += 6;
                   colour += 6;
                   point_counter += 2;
@@ -923,14 +904,13 @@ generate_furball_ultimate(float size, int cuts, int density)
         }
     }
   b->mode = GL_LINES;
-
   b->size = point_counter;
-  // vboize(b);
   printf("Created furball of %i points!\n", point_counter);
 
   return b;
 }
 
+// egnerates a simple furball
 BUFFER*
 generate_furball_normal(float size, int cuts, int density)
 {
@@ -939,10 +919,9 @@ generate_furball_normal(float size, int cuts, int density)
   float fx, fy, fz, *vertex, *colour;
   float deviation, colour_deviation, colour_factor;
   deviation = size * .3f;
-  // deviation=density*.333;
   colour_deviation = .08;
-  float hair_colour, hair_distance;
-  // printf("Dimensions are: %i x %i x %i\n", size_x,size_y,size_z);
+
+  // allocates buffers
   b = malloc(sizeof(BUFFER));
   b->vtx = malloc(density * density * density * cuts * 3 * sizeof(float));
   b->clr = malloc(density * density * density * cuts * 3 * sizeof(float));
@@ -956,6 +935,7 @@ generate_furball_normal(float size, int cuts, int density)
         {
           for (z = 0; z < density; z++)
             {
+              // gnerates vertex position in a sphere, and displaces a bit
               fx = (x * M_PI * 2) / (density - 1);
               fy = (y * M_PI) / (density - 1);
               fz = (z * M_PI * 2) / (density - 1);
@@ -965,8 +945,8 @@ generate_furball_normal(float size, int cuts, int density)
                   vertex[0] = size * cos(fx) * sin(fy) + ((((rand() % 512) / 256.0f) - 1.0f) * deviation);
                   vertex[1] = size * cos(fy) + ((((rand() % 512) / 256.0f) - 1.0f) * deviation);
                   vertex[2] = size * sin(fz) * sin(fy) + ((((rand() % 512) / 256.0f) - 1.0f) * deviation);
+
                   colour_factor = sqrt(vertex[0] * vertex[0] + vertex[1] * vertex[1] + vertex[2] * vertex[2]) / size;
-                  // colour_factor*=colour_factor;
                   colour[0] = colour_factor + ((((rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
                   colour[1] = colour_factor + ((((rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
                   colour[2] = colour_factor + ((((rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
@@ -979,12 +959,12 @@ generate_furball_normal(float size, int cuts, int density)
     }
   b->mode = GL_POINTS;
   b->size = point_counter;
-  // vboize(b);
   printf("Created furball of %i points!\n", point_counter);
 
   return b;
 }
 
+// creates all the furballs
 void
 create_ballz()
 {
@@ -992,18 +972,29 @@ create_ballz()
   float x, y, z, r, g, b;
   for (c = 0; c < BALLZ; c++)
     {
+      // if is_good, then it's 'ultimate' == hairy
       is_good = !(rand() % 8);
+
+      // no hairy furballs for lofi version
       if (LOFI)
         is_good = 0;
+
+      // randomises colour and position
       r = ((rand() % 256) / 256.0f);
       g = ((rand() % 256) / 256.0f);
       b = ((rand() % 256) / 256.0f);
       x = ((rand() % 1024) / 1024.0f) * WORLD_SIZE;
       y = HEIGHT;
       z = ((rand() % 1024) / 1024.0f) * WORLD_SIZE;
+
+      // creates the instance
       ballz[c] = spawn_furball(x, y, z, is_good ? ultimate_furball : casual_furball, 8, is_good, r, g, b);
+
+      // sets up ai
       ballz[c]->iq = 0;
       ballz[c]->smart = .05f + ((rand() % 256) / 256.0f) * .15;
+
+      // adjusts ai for hairy furball
       if (is_good)
         ballz[c]->smart *= .2;
       if (!is_good)
@@ -1011,41 +1002,178 @@ create_ballz()
       else
         ballz[c]->scale = 1.0f + ((rand() % 256) / 256.0f) * 3.0f;
       ballz[c]->dying = 0;
-      if (c == 8)
-        printf("mine is %08x!\n", ballz[c]->mine);
-      // ballz[c]->a= b=((rand()%256)/256.0f);
     }
 }
 
+////////////////////////////////////////////////////
+////////////////////////////////////////////////////  MECHANINCS FUNCTIONS
+////////////////////////////////////////////////////
+
+// creates [num] blood particles at [b] buffer
+void
+explode(BLOOD* b, int num, float x, float y, float z)
+{
+  int c;
+  for (c = 0; c < num; c++)
+    {
+      // sets position
+      b[c].x = x;
+      b[c].y = y;
+      b[c].z = z;
+      // random velocity and colour
+      b[c].vx = ((((rand() % 512) / 256.0f) - 1.0f) * 4.0f);
+      b[c].vy = ((((rand() % 512) / 256.0f) - 1.0f) * 8.0f);
+      b[c].vz = ((((rand() % 512) / 256.0f) - 1.0f) * 4.0f);
+      b[c].r = .6 + ((((rand() % 512) / 256.0f) - 1.0f) * .4f);
+      b[c].g = 0;
+      b[c].b = 0;
+      b[c].alive = 1;
+    }
+}
+
+// shoots gun
+int
+shoot()
+{
+  int c, h = 0;
+  FURBALL* hitball = 0;
+  float p[3], b[3], m[3], p_minus_b[3], t0, hit[3], pdist, rdist, rhit[3];
+  play_sample(shot, 255, 128, 1000, 0);
+  // gets shoot position and direction
+  b[0] = playerx;
+  b[1] = playery;
+  b[2] = playerz;
+  m[0] = cos(looky) * cos(lookx);
+  m[1] = -sin(lookx);
+  m[2] = sin(looky) * cos(lookx);
+  pdist = 999999.0f;
+  for (c = 0; c < BALLZ; c++)
+    {
+      // picks furball closest to the ray
+      if (ballz[c]->exists)
+        {
+          p[0] = ballz[c]->x;
+          p[1] = ballz[c]->y;
+          p[2] = ballz[c]->z;
+          p_minus_b[0] = p[0] - b[0];
+          p_minus_b[1] = p[1] - b[1];
+          p_minus_b[2] = p[2] - b[2];
+          t0 = dot3v(m, p_minus_b) / dot3v(m, m);
+          if (t0 > 0)
+            {
+              rhit[0] = p[0] - (b[0] + t0 * m[0]);
+              rhit[1] = p[1] - (b[1] + t0 * m[1]);
+              rhit[2] = p[2] - (b[2] + t0 * m[2]);
+              rdist = length3v(rhit);
+              if (rdist < 10.0f)
+                {
+                  printf("hit with rdist: %f\n", rdist);
+                  if (dist3v(b, p) < pdist)
+                    {
+                      pdist = dist3v(b, p);
+                      hit[0] = p[0];
+                      hit[1] = p[1];
+                      hit[2] = p[2];
+                      h = 1;
+                      hitball = ballz[c];
+                    }
+                }
+            }
+        }
+    }
+  // checks if furball is close enough to the ray to be hit
+  if (h && pdist < 300.0f)
+    {
+      // disables furball rendering
+      hitball->exists = 0;
+
+      // enables blood renderign for 100 frames
+      hitball->dying = 100;
+
+      // creates blood
+      explode(hitball->blood, PARTICLES, hitball->x, hitball->y, hitball->z);
+
+      // plays sound
+      play_sample(slash, 255, 128, 900 + (rand() % 200), 0);
+      play_sample(die[rand() % 8], 255, 128, 1000, 0);
+    }
+  return h;
+}
+
+// updates blood particles
+void
+update_blood(BLOOD* b, int num)
+{
+  int c, pic_x, pic_y, pr, pg, pb, pix;
+  for (c = 0; c < num; c++)
+    {
+      // if the particle is alive...
+      if (b[c].alive)
+        {
+
+          // updates position
+          b[c].x += b[c].vx;
+          b[c].y += b[c].vy;
+          b[c].z += b[c].vz;
+
+          // adds gravity
+          b[c].vy -= .6;
+
+          // if it hits the ground
+          if (b[c].y < 0)
+            {
+              // no more updates for this one
+              b[c].alive = 0;
+
+              // if was inside world sware, colours a pixel red
+              pic_x = (b[c].x * ground_bmp->w) / (WORLD_SIZE);
+              pic_y = (b[c].z * ground_bmp->h) / (WORLD_SIZE);
+              if (pic_x >= 0 && pic_y >= 0 && pic_x < ground_bmp->w && pic_y < ground_bmp->h)
+                {
+                  pix = getpixel(ground_bmp, pic_x, pic_y);
+                  pr = (getr(pix) + b[c].r * 128) / 1.5;
+                  pg = (getg(pix) + b[c].g * 128) / 1.5;
+                  pb = (getb(pix) + b[c].b * 128) / 1.5;
+                  putpixel(ground_bmp, pic_x, pic_y, makecol(pr, pg, pb));
+                }
+            }
+        }
+    }
+}
+
+// updates furballs
 void
 update_ballz()
 {
   int c, i;
-  float x, y, z, r, g, b;
   FURBALL* fur;
-  // printf("updateing ballz!\n");
   for (c = 0; c < BALLZ; c++)
     {
+      // if it's still alive
       if (ballz[c]->exists)
         {
-          //  printf("updateing ball %i !\n",c);
           fur = ballz[c];
-          //    if (c==7) printf("mine at %i is %08x!\n",c,ballz[8]->mine);
-          fur->iq -= fur->smart;
 
+          // decreases direction change counter
+          // and changes movement direction if needed
+          fur->iq -= fur->smart;
           if (fur->iq <= 0)
             {
               fur->iq = (IQ + (rand() % IQ)) * M_PI;
-
               fur->speed = ((rand() % 256) / 256.0f) * SPEED;
               fur->a = ((rand() % 256) / 256.0f) * M_PI * 2;
               fur->bounce_rate = 10.0f + ((rand() % 256) / 256.0f) * 40.0f;
             }
-          //      if (c==7) printf("mine at %i is %08x!\n",c,ballz[8]->mine);
+
+          // adjusts bounce rate
           fur->bounce += .1f * SPEED;
+
+          // updates position
           fur->x += cos(fur->a) * fur->speed;
           fur->z += sin(fur->a) * fur->speed;
           fur->y = fur->scale * (fur->ultimate ? 1 : 8) + ABS(sin(fur->iq) * fur->bounce_rate);
+
+          // keeps inside the world
           if (fur->x < 0)
             fur->x = 0;
           if (fur->z < 0)
@@ -1054,41 +1182,46 @@ update_ballz()
             fur->x = WORLD_SIZE;
           if (fur->z > WORLD_SIZE)
             fur->z = WORLD_SIZE;
-          // if (c==7) printf("mine at %i is %08x!\n",c,ballz[8]->mine);
+
+          // wites down trail for hair rendering
           for (i = TRAIL; i > 0; i--)
             {
-
               fur->trail[i][0] = fur->trail[i - 1][0];
               fur->trail[i][1] = fur->trail[i - 1][1];
               fur->trail[i][2] = fur->trail[i - 1][2];
             }
-          // if (c==7) printf("mine at %i is %08x!\n",c,ballz[8]->mine);
-          // fur->y=playery;
-          // fur->x=playerz;
           fur->trail[0][0] = fur->x;
           fur->trail[0][1] = fur->y;
           fur->trail[0][2] = fur->z;
         }
       else if (ballz[c]->dying)
         {
-          // printf("%i is dying %i\n",c,ballz[c]->dying);
+          // if it's dying, only particles get updated
           update_blood(ballz[c]->blood, PARTICLES);
           ballz[c]->dying--;
         }
-      // if (c==7) printf("mine at %i is %08x!\n",c,ballz[8]->mine);haha
     }
 }
 
+// generates world map from 3 files
+// first is colour, where it stores ground and grass colours
+// second is grass height
+// third is entity distribution, a specific colour represents one entity
+// made so for quick level editing
 BUFFER*
 generate_world_map(const char* grass_file, const char* height_file, const char* entity_file, int density)
 {
   BUFFER* b;
   BITMAP *bmpg, *bmph, *bmph_t, *bmpg_t;
-  int x, y, z, d, size_x, size_y, line_counter, img_x, img_y, col;
+  int x, y, d, size_x, size_y, line_counter, col;
   float deviation, *vertex, *colour, colour_deviation, grass_x, grass_y, grass_h, patch_size;
   printf("Creating grass from %s...\n", grass_file);
+
+  // randomisation constants
   deviation = .4f;
   colour_deviation = .1f;
+
+  // lofi gets smaller bitmaps
   if (LOFI)
     {
       bmpg_t = load_bmp(grass_file, 0);
@@ -1109,6 +1242,7 @@ generate_world_map(const char* grass_file, const char* height_file, const char* 
   size_y = bmpg->h;
   printf("Dimensions are: %i x %i x %i\n", size_x, size_y, density);
 
+  // allocates grass buffer
   b = malloc(sizeof(BUFFER));
   b->vtx = malloc(size_x * size_y * density * 6 * sizeof(float));
   b->clr = malloc(size_x * size_y * density * 6 * sizeof(float));
@@ -1117,13 +1251,15 @@ generate_world_map(const char* grass_file, const char* height_file, const char* 
   vertex = b->vtx;
   colour = b->clr;
   patch_size = WORLD_SIZE / bmpg->w;
-  printf("Beggining clouding...\n");
+  printf("Beggining clouding...\n"); // actually grassing
   for (x = 0; x < size_x; x++)
     {
       for (y = 0; y < size_y; y++)
         {
           for (d = 0; d < density; d++)
             {
+              // for each bitmap pixel it creates [density] grass blades
+              // colour and height get randomised a bit
               grass_x = ((x * WORLD_SIZE) / size_x) + ((((rand() % 512) / 512.0f)) * patch_size);
               grass_y = ((y * WORLD_SIZE) / size_x) + ((((rand() % 512) / 512.0f)) * patch_size);
               grass_h = (.1 * getr(getpixel(bmph, x, y))) + ((((rand() % 512) / 512.0f)) * (grass_h * .3f));
@@ -1153,6 +1289,8 @@ generate_world_map(const char* grass_file, const char* height_file, const char* 
   ground_bmp = bmpg;
 
   destroy_bitmap(bmph);
+
+  // creates entities
   bmph = load_bmp(entity_file, 0);
   size_x = bmph->w;
   size_y = bmph->h;
@@ -1160,6 +1298,7 @@ generate_world_map(const char* grass_file, const char* height_file, const char* 
     {
       for (y = 0; y < size_y; y++)
         {
+          // iterates through pixel looking for values representing entities
           grass_x = ((x * WORLD_SIZE) / size_x) + ((((rand() % 512) / 512.0f)) * patch_size);
           grass_y = ((y * WORLD_SIZE) / size_x) + ((((rand() % 512) / 512.0f)) * patch_size);
           grass_h = 1.0f + ((((rand() % 512) / 512.0f)) * 1.0f);
@@ -1250,6 +1389,7 @@ generate_world_map(const char* grass_file, const char* height_file, const char* 
   return b;
 }
 
+// generate everything batch
 void
 generate_stuff()
 {
@@ -1266,18 +1406,12 @@ generate_stuff()
   fence = generate_cloud_triple("fence_side.bmp", "fence_side.bmp", "fence_top.bmp", 3);
   church = generate_cloud_double("church_front.bmp", "church_side.bmp", 1);
   brickhouse = generate_cloud_double("brickhouse_front.bmp", "brickhouse_side.bmp", 1);
-  // fur = spawn_furball(20,0,20,casual_furball,8,0,.4,.5,.6);
   grass = generate_world_map("grassmap.bmp", "grassheight.bmp", "entitymap.bmp", LOFI ? 2 : 4);
   create_ballz();
-  // world[0] = generate_cloud_single("horsex.bmp",2);
 }
 
-void
-update_furballs()
-{
-  int c;
-}
-
+// timed function that updates everything
+// and handles input
 void
 timer_proc(void)
 {
@@ -1285,6 +1419,8 @@ timer_proc(void)
   float move_spd = MOVE_SPEED;
   clock_t clk;
   clk = clock();
+
+  // if it's intro, waits for space
   if (game_state == INTRO)
     {
       position_mouse(SCREEN_W / 2, SCREEN_H / 2);
@@ -1296,6 +1432,7 @@ timer_proc(void)
     }
   else
     {
+      // furball talking got disabled
       if (talking)
         {
           talk_counter--;
@@ -1305,9 +1442,13 @@ timer_proc(void)
               // play_sample(furtalk[(rand()%16)>>1],128,128,1000,0);
             }
         }
-      // printf("mine inb4 timer is %08x!\n",ballz[8]->mine);
+
+      // furball whistle makes all furballs
+      // move towards player for some time
       if (whistle_timeout)
-        whistle_timeout--;
+        {
+          whistle_timeout--;
+        }
       else
         {
           if (key[KEY_SPACE])
@@ -1321,17 +1462,18 @@ timer_proc(void)
                 }
             }
         }
+      // shift makes you run faster
       if (key[KEY_LSHIFT])
         move_spd *= 2;
+
+      // rotates camera using mouse input
       get_mouse_mickeys(&mx, &my);
       position_mouse(SCREEN_W / 2, mouse_y);
       update_blood(blood, PARTICLES);
       lookx = (M_PI / 2) * (1.0f * (mouse_y - (SCREEN_W / 2))) / (SCREEN_W / 2.0f);
       looky += (M_PI) * (mx * 1.0f) / (SCREEN_W / 2.0f);
-      // if (key[KEY_L])
-      //{
-      // printf("pos: %f %f %f look: %f %f %f",playerx,playery,playerz,lookx,looky,lookz);
-      //}
+
+      // moves player according to key input
       if (key[KEY_LEFT] || key[KEY_A])
         {
           playerx += sin(looky) * move_spd;
@@ -1357,18 +1499,12 @@ timer_proc(void)
           playerz -= sin(looky) * move_spd;
           state = WALK;
         }
-      // if (key[KEY_Q]) explode(blood,PARTICLES,10,10,10);
+
+      // if not walking, sets idle state
       if (!key[KEY_UP] && !key[KEY_DOWN] && state != IDLE)
         state = IDLE;
-      if ((playery - HEIGHT) < .2)
-        {
-          // printf("b");
-          // if (key[KEY_LCONTROL])
-          // {
-          //     bounce*=1.7;
-          // }
-          //  else bounce*=.3;
-        }
+
+      // if not moving, add breathing effect
       if (state == STOP)
         {
           if (ABS(playery - HEIGHT) > HAYSTACK * sin((playerx / WORLD_SIZE) * M_PI) * sin((playerx / WORLD_SIZE) * M_PI) * sin((playerz / WORLD_SIZE) * M_PI) * sin((playerz / WORLD_SIZE) * M_PI))
@@ -1381,12 +1517,14 @@ timer_proc(void)
               lookf = 0.0;
             }
         }
+      // shoots
       if (mouse_b)
         shoot();
     }
+
   bounce = BOUNCE_RATE;
-  // if (bounce>400) bounce=400;
-  // printf("%f\n",bounce);
+
+  // if idle, add breathe effect aswell
   if (state == IDLE)
     {
       lookf += .2;
@@ -1398,16 +1536,8 @@ timer_proc(void)
 
       playery = HEIGHT + (bounce * (sin(lookf)));
     }
-  /*
-      if (key[KEY_SPACE])
-      {
-          if (lookx<M_PI/4) lookx+=.1;
-      }
-      else
-      {
-          if (lookx>0.0) lookx-=.2;
-      }
-      */
+
+  // keeps player inside the world
   if (playerx > (WORLD_SIZE - 50.0))
     playerx = (WORLD_SIZE - 50.0);
   if (playerz > (WORLD_SIZE - 50.0))
@@ -1417,65 +1547,71 @@ timer_proc(void)
   if (playerz < 50.0)
     playerz = 50.0;
 
-  // if (key[KEY_A]) gameover=1;
-  //  printf("mine inb4 update is %08x!\n",ballz[8]->mine);
-
+  // updates furballs
   update_ballz();
-  // printf("Update took %u msec\n",clock()-clk);
 }
 
+// rendering function
 void
 draw(void)
 {
   clock_t clk;
   int c;
-  float r, g, b, mx, my, bh;
-  float bg, bg2, ns;
+  float mx, my;
+  float ns;
   char nums[16];
   int left = 0;
+
+  // checks for number of furballs left
   for (c = 0; c < BALLZ; c++)
     {
       if (ballz[c]->exists)
         left++;
     }
+
+  // a cheatcode ;)
   if (key[KEY_Y])
     left = 0;
+
+  // sets state to outro if all furballs are dead
   if (!left)
     game_state = OUTRO;
+
+  // stop furball talking if you killed too much
   if (left < 100)
     talking = 0;
   sprintf(nums, "%03i:%03i", left, BALLZ);
+
+  // up sets furball count display
   for (c = 0; c < 7; c++)
     {
       nums[c] -= 0x30;
-      //  printf("%i:%i ",c,nums[c]);
     }
-  // printf("\n");
   clk = clock();
+
+  // basic gl frame setup
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
   glPushMatrix();
   glFrustum(-(4.0 / 3.0), 4.0 / 3.0, -1.0, 1.0, 1.0, DRAW_DIST);
   glMatrixMode(GL_MODELVIEW);
+
   // Clear the RGB buffer and the depth buffer
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   // Set the modelview matrix to be the identity matrix
   glLoadIdentity();
-
   glPushMatrix();
 
   // Set the camera
-
   glRotatef(DEG(lookx), 1, 0, 0);
   glRotatef(DEG(looky) + 90.0, 0, 1, 0);
   glRotatef(DEG(lookz), 0, 0, 1);
   glTranslatef(-playerx, -playery, -playerz);
+
   // Save the camera matrix
   glMatrixMode(GL_MODELVIEW);
   glPushMatrix();
-  // glRotatef (DEG(lookx), 1, 0, 0);
-
   glLoadIdentity();
   glTranslatef(0, sin(lookx * 1.333), 0);
   glMatrixMode(GL_PROJECTION);
@@ -1483,8 +1619,9 @@ draw(void)
   glLoadIdentity();
   glDisable(GL_DEPTH_TEST);
   glDepthMask(GL_FALSE);
-  glBegin(GL_QUADS);
 
+  // draws backgorund
+  glBegin(GL_QUADS);
   glColor3f(1.0f, .8, .4);
   glVertex2f(-1, .5);
   glVertex2f(1, .5);
@@ -1492,37 +1629,37 @@ draw(void)
   glVertex2f(1, .2);
   glVertex2f(-1, .2);
 
-  // glColor3f(1.0f,.8,.4);
   glVertex2f(-1, .2);
   glVertex2f(1, .2);
   glColor3f(1.0f, .9, .8);
   glVertex2f(1, 0);
   glVertex2f(-1, 0);
 
-  // glColor3f(1.0f,1,1);
   glVertex2f(-1, 0);
   glVertex2f(1, 0);
   glColor3f(0, 0, 0);
   glVertex2f(1, -1);
   glVertex2f(-1, -1);
   glEnd();
+
   glDepthMask(GL_TRUE);
   glEnable(GL_DEPTH_TEST);
   glMatrixMode(GL_MODELVIEW);
   glPopMatrix();
   glMatrixMode(GL_PROJECTION);
   glPopMatrix();
+
   // Translate and rotate the object
   glColor3f(1.0, 1.0, 1.0);
+
+  // draws world
   draw_tree();
 
-  // draw_trees();
-  // glFlush();
   glMatrixMode(GL_PROJECTION);
   glPopMatrix();
   glMatrixMode(GL_MODELVIEW);
   glPopMatrix();
-  // glPointSize(3.0);
+
   glDisable(GL_TEXTURE_2D);
   glColor3f(1.0, 1.0, 1.0);
   mx = (mouse_x - 160) / 160.0;
@@ -1532,14 +1669,18 @@ draw(void)
   glDisable(GL_DEPTH_TEST);
   if (game_state == PLAY)
     {
+
+      // draws crosshair
       glBegin(GL_POINTS);
       glColor4f(1.0, 1.0, 1.0, 1.0);
       glVertex2f(0, 0);
-
       glEnd();
+
+      // draws numbers
       glEnable(GL_TEXTURE_2D);
       glBindTexture(GL_TEXTURE_2D, numbers);
       glBegin(GL_QUADS);
+
       for (c = 0, ns = 0; c < 7; c++, ns += NUMSIZE)
         {
 
@@ -1552,10 +1693,12 @@ draw(void)
           glTexCoord2f(nums[c] * .090909f, 0.0);
           glVertex2f(-1.0 + ns, 1.0 - NUMSIZE);
         }
+
       glEnd();
       glDisable(GL_TEXTURE_2D);
     }
 
+  // renders intro screen
   if (game_state == INTRO)
     {
       glEnable(GL_TEXTURE_2D);
@@ -1572,6 +1715,8 @@ draw(void)
       glEnd();
       glDisable(GL_TEXTURE_2D);
     }
+
+  // renders outro screen
   if (game_state == OUTRO)
     {
       glEnable(GL_TEXTURE_2D);
@@ -1589,10 +1734,13 @@ draw(void)
       glDisable(GL_TEXTURE_2D);
     }
   glEnable(GL_DEPTH_TEST);
+
+  // flip buffers
   allegro_gl_flip();
   // printf("Draw took %u msec\n",clock()-clk);
 }
 
+// timer thread
 void
 timer(void)
 {
@@ -1600,14 +1748,16 @@ timer(void)
 }
 END_OF_FUNCTION(timer);
 
+// application entry point
 int
 main(int argc, char** argv)
 {
   int c;
   float fogc[] = {1.0f, .8, .4, .0};
   char samp[64];
+
+  // allegro setup
   allegro_init();
-  // printf("WAT?\n");
   install_allegro_gl();
 
   allegro_gl_clear_settings();
@@ -1630,11 +1780,11 @@ main(int argc, char** argv)
   install_timer();
   install_mouse();
   install_sound(DIGI_AUTODETECT, MIDI_NONE, argv[0]);
-  //	show_mouse(screen);
 
   LOCK_FUNCTION(timer);
   LOCK_VARIABLE(tim);
 
+  // GL setup
   glShadeModel(GL_SMOOTH);
   glEnable(GL_DEPTH_TEST);
   glCullFace(GL_FRONT_AND_BACK);
@@ -1655,14 +1805,17 @@ main(int argc, char** argv)
 
   glEnableClientState(GL_VERTEX_ARRAY);
   glEnableClientState(GL_COLOR_ARRAY);
+
+  // timer setup
   install_int_ex(timer, BPS_TO_TIMER(30));
   srand(time(NULL));
-  // printf("WAT?\n");
+
+  // generates everything
   glEnable(GL_TEXTURE_2D);
   generate_stuff();
-  // printf("mine in main is %08x!\n",ballz[8]->mine);
-  glClearColor(1.0f, .8, .4, .0);
 
+  // more gl setup
+  glClearColor(1.0f, .8, .4, .0);
   glEnable(GL_BLEND);
   glEnable(GL_ALPHA_TEST);
   glAlphaFunc(GL_GREATER, .3);
@@ -1670,9 +1823,10 @@ main(int argc, char** argv)
   playerx = 20.0;
   playerz = 20.0;
   looky = M_PI / 4;
-  // printf("mine inb4 loop is %08x!\n",ballz[8]->mine);
+
   get_mouse_mickeys(&mx, &my);
 
+  // loads textures and audio
   intro = SOIL_load_OGL_texture("start.tga", 4, 0, SOIL_FLAG_POWER_OF_TWO | SOIL_FLAG_TEXTURE_REPEATS);
   outro = SOIL_load_OGL_texture("finish.tga", 4, 0, SOIL_FLAG_POWER_OF_TWO | SOIL_FLAG_TEXTURE_REPEATS);
   numbers = SOIL_load_OGL_texture("nums.tga", 4, 0, SOIL_FLAG_POWER_OF_TWO | SOIL_FLAG_TEXTURE_REPEATS);
@@ -1684,24 +1838,28 @@ main(int argc, char** argv)
 
   for (c = 0; c < SAMPS; c++)
     {
-      sprintf(samp, "fur%i.wav\0", c + 1);
+      sprintf(samp, "fur%i.wav", c + 1);
       printf("Loading %s\n", samp);
       furtalk[c] = load_wav(samp);
-      sprintf(samp, "die%i.wav\0", c + 1);
+      sprintf(samp, "die%i.wav", c + 1);
       printf("Loading %s\n", samp);
       die[c] = load_wav(samp);
     }
+
+  // sets player initial position and direction
   playerx = 150;
   playery = HEIGHT;
   playerz = 150;
   lookx = (M_PI / 2) * (1.0f * ((SCREEN_H / 2) - (SCREEN_W / 2))) / (SCREEN_W / 2.0f);
-  ;
   looky = 1.639519;
   lookz = 0;
+
+  // plays music
   play_sample(music, 255, 128, 1000, 1);
+
+  // main loop runs until someone presses escape
   do
     {
-      // if (tim<=0)
       while (tim > 0)
         {
           timer_proc();
