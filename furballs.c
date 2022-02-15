@@ -17,13 +17,11 @@
 
 // standard includes
 // included allegro to get a kickstart for the tight deadline
-#include "alleggl.h"  // gl helper for allegro
-#include <SOIL.h>     // Simple OpenGL Image Loader
+#include <alleggl.h>  // gl helper for allegro
+#include <SOIL/SOIL.h>// Simple OpenGL Image Loader
 #include <allegro.h>  // allegro - a game programming library
 #include <math.h>     // just math
 #include <stdio.h>    // standard
-#include <winalleg.h> // allegro vs windows redefinitions helper
-#include <windows.h>  // windows things
 
 ////////////////////////////////////////////////////
 //////////////////////////////////////////////////// DEFINES
@@ -83,6 +81,15 @@
 ////////////////////////////////////////////////////
 //////////////////////////////////////////////////// TYPEDEFS
 ////////////////////////////////////////////////////
+
+typedef struct RECT RECT;
+struct RECT
+{
+  int32_t left;
+  int32_t top;
+  int32_t right;
+  int32_t bottom;
+};
 
 // basic vertex buffer struct
 typedef struct BUFFER
@@ -1758,7 +1765,6 @@ main(int argc, char** argv)
   float fogc[] = {1.0f, .8, .4, .0};
   char samp[64];
 
-  GetWindowRect(GetDesktopWindow(), &rect);
   h = rect.bottom - rect.top;
   w = rect.right - rect.left;
   printf("Width: %i\nHeight: %i", w, h);
@@ -1874,7 +1880,7 @@ main(int argc, char** argv)
       draw();
       // Sleep(5);
     }
-  while (!GetAsyncKeyState(VK_ESCAPE));
+  while (1);//!GetAsyncKeyState(VK_ESCAPE));
 
   set_gfx_mode(GFX_TEXT, 0, 0, 0, 0);
 
