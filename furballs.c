@@ -30,7 +30,7 @@
 ////////////////////////////////////////////////////
 
 // tweakable defines
-#define LOFI 0            // this disables VBOs, reduces drawing distance and furball complexity
+#define LOFI 1            // this disables VBOs, reduces drawing distance and furball complexity
                           // HiFi version runs smoothly on a modern PC or decent laptop
                           // LoFi version runs smoothly on a 10yo PC
 #define TURN_SPEED .1     // camera/player control sensitivity
@@ -1470,8 +1470,8 @@ timer_proc(void)
       get_mouse_mickeys(&mx, &my);
       position_mouse(SCREEN_W / 2, mouse_y);
       update_blood(blood, PARTICLES);
-      lookx = (M_PI / 2) * (1.0f * (mouse_y - (SCREEN_W / 2))) / (SCREEN_W / 2.0f);
-      looky += (M_PI) * (mx * 1.0f) / (SCREEN_W / 2.0f);
+      lookx = (M_PI / 2) * (1.0f * (mouse_y - (SCREEN_H / 2))) / (SCREEN_H / 2.0f);
+      looky += (M_PI) * (mx * 1.0f) / (640 / 2.0f);
 
       // moves player according to key input
       if (key[KEY_LEFT] || key[KEY_A])
@@ -1593,7 +1593,7 @@ draw(void)
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
   glPushMatrix();
-  glFrustum(-(4.0 / 3.0), 4.0 / 3.0, -1.0, 1.0, 1.0, DRAW_DIST);
+  glFrustum(-((1.0 * SCREEN_W) / SCREEN_H), (1.0 * SCREEN_W) / SCREEN_H, -1.0, 1.0, 1.0, DRAW_DIST);
   glMatrixMode(GL_MODELVIEW);
 
   // Clear the RGB buffer and the depth buffer
@@ -1753,9 +1753,15 @@ int
 main(int argc, char** argv)
 {
   int c;
+  int w, h;
+  RECT rect;
   float fogc[] = {1.0f, .8, .4, .0};
   char samp[64];
 
+  GetWindowRect(GetDesktopWindow(), &rect);
+  h = rect.bottom - rect.top;
+  w = rect.right - rect.left;
+  printf("Width: %i\nHeight: %i", w, h);
   // allegro setup
   allegro_init();
   install_allegro_gl();
@@ -1763,12 +1769,12 @@ main(int argc, char** argv)
   allegro_gl_clear_settings();
   allegro_gl_set(AGL_COLOR_DEPTH, 32);
   allegro_gl_set(AGL_Z_DEPTH, 24);
-  allegro_gl_set(AGL_WINDOWED, TRUE);
+  allegro_gl_set(AGL_WINDOWED, FALSE);
   allegro_gl_set(AGL_DOUBLEBUFFER, 1);
   allegro_gl_set(AGL_SUGGEST, AGL_COLOR_DEPTH | AGL_Z_DEPTH
-                                | AGL_DOUBLEBUFFER | AGL_WINDOWED);
+                                | AGL_DOUBLEBUFFER | AGL_FULLSCREEN);
 
-  if (set_gfx_mode(GFX_OPENGL, 640, 480, 0, 0) < 0)
+  if (set_gfx_mode(GFX_OPENGL, w, h, 0, 0) < 0)
     {
       allegro_message("Error setting OpenGL graphics mode:\n%s\n"
                       "Allegro GL error : %s\n",
