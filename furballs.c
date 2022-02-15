@@ -28,7 +28,7 @@
 ////////////////////////////////////////////////////
 
 // tweakable defines
-#define LOFI 1            // this disables VBOs, reduces drawing distance and furball complexity
+#define LOFI 0            // this disables VBOs, reduces drawing distance and furball complexity
                           // HiFi version runs smoothly on a modern PC or decent laptop
                           // LoFi version runs smoothly on a 10yo PC
 #define TURN_SPEED .1     // camera/player control sensitivity
