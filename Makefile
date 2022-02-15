@@ -1,6 +1,6 @@
 #### PROJECT SETTINGS ####
 # The name of the executable to be created
-BIN_NAME := hello
+BIN_NAME := furballs
 # Compiler used
 CC ?= gcc
 # Extension of source files used in the project
@@ -10,15 +10,15 @@ SRC_PATH = .
 # Space-separated pkg-config libraries used by this project
 LIBS =
 # General compiler flags
-COMPILE_FLAGS = -std=c99 -Wall -Wextra -g
+COMPILE_FLAGS = -Wall -Wextra -Wpedantic
 # Additional release-specific flags
-RCOMPILE_FLAGS = -D NDEBUG
+RCOMPILE_FLAGS = -D NDEBUG -Ofast -g0 -s
 # Additional debug-specific flags
-DCOMPILE_FLAGS = -D DEBUG
+DCOMPILE_FLAGS = -D DEBUG -O0 -ggdb3
 # Add additional include paths
-INCLUDES = -I $(SRC_PATH)
+INCLUDES = -I $(SRC_PATH) -I /usr/include/allegro
 # General linker settings
-LINK_FLAGS =
+LINK_FLAGS = -lm -lGL -lSOIL -lalleg -lalleggl
 # Additional release-specific linker settings
 RLINK_FLAGS =
 # Additional debug-specific linker settings
