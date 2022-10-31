@@ -364,7 +364,7 @@ draw_eyes(FURBALL* f)
 // draws a long-haired furball
 // pretty much more CPU intensive than it seems
 // thus ultimate furballs are disabled in LOFI mode
-void
+static void
 draw_furball_ultimate(FURBALL* f)
 {
   int c, x, y, z, v;
