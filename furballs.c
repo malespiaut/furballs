@@ -1746,6 +1746,8 @@ END_OF_FUNCTION(timer)
 int
 main(int argc, char** argv)
 {
+  (void)argc;
+
   int c;
   int w, h;
   RECT rect;
