@@ -49,7 +49,7 @@
 #define STOP 3
 
 #define HEIGHT 10.0      // height of camera/player
-#define BOUNCE_RATE 2.0f // player jump rate
+#define BOUNCE_RATE 2.0 // player jump rate
 #define NUMSIZE .1f      // size of onscreen numbers
 #define FUR_SLICE 8      // not used DELME
 
@@ -63,17 +63,17 @@
 
 // graphics quality settings
 #if LOFI == 1
-#define DRAW_DIST 500.0f // rendering / fog distance
+#define DRAW_DIST 500.0 // rendering / fog distance
 #define PARTICLES 128    // number of max onscreen particles
 #define BALLZ 666        // number of furballs
 #define TRAIL 1          // hair length for hairy furballs
-#define LINE_WIDTH 24.0f // line width for grass
+#define LINE_WIDTH 24.0 // line width for grass
 #else
-#define LINE_WIDTH 12.0f
+#define LINE_WIDTH 12.0
 #define PARTICLES 256
 #define BALLZ 666
 #define TRAIL 4
-#define DRAW_DIST 2000.0f
+#define DRAW_DIST 2000.0
 #endif
 
 #define MAX_ENTITIES 1024 // max scene entities
@@ -313,7 +313,7 @@ draw_buffer_ex(BUFFER* b, float x, float y, float z, float sx, float sy, float s
 void
 draw_buffer(BUFFER* b, float x, float y, float z, float scale, float angle)
 {
-  draw_buffer_ex(b, x, y, z, scale, scale, scale, 1.0f, angle);
+  draw_buffer_ex(b, x, y, z, scale, scale, scale, 1.0, angle);
 }
 
 // draws eyes for a furball
@@ -338,7 +338,7 @@ draw_eyes(FURBALL* f)
       s *= .25;
     }
   // if the size is too small, no use drawing eyes
-  if (s < 2.0f)
+  if (s < 2.0)
     return;
   glPointSize(s * 4);
   glPushMatrix();
@@ -427,10 +427,10 @@ draw_furball_normal(FURBALL* f)
 
   stretch = 1.0 + pow(ABS(f->y - f->trail[1][1]) * .1, 2);
   displace = f->y - f->trail[1][1];
-  if (stretch > 3.0f)
-    stretch = 3.0f;
+  if (stretch > 3.0)
+    stretch = 3.0;
 
-  draw_buffer_ex(f->mine, f->x, f->y - displace, f->z, f->scale, f->scale * stretch, f->scale, 1.0f, 0.0f);
+  draw_buffer_ex(f->mine, f->x, f->y - displace, f->z, f->scale, f->scale * stretch, f->scale, 1.0, 0.0);
 }
 
 // draws a blood particles array and makes coffee
@@ -438,7 +438,7 @@ void
 draw_blood(BLOOD* b, int num)
 {
   int c;
-  glPointSize(20.0f);
+  glPointSize(20.0);
   glBegin(GL_POINTS);
   for (c = 0; c < num; c++)
     {
@@ -618,12 +618,12 @@ generate_cloud_single(const char* filename, int density)
                   col = getpixel(bmp, img_x, img_y);
                   if (col != makecol(255, 0, 255) && img_x < bmp->w)
                     {
-                      vertex[0] = (1.0f * x) + ((((rand() % 512) / 256.0f) - 1.0f) * deviation) - c_x;
-                      vertex[1] = (1.0f * y) + ((((rand() % 512) / 256.0f) - 1.0f) * deviation);
-                      vertex[2] = (1.0f * z) + ((((rand() % 512) / 256.0f) - 1.0f) * deviation) - c_z;
-                      colour[0] = (getr(col) / 256.0f) + ((((rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
-                      colour[1] = (getg(col) / 256.0f) + ((((rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
-                      colour[2] = (getb(col) / 256.0f) + ((((rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
+                      vertex[0] = (1.0 * x) + ((((rand() % 512) / 256.0) - 1.0) * deviation) - c_x;
+                      vertex[1] = (1.0 * y) + ((((rand() % 512) / 256.0) - 1.0) * deviation);
+                      vertex[2] = (1.0 * z) + ((((rand() % 512) / 256.0) - 1.0) * deviation) - c_z;
+                      colour[0] = (getr(col) / 256.0) + ((((rand() % 512) / 256.0) - 1.0) * colour_deviation);
+                      colour[1] = (getg(col) / 256.0) + ((((rand() % 512) / 256.0) - 1.0) * colour_deviation);
+                      colour[2] = (getb(col) / 256.0) + ((((rand() % 512) / 256.0) - 1.0) * colour_deviation);
                       vertex += 3;
                       colour += 3;
                       point_counter++;
@@ -686,12 +686,12 @@ generate_cloud_double(const char* filename_x, const char* filename_z, int densit
                   col2 = getpixel(bmpz, img_z, img_y);
                   if (col1 != makecol(255, 0, 255) && col2 != makecol(255, 0, 255) && img_x < bmpx->w && img_z < bmpz->w)
                     {
-                      vertex[0] = (1.0f * x) + ((((rand() % 512) / 256.0f) - 1.0f) * deviation) - c_x;
-                      vertex[1] = (1.0f * y) + ((((rand() % 512) / 256.0f) - 1.0f) * deviation);
-                      vertex[2] = (1.0f * z) + ((((rand() % 512) / 256.0f) - 1.0f) * deviation) - c_z;
-                      colour[0] = ((getr(col1) + getr(col2)) / 512.0f) + ((((rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
-                      colour[1] = ((getg(col1) + getg(col2)) / 512.0f) + ((((rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
-                      colour[2] = ((getb(col1) + getb(col2)) / 512.0f) + ((((rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
+                      vertex[0] = (1.0 * x) + ((((rand() % 512) / 256.0) - 1.0) * deviation) - c_x;
+                      vertex[1] = (1.0 * y) + ((((rand() % 512) / 256.0) - 1.0) * deviation);
+                      vertex[2] = (1.0 * z) + ((((rand() % 512) / 256.0) - 1.0) * deviation) - c_z;
+                      colour[0] = ((getr(col1) + getr(col2)) / 512.0) + ((((rand() % 512) / 256.0) - 1.0) * colour_deviation);
+                      colour[1] = ((getg(col1) + getg(col2)) / 512.0) + ((((rand() % 512) / 256.0) - 1.0) * colour_deviation);
+                      colour[2] = ((getb(col1) + getb(col2)) / 512.0) + ((((rand() % 512) / 256.0) - 1.0) * colour_deviation);
                       vertex += 3;
                       colour += 3;
                       point_counter++;
@@ -757,12 +757,12 @@ generate_cloud_triple(const char* filename_x, const char* filename_z, const char
                   col3 = getpixel(bmpy, img_x, img_z);
                   if (col3 != makecol(255, 0, 255) && col1 != makecol(255, 0, 255) && col2 != makecol(255, 0, 255) && img_x < bmpx->w && img_z < bmpz->w)
                     {
-                      vertex[0] = (1.0f * x) + ((((rand() % 512) / 256.0f) - 1.0f) * deviation) - c_x;
-                      vertex[1] = (1.0f * y) + ((((rand() % 512) / 256.0f) - 1.0f) * deviation);
-                      vertex[2] = (1.0f * z) + ((((rand() % 512) / 256.0f) - 1.0f) * deviation) - c_z;
-                      colour[0] = ((getr(col1) + getr(col2)) / 512.0f) + ((((rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
-                      colour[1] = ((getg(col1) + getg(col2)) / 512.0f) + ((((rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
-                      colour[2] = ((getb(col1) + getb(col2)) / 512.0f) + ((((rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
+                      vertex[0] = (1.0 * x) + ((((rand() % 512) / 256.0) - 1.0) * deviation) - c_x;
+                      vertex[1] = (1.0 * y) + ((((rand() % 512) / 256.0) - 1.0) * deviation);
+                      vertex[2] = (1.0 * z) + ((((rand() % 512) / 256.0) - 1.0) * deviation) - c_z;
+                      colour[0] = ((getr(col1) + getr(col2)) / 512.0) + ((((rand() % 512) / 256.0) - 1.0) * colour_deviation);
+                      colour[1] = ((getg(col1) + getg(col2)) / 512.0) + ((((rand() % 512) / 256.0) - 1.0) * colour_deviation);
+                      colour[2] = ((getb(col1) + getb(col2)) / 512.0) + ((((rand() % 512) / 256.0) - 1.0) * colour_deviation);
                       vertex += 3;
                       colour += 3;
                       point_counter++;
@@ -876,12 +876,12 @@ generate_furball_ultimate(float size, int cuts, int density)
                   // this generates startpoint
                   if (!c)
                     {
-                      vertex[0] = hair_distance * cos(fx) * sin(fy) + ((((rand() % 512) / 256.0f) - 1.0f) * deviation);
-                      vertex[1] = hair_distance * cos(fy) + ((((rand() % 512) / 256.0f) - 1.0f) * deviation);
-                      vertex[2] = hair_distance * sin(fz) * sin(fy) + ((((rand() % 512) / 256.0f) - 1.0f) * deviation);
-                      colour[0] = hair_colour + ((((rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
-                      colour[1] = hair_colour + ((((rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
-                      colour[2] = hair_colour + ((((rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
+                      vertex[0] = hair_distance * cos(fx) * sin(fy) + ((((rand() % 512) / 256.0) - 1.0) * deviation);
+                      vertex[1] = hair_distance * cos(fy) + ((((rand() % 512) / 256.0) - 1.0) * deviation);
+                      vertex[2] = hair_distance * sin(fz) * sin(fy) + ((((rand() % 512) / 256.0) - 1.0) * deviation);
+                      colour[0] = hair_colour + ((((rand() % 512) / 256.0) - 1.0) * colour_deviation);
+                      colour[1] = hair_colour + ((((rand() % 512) / 256.0) - 1.0) * colour_deviation);
+                      colour[2] = hair_colour + ((((rand() % 512) / 256.0) - 1.0) * colour_deviation);
                     }
                   else
                     {
@@ -895,14 +895,14 @@ generate_furball_ultimate(float size, int cuts, int density)
 
                   // sets up hair endpoint
                   // hair is actually line list as opposed to a strip
-                  hair_colour = ((c + 1) * 1.0f) / (cuts);
+                  hair_colour = ((c + 1) * 1.0) / (cuts);
                   hair_distance = size + ((c + 1) * size) / (cuts);
-                  vertex[3] = hair_distance * cos(fx) * sin(fy) + ((((rand() % 512) / 256.0f) - 1.0f) * deviation);
-                  vertex[4] = hair_distance * cos(fy) + ((((rand() % 512) / 256.0f) - 1.0f) * deviation);
-                  vertex[5] = hair_distance * sin(fz) * sin(fy) + ((((rand() % 512) / 256.0f) - 1.0f) * deviation);
-                  colour[3] = hair_colour + ((((rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
-                  colour[4] = hair_colour + ((((rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
-                  colour[5] = hair_colour + ((((rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
+                  vertex[3] = hair_distance * cos(fx) * sin(fy) + ((((rand() % 512) / 256.0) - 1.0) * deviation);
+                  vertex[4] = hair_distance * cos(fy) + ((((rand() % 512) / 256.0) - 1.0) * deviation);
+                  vertex[5] = hair_distance * sin(fz) * sin(fy) + ((((rand() % 512) / 256.0) - 1.0) * deviation);
+                  colour[3] = hair_colour + ((((rand() % 512) / 256.0) - 1.0) * colour_deviation);
+                  colour[4] = hair_colour + ((((rand() % 512) / 256.0) - 1.0) * colour_deviation);
+                  colour[5] = hair_colour + ((((rand() % 512) / 256.0) - 1.0) * colour_deviation);
 
                   // witty pointer iterators
                   vertex += 6;
@@ -951,14 +951,14 @@ generate_furball_normal(float size, int cuts, int density)
               for (c = 0; c < cuts; c++)
                 {
 
-                  vertex[0] = size * cos(fx) * sin(fy) + ((((rand() % 512) / 256.0f) - 1.0f) * deviation);
-                  vertex[1] = size * cos(fy) + ((((rand() % 512) / 256.0f) - 1.0f) * deviation);
-                  vertex[2] = size * sin(fz) * sin(fy) + ((((rand() % 512) / 256.0f) - 1.0f) * deviation);
+                  vertex[0] = size * cos(fx) * sin(fy) + ((((rand() % 512) / 256.0) - 1.0) * deviation);
+                  vertex[1] = size * cos(fy) + ((((rand() % 512) / 256.0) - 1.0) * deviation);
+                  vertex[2] = size * sin(fz) * sin(fy) + ((((rand() % 512) / 256.0) - 1.0) * deviation);
 
                   colour_factor = sqrt(vertex[0] * vertex[0] + vertex[1] * vertex[1] + vertex[2] * vertex[2]) / size;
-                  colour[0] = colour_factor + ((((rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
-                  colour[1] = colour_factor + ((((rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
-                  colour[2] = colour_factor + ((((rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
+                  colour[0] = colour_factor + ((((rand() % 512) / 256.0) - 1.0) * colour_deviation);
+                  colour[1] = colour_factor + ((((rand() % 512) / 256.0) - 1.0) * colour_deviation);
+                  colour[2] = colour_factor + ((((rand() % 512) / 256.0) - 1.0) * colour_deviation);
                   vertex += 3;
                   colour += 3;
                   point_counter++;
@@ -989,27 +989,27 @@ create_ballz()
         is_good = 0;
 
       // randomises colour and position
-      r = ((rand() % 256) / 256.0f);
-      g = ((rand() % 256) / 256.0f);
-      b = ((rand() % 256) / 256.0f);
-      x = ((rand() % 1024) / 1024.0f) * WORLD_SIZE;
+      r = ((rand() % 256) / 256.0);
+      g = ((rand() % 256) / 256.0);
+      b = ((rand() % 256) / 256.0);
+      x = ((rand() % 1024) / 1024.0) * WORLD_SIZE;
       y = HEIGHT;
-      z = ((rand() % 1024) / 1024.0f) * WORLD_SIZE;
+      z = ((rand() % 1024) / 1024.0) * WORLD_SIZE;
 
       // creates the instance
       ballz[c] = spawn_furball(x, y, z, is_good ? ultimate_furball : casual_furball, 8, is_good, r, g, b);
 
       // sets up ai
       ballz[c]->iq = 0;
-      ballz[c]->smart = .05f + ((rand() % 256) / 256.0f) * .15;
+      ballz[c]->smart = .05f + ((rand() % 256) / 256.0) * .15;
 
       // adjusts ai for hairy furball
       if (is_good)
         ballz[c]->smart *= .2;
       if (!is_good)
-        ballz[c]->scale = .2f + ((rand() % 256) / 256.0f) * .15;
+        ballz[c]->scale = .2f + ((rand() % 256) / 256.0) * .15;
       else
-        ballz[c]->scale = 1.0f + ((rand() % 256) / 256.0f) * 3.0f;
+        ballz[c]->scale = 1.0 + ((rand() % 256) / 256.0) * 3.0;
       ballz[c]->dying = 0;
     }
 }
@@ -1030,10 +1030,10 @@ explode(BLOOD* b, int num, float x, float y, float z)
       b[c].y = y;
       b[c].z = z;
       // random velocity and colour
-      b[c].vx = ((((rand() % 512) / 256.0f) - 1.0f) * 4.0f);
-      b[c].vy = ((((rand() % 512) / 256.0f) - 1.0f) * 8.0f);
-      b[c].vz = ((((rand() % 512) / 256.0f) - 1.0f) * 4.0f);
-      b[c].r = .6 + ((((rand() % 512) / 256.0f) - 1.0f) * .4f);
+      b[c].vx = ((((rand() % 512) / 256.0) - 1.0) * 4.0);
+      b[c].vy = ((((rand() % 512) / 256.0) - 1.0) * 8.0);
+      b[c].vz = ((((rand() % 512) / 256.0) - 1.0) * 4.0);
+      b[c].r = .6 + ((((rand() % 512) / 256.0) - 1.0) * .4f);
       b[c].g = 0;
       b[c].b = 0;
       b[c].alive = 1;
@@ -1055,7 +1055,7 @@ shoot()
   m[0] = cos(looky) * cos(lookx);
   m[1] = -sin(lookx);
   m[2] = sin(looky) * cos(lookx);
-  pdist = 999999.0f;
+  pdist = 999999.0;
   for (c = 0; c < BALLZ; c++)
     {
       // picks furball closest to the ray
@@ -1074,7 +1074,7 @@ shoot()
               rhit[1] = p[1] - (b[1] + t0 * m[1]);
               rhit[2] = p[2] - (b[2] + t0 * m[2]);
               rdist = length3v(rhit);
-              if (rdist < 10.0f)
+              if (rdist < 10.0)
                 {
                   printf("hit with rdist: %f\n", rdist);
                   if (dist3v(b, p) < pdist)
@@ -1091,7 +1091,7 @@ shoot()
         }
     }
   // checks if furball is close enough to the ray to be hit
-  if (h && pdist < 300.0f)
+  if (h && pdist < 300.0)
     {
       // disables furball rendering
       hitball->exists = 0;
@@ -1169,9 +1169,9 @@ update_ballz()
           if (fur->iq <= 0)
             {
               fur->iq = (IQ + (rand() % IQ)) * M_PI;
-              fur->speed = ((rand() % 256) / 256.0f) * SPEED;
-              fur->a = ((rand() % 256) / 256.0f) * M_PI * 2;
-              fur->bounce_rate = 10.0f + ((rand() % 256) / 256.0f) * 40.0f;
+              fur->speed = ((rand() % 256) / 256.0) * SPEED;
+              fur->a = ((rand() % 256) / 256.0) * M_PI * 2;
+              fur->bounce_rate = 10.0 + ((rand() % 256) / 256.0) * 40.0;
             }
 
           // adjusts bounce rate
@@ -1269,9 +1269,9 @@ generate_world_map(const char* grass_file, const char* height_file, const char* 
             {
               // for each bitmap pixel it creates [density] grass blades
               // colour and height get randomised a bit
-              grass_x = ((x * WORLD_SIZE) / size_x) + ((((rand() % 512) / 512.0f)) * patch_size);
-              grass_y = ((y * WORLD_SIZE) / size_x) + ((((rand() % 512) / 512.0f)) * patch_size);
-              grass_h = (.1 * getr(getpixel(bmph, x, y))) + ((((rand() % 512) / 512.0f)) * (grass_h * .3f));
+              grass_x = ((x * WORLD_SIZE) / size_x) + ((((rand() % 512) / 512.0)) * patch_size);
+              grass_y = ((y * WORLD_SIZE) / size_x) + ((((rand() % 512) / 512.0)) * patch_size);
+              grass_h = (.1 * getr(getpixel(bmph, x, y))) + ((((rand() % 512) / 512.0)) * (grass_h * .3f));
               vertex[0] = grass_x;
               vertex[1] = 0;
               vertex[2] = grass_y;
@@ -1279,9 +1279,9 @@ generate_world_map(const char* grass_file, const char* height_file, const char* 
               vertex[4] = grass_h;
               vertex[5] = grass_y;
               col = getpixel(bmpg, x, y);
-              colour[3] = ((getr(col)) / 256.0f) + ((((rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
-              colour[4] = ((getg(col)) / 256.0f) + ((((rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
-              colour[5] = ((getb(col)) / 256.0f) + ((((rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
+              colour[3] = ((getr(col)) / 256.0) + ((((rand() % 512) / 256.0) - 1.0) * colour_deviation);
+              colour[4] = ((getg(col)) / 256.0) + ((((rand() % 512) / 256.0) - 1.0) * colour_deviation);
+              colour[5] = ((getb(col)) / 256.0) + ((((rand() % 512) / 256.0) - 1.0) * colour_deviation);
               colour[0] = colour[3] * .5f;
               colour[1] = colour[4] * .5f;
               colour[2] = colour[5] * .5f;
@@ -1308,9 +1308,9 @@ generate_world_map(const char* grass_file, const char* height_file, const char* 
       for (y = 0; y < size_y; y++)
         {
           // iterates through pixel looking for values representing entities
-          grass_x = ((x * WORLD_SIZE) / size_x) + ((((rand() % 512) / 512.0f)) * patch_size);
-          grass_y = ((y * WORLD_SIZE) / size_x) + ((((rand() % 512) / 512.0f)) * patch_size);
-          grass_h = 1.0f + ((((rand() % 512) / 512.0f)) * 1.0f);
+          grass_x = ((x * WORLD_SIZE) / size_x) + ((((rand() % 512) / 512.0)) * patch_size);
+          grass_y = ((y * WORLD_SIZE) / size_x) + ((((rand() % 512) / 512.0)) * patch_size);
+          grass_h = 1.0 + ((((rand() % 512) / 512.0)) * 1.0);
           col = getpixel(bmph, x, y);
           if (col == makecol(0, 255, 0))
             {
@@ -1319,7 +1319,7 @@ generate_world_map(const char* grass_file, const char* height_file, const char* 
               ents[num_ents].y = 0;
               ents[num_ents].z = grass_y;
               ents[num_ents].s = grass_h * 4;
-              ents[num_ents].a = ((((rand() % 512) / 512.0f)) * 360);
+              ents[num_ents].a = ((((rand() % 512) / 512.0)) * 360);
               num_ents++;
             }
           if (col == makecol(255, 255, 128))
@@ -1329,7 +1329,7 @@ generate_world_map(const char* grass_file, const char* height_file, const char* 
               ents[num_ents].y = 0;
               ents[num_ents].z = grass_y;
               ents[num_ents].s = grass_h * 2;
-              ents[num_ents].a = ((((rand() % 512) / 512.0f)) * 360);
+              ents[num_ents].a = ((((rand() % 512) / 512.0)) * 360);
               num_ents++;
             }
           if (col == makecol(0, 128, 0))
@@ -1339,7 +1339,7 @@ generate_world_map(const char* grass_file, const char* height_file, const char* 
               ents[num_ents].y = 0;
               ents[num_ents].z = grass_y;
               ents[num_ents].s = grass_h * 3;
-              ents[num_ents].a = ((((rand() % 512) / 512.0f)) * 360);
+              ents[num_ents].a = ((((rand() % 512) / 512.0)) * 360);
               num_ents++;
             }
           if (col == makecol(128, 64, 64))
@@ -1349,7 +1349,7 @@ generate_world_map(const char* grass_file, const char* height_file, const char* 
               ents[num_ents].y = 0;
               ents[num_ents].z = grass_y;
               ents[num_ents].s = grass_h * 1.5;
-              ents[num_ents].a = ((((rand() % 512) / 512.0f)) * 360);
+              ents[num_ents].a = ((((rand() % 512) / 512.0)) * 360);
               num_ents++;
             }
           if (col == makecol(0, 255, 255))
@@ -1359,7 +1359,7 @@ generate_world_map(const char* grass_file, const char* height_file, const char* 
               ents[num_ents].y = 0;
               ents[num_ents].z = grass_y;
               ents[num_ents].s = grass_h * 3;
-              ents[num_ents].a = ((((rand() % 512) / 512.0f)) * 360);
+              ents[num_ents].a = ((((rand() % 512) / 512.0)) * 360);
               num_ents++;
             }
           if (col == makecol(255, 0, 0))
@@ -1369,7 +1369,7 @@ generate_world_map(const char* grass_file, const char* height_file, const char* 
               ents[num_ents].y = 0;
               ents[num_ents].z = grass_y;
               ents[num_ents].s = grass_h * 2;
-              ents[num_ents].a = (((rand() % 4)) * 90.0f);
+              ents[num_ents].a = (((rand() % 4)) * 90.0);
               num_ents++;
             }
           if (col == makecol(255, 128, 128))
@@ -1379,7 +1379,7 @@ generate_world_map(const char* grass_file, const char* height_file, const char* 
               ents[num_ents].y = 0;
               ents[num_ents].z = grass_y;
               ents[num_ents].s = grass_h * 6;
-              ents[num_ents].a = 90.0f; //((((rand()%512)/512.0f))*360);
+              ents[num_ents].a = 90.0; //((((rand()%512)/512.0))*360);
               num_ents++;
             }
           if (col == makecol(128, 0, 0))
@@ -1389,7 +1389,7 @@ generate_world_map(const char* grass_file, const char* height_file, const char* 
               ents[num_ents].y = 0;
               ents[num_ents].z = grass_y;
               ents[num_ents].s = grass_h * 1.5;
-              ents[num_ents].a = (((rand() % 4)) * 90.0f);
+              ents[num_ents].a = (((rand() % 4)) * 90.0);
               num_ents++;
             }
         }
@@ -1403,8 +1403,8 @@ void
 generate_stuff()
 {
   // generate_font("cartographer.ttf",1000);
-  ultimate_furball = generate_furball_ultimate(1.0f, TRAIL, 8);
-  casual_furball = generate_furball_normal(8.0f, TRAIL, 8);
+  ultimate_furball = generate_furball_ultimate(1.0, TRAIL, 8);
+  casual_furball = generate_furball_normal(8.0, TRAIL, 8);
   tall_tree = generate_cloud_triple("tall_tree.bmp", "tall_tree.bmp", "tall_tree_top.bmp", 1);
   withered_bush = generate_cloud_double("small_bush_left.bmp", "small_bush_front.bmp", 1);
   cactus = generate_cloud_double("cactus_front.bmp", "cactus_side.bmp", 1);
@@ -1479,8 +1479,8 @@ timer_proc(void)
       get_mouse_mickeys(&mx, &my);
       position_mouse(SCREEN_W / 2, mouse_y);
       update_blood(blood, PARTICLES);
-      lookx = (M_PI / 2) * (1.0f * (mouse_y - (SCREEN_H / 2))) / (SCREEN_H / 2.0f);
-      looky += (M_PI) * (mx * 1.0f) / (640 / 2.0f);
+      lookx = (M_PI / 2) * (1.0 * (mouse_y - (SCREEN_H / 2))) / (SCREEN_H / 2.0);
+      looky += (M_PI) * (mx * 1.0) / (640 / 2.0);
 
       // moves player according to key input
       if (key[KEY_LEFT] || key[KEY_A])
@@ -1631,16 +1631,16 @@ draw(void)
 
   // draws backgorund
   glBegin(GL_QUADS);
-  glColor3f(1.0f, .8, .4);
+  glColor3f(1.0, .8, .4);
   glVertex2f(-1, .5);
   glVertex2f(1, .5);
-  glColor3f(1.0f, .85, .6);
+  glColor3f(1.0, .85, .6);
   glVertex2f(1, .2);
   glVertex2f(-1, .2);
 
   glVertex2f(-1, .2);
   glVertex2f(1, .2);
-  glColor3f(1.0f, .9, .8);
+  glColor3f(1.0, .9, .8);
   glVertex2f(1, 0);
   glVertex2f(-1, 0);
 
@@ -1764,7 +1764,7 @@ main(int argc, char** argv)
   int c;
   int w, h;
   RECT rect;
-  float fogc[] = {1.0f, .8, .4, .0};
+  float fogc[] = {1.0, .8, .4, .0};
   char samp[64];
 
   h = rect.bottom - rect.top;
@@ -1803,8 +1803,8 @@ main(int argc, char** argv)
   glEnable(GL_DEPTH_TEST);
   glCullFace(GL_FRONT_AND_BACK);
   glDisable(GL_CULL_FACE);
-  glLineWidth(12.0f);
-  glPointSize(26.0f);
+  glLineWidth(12.0);
+  glPointSize(26.0);
   glHint(GL_LINE_SMOOTH_HINT, GL_FASTEST);
   glHint(GL_POINT_SMOOTH_HINT, GL_FASTEST);
   glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
@@ -1829,7 +1829,7 @@ main(int argc, char** argv)
   generate_stuff();
 
   // more gl setup
-  glClearColor(1.0f, .8, .4, .0);
+  glClearColor(1.0, .8, .4, .0);
   glEnable(GL_BLEND);
   glEnable(GL_ALPHA_TEST);
   glAlphaFunc(GL_GREATER, .3);
@@ -1864,7 +1864,7 @@ main(int argc, char** argv)
   playerx = 150;
   playery = HEIGHT;
   playerz = 150;
-  lookx = (M_PI / 2) * (1.0f * ((SCREEN_H / 2) - (SCREEN_W / 2))) / (SCREEN_W / 2.0f);
+  lookx = (M_PI / 2) * (1.0 * ((SCREEN_H / 2) - (SCREEN_W / 2))) / (SCREEN_W / 2.0);
   looky = 1.639519;
   lookz = 0;
 
