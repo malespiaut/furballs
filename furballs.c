@@ -225,7 +225,7 @@ length3v(float* a)
 }
 
 // 2 point distance
-float
+static float
 dist3v(float* a, float* b)
 {
   float x, y, z;
@@ -236,7 +236,7 @@ dist3v(float* a, float* b)
 }
 
 // dot product
-float
+static float
 dot3v(float* a, float* b)
 {
   return (a[0] * b[0] + a[1] * b[1] + a[2] * b[2]);
@@ -247,7 +247,7 @@ dot3v(float* a, float* b)
 ////////////////////////////////////////////////////
 
 // creates VBO from vertex array
-void
+static void
 vboize(BUFFER* b)
 {
   if (LOFI)
@@ -272,7 +272,7 @@ vboize(BUFFER* b)
 }
 
 // renders a BUFFER at desired position
-void
+static void
 draw_buffer_ex(BUFFER* b, float x, float y, float z, float sx, float sy, float sz, float point_size, float angle)
 {
   float dist, psize, scale;
@@ -310,14 +310,14 @@ draw_buffer_ex(BUFFER* b, float x, float y, float z, float sx, float sy, float s
 }
 
 // simplified version of the above
-void
+static void
 draw_buffer(BUFFER* b, float x, float y, float z, float scale, float angle)
 {
   draw_buffer_ex(b, x, y, z, scale, scale, scale, 1.0, angle);
 }
 
 // draws eyes for a furball
-void
+static void
 draw_eyes(FURBALL* f)
 {
   float x1 = 1.2, y = 10, z1 = 1, x2 = 1.2, z2 = 1, s;
