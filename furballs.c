@@ -511,10 +511,8 @@ draw_ents()
 static void
 draw_tree()
 {
-  clock_t clk;
   int c, x, y, pix;
   float fx, fy, fs, r, g, b, xx, yy;
-  clk = clock();
 
   // draws array of ground quads
   glBegin(GL_QUADS);
