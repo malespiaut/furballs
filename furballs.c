@@ -218,7 +218,7 @@ isExtensionSupported(const char* extension)
 ////////////////////////////////////////////////////
 
 // vector length
-float
+static float
 length3v(float* a)
 {
   return sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);
