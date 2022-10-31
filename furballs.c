@@ -1040,7 +1040,7 @@ shoot()
 {
   int c, h = 0;
   FURBALL* hitball = 0;
-  float p[3], b[3], m[3], p_minus_b[3], t0, hit[3], pdist, rdist, rhit[3];
+  float p[3], b[3], m[3], p_minus_b[3], t0, pdist, rdist, rhit[3];
   play_sample(shot, 255, 128, 1000, 0);
   // gets shoot position and direction
   b[0] = playerx;
@@ -1074,9 +1074,6 @@ shoot()
                   if (dist3v(b, p) < pdist)
                     {
                       pdist = dist3v(b, p);
-                      hit[0] = p[0];
-                      hit[1] = p[1];
-                      hit[2] = p[2];
                       h = 1;
                       hitball = ballz[c];
                     }
