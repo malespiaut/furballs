@@ -17,11 +17,11 @@
 
 // standard includes
 // included allegro to get a kickstart for the tight deadline
-#include <alleggl.h>  // gl helper for allegro
-#include <SOIL/SOIL.h>// Simple OpenGL Image Loader
-#include <allegro.h>  // allegro - a game programming library
-#include <math.h>     // just math
-#include <stdio.h>    // standard
+#include <SOIL/SOIL.h> // Simple OpenGL Image Loader
+#include <alleggl.h>   // gl helper for allegro
+#include <allegro.h>   // allegro - a game programming library
+#include <math.h>      // just math
+#include <stdio.h>     // standard
 
 ////////////////////////////////////////////////////
 //////////////////////////////////////////////////// DEFINES
@@ -1880,7 +1880,7 @@ main(int argc, char** argv)
       draw();
       // Sleep(5);
     }
-  while (1);//!GetAsyncKeyState(VK_ESCAPE));
+  while (1); //! GetAsyncKeyState(VK_ESCAPE));
 
   set_gfx_mode(GFX_TEXT, 0, 0, 0, 0);
 
