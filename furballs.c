@@ -638,13 +638,13 @@ generate_cloud_single(const char* filename, int density)
 
 // generates a mesh from two images
 // these are axis projections from front and side
-BUFFER*
+static BUFFER*
 generate_cloud_double(const char* filename_x, const char* filename_z, int density)
 {
   BUFFER* b;
   BITMAP *bmpx, *bmpz;
   int x, y, z, d, size_x, size_y, size_z, point_counter, img_x, img_y;
-  int img_z, col1, col2, c_x, c_y, c_z;
+  int img_z, col1, col2, c_x, c_z;
   float deviation, *vertex, *colour, colour_deviation;
   deviation = .4f;
   colour_deviation = .03f;
@@ -664,7 +664,6 @@ generate_cloud_double(const char* filename_x, const char* filename_z, int densit
   colour = b->clr;
   c_x = size_x / 2;
   c_z = size_z / 2;
-  c_y = size_y / 2;
   for (x = 0; x < size_x; x++)
     {
       for (y = 0; y < size_y; y++)
