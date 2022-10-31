@@ -104,8 +104,8 @@ typedef struct BUFFER
 {
   float *vtx, *clr;              // vertex and colour buffers
   GLuint vtx_handle, clr_handle; // VBO handles for the above
-  int size,                      // number of vertices
-    hardware;                    // is it VBO or array
+  size_t size;                   // number of vertices
+  int hardware;                  // is it VBO or array
   int frames;                    // number of frames
   int current_frame;             // currently playing frame
   GLenum mode;                   // lines or points
@@ -135,8 +135,8 @@ typedef struct FURBALL
     speed,                   // speed of movement
     bounce_rate;             // base bounce rate
   float trail[TRAIL + 1][3]; // 'hair' trail (only ultimate)
-  int density,               // points per voxel
-    exists,                  // render flag
+  size_t density;            // points per voxel
+  int exists,                // render flag
     dying;                   // blood render flag
   BLOOD blood[PARTICLES];    // blood particles
   float iq,                  // directiona change interval
@@ -174,7 +174,7 @@ FURBALL* ballz[BALLZ] = {NULL};           // furballs
 int mx = 0, my = 0;                       // mouse delta position
 BLOOD blood[PARTICLES] = {0};             // particles
 ENTITY ents[MAX_ENTITIES] = {0};          // entities (map objects) array
-int num_ents = 0;                         // number of entities
+size_t num_ents = 0;                      // number of entities
 int game_state = INTRO;                   // game state
 GLuint numbers = 0, intro = 0, outro = 0; // textures
 
@@ -259,7 +259,7 @@ vboize(BUFFER* b)
     return;
   if (!isExtensionSupported("GL_ARB_vertex_buffer_object"))
     return;
-  printf("Vboizing buffer with %i elements\n", b->size);
+  printf("Vboizing buffer with %lu elements\n", b->size);
   b->hardware = 1;
   glGenBuffers(1, &(b->vtx_handle));
   glBindBuffer(GL_ARRAY_BUFFER, b->vtx_handle);
@@ -371,7 +371,6 @@ draw_eyes(FURBALL* f)
 static void
 draw_furball_ultimate(FURBALL* f)
 {
-  int c = 0, x = 0, y = 0, z = 0, v = 0;
   float *vertex = NULL, *basevertex = NULL, dir[3] = {0.0}, dist = 0.0, lsize = 0.0, *colour = NULL, *basecolour = NULL;
 
   // fetches base vertex buffer for augmentation
@@ -381,24 +380,24 @@ draw_furball_ultimate(FURBALL* f)
   basecolour = f->buf->clr;
 
   // augments the buffer
-  for (x = 0; x < f->density; x++)
+  for (size_t x = 0; x < f->density; x++)
     {
-      for (y = 0; y < f->density; y++)
+      for (size_t y = 0; y < f->density; y++)
         {
-          for (z = 0; z < f->density; z++)
+          for (size_t z = 0; z < f->density; z++)
             {
-              for (c = 0; c < TRAIL; c++)
+              for (size_t c = 0; c < TRAIL; c++)
                 {
                   dir[0] = (f->trail[c][0] - f->x);
                   dir[1] = (f->trail[c][1] - f->y);
                   dir[2] = (f->trail[c][2] - f->z);
-                  for (v = 0; v < 3; v++)
+                  for (size_t v = 0; v < 3; v++)
                     vertex[v] = basevertex[v] + (dir[v]);
 
                   dir[0] = f->trail[c + 1][0] - f->x;
                   dir[1] = f->trail[c + 1][1] - f->y;
                   dir[2] = f->trail[c + 1][2] - f->z;
-                  for (v = 0; v < 3; v++)
+                  for (size_t v = 0; v < 3; v++)
                     vertex[3 + v] = basevertex[3 + v] + (dir[v]);
                   vertex += 6;
                   basevertex += 6;
@@ -438,12 +437,11 @@ draw_furball_normal(FURBALL* f)
 
 // draws a blood particles array and makes coffee
 static void
-draw_blood(BLOOD* b, int num)
+draw_blood(BLOOD* b, size_t num)
 {
-  int c = 0;
   glPointSize(20.0);
   glBegin(GL_POINTS);
-  for (c = 0; c < num; c++)
+  for (size_t c = 0; c < num; c++)
     {
       glColor3dv(&(b[c].r));
       glVertex3dv(&(b[c].x));
@@ -478,10 +476,9 @@ draw_furball(FURBALL* f)
 
 // draws all furballs
 static void
-draw_ballz()
+draw_ballz(void)
 {
-  int c = 0;
-  for (c = 0; c < BALLZ; c++)
+  for (size_t c = 0; c < BALLZ; c++)
     {
       draw_furball(ballz[c]);
     }
@@ -491,11 +488,10 @@ draw_ballz()
 // draws all entities
 // actually draws only the ones that are close enough
 static void
-draw_ents()
+draw_ents(void)
 {
-  int c = 0;
   float x = 0.0, z = 0.0, dist = 0.0;
-  for (c = 0; c < num_ents; c++)
+  for (size_t c = 0; c < num_ents; c++)
     {
       x = ents[c].x - playerx;
       z = (ents[c].z) - playerz;
@@ -513,16 +509,16 @@ draw_ents()
 // this saves cpu and gpu from dynamic texture updates
 // it also draws everything else :P
 static void
-draw_tree()
+draw_tree(void)
 {
-  int c = 0, x = 0, y = 0, pix = 0;
+  int c = 0, pix = 0;
   float fx = 0.0, fy = 0.0, fs = 0.0, r = 0.0, g = 0.0, b = 0.0, xx = 0.0, yy = 0.0;
 
   // draws array of ground quads
   glBegin(GL_QUADS);
-  for (x = 0; x < ground_bmp->w; x++)
+  for (int x = 0; x < ground_bmp->w; x++)
     {
-      for (y = 0; y < ground_bmp->h; y++)
+      for (int y = 0; y < ground_bmp->h; y++)
         {
           fx = (x * WORLD_SIZE) / ground_bmp->w;
           fy = (y * WORLD_SIZE) / ground_bmp->w;
@@ -576,11 +572,12 @@ draw_tree()
 // generates a mesh from one bitmap
 // by 'spinning it' around Y axis
 static BUFFER*
-generate_cloud_single(const char* filename, int density)
+generate_cloud_single(const char* filename, size_t density)
 {
   BUFFER* b = NULL;
   BITMAP* bmp = NULL;
-  int x = 0, y = 0, z = 0, d = 0, size_x = 0, size_y = 0, size_z = 0, point_counter = 0, img_x = 0, img_y = 0, col = 0, c_x = 0, c_z = 0;
+  size_t size_x = 0, size_y = 0, size_z = 0, point_counter = 0, img_y = 0, c_x = 0, c_z = 0;
+  int img_x = 0, col = 0;
   float deviation = 0.0, *vertex = NULL, *colour = NULL, colour_deviation = 0.0;
   printf("Creating cloud from %s...\n", filename);
   deviation = .4;
@@ -589,7 +586,7 @@ generate_cloud_single(const char* filename, int density)
   size_x = bmp->w;
   size_y = bmp->h;
   size_z = bmp->w;
-  printf("Dimensions are: %i x %i x %i\n", size_x, size_y, size_z);
+  printf("Dimensions are: %lu x %lu x %lu\n", size_x, size_y, size_z);
 
   // allocates a too large buffer, or too small, if of higher density
   b = malloc(sizeof(BUFFER));
@@ -602,13 +599,13 @@ generate_cloud_single(const char* filename, int density)
   c_x = size_x / 2;
   c_z = size_z / 2;
   printf("Beggining clouding...\n");
-  for (x = 0; x < size_x; x++)
+  for (size_t x = 0; x < size_x; x++)
     {
-      for (y = 0; y < size_y; y++)
+      for (size_t y = 0; y < size_y; y++)
         {
-          for (z = 0; z < size_z; z++)
+          for (size_t z = 0; z < size_z; z++)
             {
-              for (d = 0; d < density; d++)
+              for (size_t d = 0; d < density; d++)
                 {
                   // tests a voxel against image, where y is y
                   // and x is distance from centre
@@ -635,7 +632,7 @@ generate_cloud_single(const char* filename, int density)
   b->size = point_counter;
   b->mode = GL_POINTS;
   vboize(b);
-  printf("Created cloud of %i points!\n", point_counter);
+  printf("Created cloud of %lu points!\n", point_counter);
   destroy_bitmap(bmp);
   return b;
 }
@@ -643,11 +640,11 @@ generate_cloud_single(const char* filename, int density)
 // generates a mesh from two images
 // these are axis projections from front and side
 static BUFFER*
-generate_cloud_double(const char* filename_x, const char* filename_z, int density)
+generate_cloud_double(const char* filename_x, const char* filename_z, size_t density)
 {
   BUFFER* b = NULL;
   BITMAP *bmpx = NULL, *bmpz = NULL;
-  int x = 0, y = 0, z = 0, d = 0, size_x = 0, size_y = 0, size_z = 0, point_counter = 0, img_x = 0, img_y = 0;
+  int size_x = 0, size_y = 0, size_z = 0, point_counter = 0, img_x = 0, img_y = 0;
   int img_z = 0, col1 = 0, col2 = 0, c_x = 0, c_z = 0;
   float deviation = 0.0, *vertex = NULL, *colour = NULL, colour_deviation = 0.0;
   deviation = .4;
@@ -668,13 +665,13 @@ generate_cloud_double(const char* filename_x, const char* filename_z, int densit
   colour = b->clr;
   c_x = size_x / 2;
   c_z = size_z / 2;
-  for (x = 0; x < size_x; x++)
+  for (int x = 0; x < size_x; x++)
     {
-      for (y = 0; y < size_y; y++)
+      for (int y = 0; y < size_y; y++)
         {
-          for (z = 0; z < size_z; z++)
+          for (int z = 0; z < size_z; z++)
             {
-              for (d = 0; d < density; d++)
+              for (size_t d = 0; d < density; d++)
                 {
                   // this tests the pixel against two projection images
                   // and sets the colour by averaging from those
@@ -710,11 +707,11 @@ generate_cloud_double(const char* filename_x, const char* filename_z, int densit
 
 // generates a mesh from 3 projection images (front, side, top)
 static BUFFER*
-generate_cloud_triple(const char* filename_x, const char* filename_z, const char* filename_y, int density)
+generate_cloud_triple(const char* filename_x, const char* filename_z, const char* filename_y, size_t density)
 {
   BUFFER* b = NULL;
   BITMAP *bmpx = NULL, *bmpz = NULL, *bmpy = NULL;
-  int x = 0, y = 0, z = 0, d = 0, size_x = 0, size_y = 0, size_z = 0, point_counter = 0, img_x = 0, img_y = 0;
+  int size_x = 0, size_y = 0, size_z = 0, point_counter = 0, img_x = 0, img_y = 0;
   int img_z = 0, col1 = 0, col2 = 0, col3 = 0, c_x = 0, c_z = 0;
   float deviation = 0.0, *vertex = NULL, *colour = NULL, colour_deviation = 0.0;
   deviation = .4;
@@ -737,13 +734,13 @@ generate_cloud_triple(const char* filename_x, const char* filename_z, const char
   colour = b->clr;
   c_x = size_x / 2;
   c_z = size_z / 2;
-  for (x = 0; x < size_x; x++)
+  for (int x = 0; x < size_x; x++)
     {
-      for (y = 0; y < size_y; y++)
+      for (int y = 0; y < size_y; y++)
         {
-          for (z = 0; z < size_z; z++)
+          for (int z = 0; z < size_z; z++)
             {
-              for (d = 0; d < density; d++)
+              for (size_t d = 0; d < density; d++)
                 {
                   // similar to the above, tests against 3 images and
                   // averages the colour
@@ -784,7 +781,7 @@ static FURBALL*
 spawn_furball(float x, float y, float z, BUFFER* b, int density, int ultimate, float red, float green, float blue)
 {
   FURBALL* f = NULL;
-  int bufsize = 0, c = 0;
+  int bufsize = 0;
   float *colour = NULL, *basecolour = NULL;
 
   // number of mesh vertices is specified through density
@@ -808,7 +805,7 @@ spawn_furball(float x, float y, float z, BUFFER* b, int density, int ultimate, f
   // sets colour
   colour = f->mine->clr;
   basecolour = f->buf->clr;
-  for (c = 0; c < f->mine->size; c++)
+  for (size_t c = 0; c < f->mine->size; c++)
     {
       colour[0] = basecolour[0] * red;
       colour[1] = basecolour[1] * green;
@@ -833,10 +830,10 @@ spawn_furball(float x, float y, float z, BUFFER* b, int density, int ultimate, f
 
 // generates a base buffer for hairy furball
 static BUFFER*
-generate_furball_ultimate(float size, int cuts, int density)
+generate_furball_ultimate(float size, size_t cuts, size_t density)
 {
   BUFFER* b = NULL;
-  int x = 0, y = 0, z = 0, c = 0, point_counter = 0;
+  int point_counter = 0;
   float fx = 0.0, fy = 0.0, fz = 0.0, *vertex = NULL, *colour = NULL;
   float deviation = 0.0, colour_deviation = 0.0;
   float hair_colour = 0.0, hair_distance = 0.0;
@@ -851,11 +848,11 @@ generate_furball_ultimate(float size, int cuts, int density)
   point_counter = 0;
   vertex = b->vtx;
   colour = b->clr;
-  for (x = 0; x < density; x++)
+  for (size_t x = 0; x < density; x++)
     {
-      for (y = 0; y < density; y++)
+      for (size_t y = 0; y < density; y++)
         {
-          for (z = 0; z < density; z++)
+          for (size_t z = 0; z < density; z++)
             {
               // generates a sphere of vertices
               fx = (x * kPiMultipliedBy2) / (density - 1);
@@ -863,7 +860,7 @@ generate_furball_ultimate(float size, int cuts, int density)
               fz = (z * kPiMultipliedBy2) / (density - 1);
 
               // generates protruding hair
-              for (c = 0; c < cuts; c++)
+              for (size_t c = 0; c < cuts; c++)
                 {
 
                   hair_colour = (.5 + .5 * (c * 1) / (cuts));
@@ -919,10 +916,10 @@ generate_furball_ultimate(float size, int cuts, int density)
 
 // egnerates a simple furball
 static BUFFER*
-generate_furball_normal(float size, int cuts, int density)
+generate_furball_normal(float size, size_t cuts, size_t density)
 {
   BUFFER* b = NULL;
-  int x = 0, y = 0, z = 0, c = 0, point_counter = 0;
+  int point_counter = 0;
   float fx = 0.0, fy = 0.0, fz = 0.0, *vertex = NULL, *colour = NULL;
   float deviation = 0.0, colour_deviation = 0.0, colour_factor = 0.0;
   deviation = size * .3;
@@ -936,17 +933,17 @@ generate_furball_normal(float size, int cuts, int density)
   point_counter = 0;
   vertex = b->vtx;
   colour = b->clr;
-  for (x = 0; x < density; x++)
+  for (size_t x = 0; x < density; x++)
     {
-      for (y = 0; y < density; y++)
+      for (size_t y = 0; y < density; y++)
         {
-          for (z = 0; z < density; z++)
+          for (size_t z = 0; z < density; z++)
             {
               // gnerates vertex position in a sphere, and displaces a bit
               fx = (x * kPiMultipliedBy2) / (density - 1);
               fy = (y * kPi) / (density - 1);
               fz = (z * kPiMultipliedBy2) / (density - 1);
-              for (c = 0; c < cuts; c++)
+              for (size_t c = 0; c < cuts; c++)
                 {
 
                   vertex[0] = size * cos(fx) * sin(fy) + ((((rand() % 512) / 256.0) - 1.0) * deviation);
@@ -973,11 +970,11 @@ generate_furball_normal(float size, int cuts, int density)
 
 // creates all the furballs
 static void
-create_ballz()
+create_ballz(void)
 {
-  int c = 0, is_good = 0;
+  int is_good = 0;
   float x = 0.0, y = 0.0, z = 0.0, r = 0.0, g = 0.0, b = 0.0;
-  for (c = 0; c < BALLZ; c++)
+  for (size_t c = 0; c < BALLZ; c++)
     {
       // if is_good, then it's 'ultimate' == hairy
       is_good = !(rand() % 8);
@@ -1018,10 +1015,9 @@ create_ballz()
 
 // creates [num] blood particles at [b] buffer
 static void
-explode(BLOOD* b, int num, float x, float y, float z)
+explode(BLOOD* b, size_t num, float x, float y, float z)
 {
-  int c = 0;
-  for (c = 0; c < num; c++)
+  for (size_t c = 0; c < num; c++)
     {
       // sets position
       b[c].x = x;
@@ -1040,9 +1036,9 @@ explode(BLOOD* b, int num, float x, float y, float z)
 
 // shoots gun
 static int
-shoot()
+shoot(void)
 {
-  int c = 0, h = 0;
+  int h = 0;
   FURBALL* hitball = 0;
   float p[3] = {0.0}, b[3] = {0.0}, m[3] = {0.0}, p_minus_b[3] = {0.0}, t0 = 0.0, pdist = 0.0, rdist = 0.0, rhit[3] = {0.0};
   play_sample(shot, 255, 128, 1000, 0);
@@ -1054,7 +1050,7 @@ shoot()
   m[1] = -sin(lookx);
   m[2] = sin(looky) * cos(lookx);
   pdist = 999999.0;
-  for (c = 0; c < BALLZ; c++)
+  for (size_t c = 0; c < BALLZ; c++)
     {
       // picks furball closest to the ray
       if (ballz[c]->exists)
@@ -1106,10 +1102,10 @@ shoot()
 
 // updates blood particles
 static void
-update_blood(BLOOD* b, int num)
+update_blood(BLOOD* b, size_t num)
 {
-  int c = 0, pic_x = 0, pic_y = 0, pr = 0, pg = 0, pb = 0, pix = 0;
-  for (c = 0; c < num; c++)
+  int pic_x = 0, pic_y = 0, pr = 0, pg = 0, pb = 0, pix = 0;
+  for (size_t c = 0; c < num; c++)
     {
       // if the particle is alive...
       if (b[c].alive)
@@ -1147,11 +1143,11 @@ update_blood(BLOOD* b, int num)
 
 // updates furballs
 static void
-update_ballz()
+update_ballz(void)
 {
-  int c = 0, i = 0;
+  int i = 0;
   FURBALL* fur = NULL;
-  for (c = 0; c < BALLZ; c++)
+  for (size_t c = 0; c < BALLZ; c++)
     {
       // if it's still alive
       if (ballz[c]->exists)
@@ -1213,11 +1209,11 @@ update_ballz()
 // third is entity distribution, a specific colour represents one entity
 // made so for quick level editing
 static BUFFER*
-generate_world_map(const char* grass_file, const char* height_file, const char* entity_file, int density)
+generate_world_map(const char* grass_file, const char* height_file, const char* entity_file, size_t density)
 {
   BUFFER* b = NULL;
   BITMAP *bmpg = NULL, *bmph = NULL, *bmph_t = NULL, *bmpg_t = NULL;
-  int x = 0, y = 0, d = 0, size_x = 0, size_y = 0, line_counter = 0, col = 0;
+  int size_x = 0, size_y = 0, line_counter = 0, col = 0;
   float *vertex = NULL, *colour = NULL, colour_deviation = 0.0, grass_x = 0.0, grass_y = 0.0, grass_h = 0.0, patch_size = 0.0;
   printf("Creating grass from %s...\n", grass_file);
 
@@ -1243,7 +1239,7 @@ generate_world_map(const char* grass_file, const char* height_file, const char* 
     }
   size_x = bmpg->w;
   size_y = bmpg->h;
-  printf("Dimensions are: %i x %i x %i\n", size_x, size_y, density);
+  printf("Dimensions are: %d x %d x %lu\n", size_x, size_y, density);
 
   // allocates grass buffer
   b = malloc(sizeof(BUFFER));
@@ -1255,11 +1251,11 @@ generate_world_map(const char* grass_file, const char* height_file, const char* 
   colour = b->clr;
   patch_size = WORLD_SIZE / bmpg->w;
   printf("Beggining clouding...\n"); // actually grassing
-  for (x = 0; x < size_x; x++)
+  for (int x = 0; x < size_x; x++)
     {
-      for (y = 0; y < size_y; y++)
+      for (int y = 0; y < size_y; y++)
         {
-          for (d = 0; d < density; d++)
+          for (size_t d = 0; d < density; d++)
             {
               // for each bitmap pixel it creates [density] grass blades
               // colour and height get randomised a bit
@@ -1297,9 +1293,9 @@ generate_world_map(const char* grass_file, const char* height_file, const char* 
   bmph = load_bmp(entity_file, 0);
   size_x = bmph->w;
   size_y = bmph->h;
-  for (x = 0; x < size_x; x++)
+  for (int x = 0; x < size_x; x++)
     {
-      for (y = 0; y < size_y; y++)
+      for (int y = 0; y < size_y; y++)
         {
           // iterates through pixel looking for values representing entities
           grass_x = ((x * WORLD_SIZE) / size_x) + ((((rand() % 512) / 512.0)) * patch_size);
@@ -1394,7 +1390,7 @@ generate_world_map(const char* grass_file, const char* height_file, const char* 
 
 // generate everything batch
 static void
-generate_stuff()
+generate_stuff(void)
 {
   // generate_font("cartographer.ttf",1000);
   ultimate_furball = generate_furball_ultimate(1.0, TRAIL, 8);
@@ -1418,7 +1414,6 @@ generate_stuff()
 static void
 timer_proc(void)
 {
-  int c = 0;
   float move_spd = MOVE_SPEED;
 
   // if it's intro, waits for space
@@ -1456,7 +1451,7 @@ timer_proc(void)
             {
               whistle_timeout = 100;
               play_sample(whistle, 255, 128, 1000, 0);
-              for (c = 0; c < BALLZ; c++)
+              for (size_t c = 0; c < BALLZ; c++)
                 {
                   ballz[c]->a = atan2(-ballz[c]->z + playerz, -ballz[c]->x + playerx);
                   ballz[c]->iq += kPiMultipliedBy4;
@@ -1556,13 +1551,11 @@ timer_proc(void)
 static void
 draw(void)
 {
-  int c = 0;
-  float ns = 0.0;
   char nums[16] = {0};
   int left = 0;
 
   // checks for number of furballs left
-  for (c = 0; c < BALLZ; c++)
+  for (size_t c = 0; c < BALLZ; c++)
     {
       if (ballz[c]->exists)
         left++;
@@ -1582,7 +1575,7 @@ draw(void)
   sprintf(nums, "%03i:%03i", left, BALLZ);
 
   // up sets furball count display
-  for (c = 0; c < 7; c++)
+  for (size_t c = 0; c < 7; c++)
     {
       nums[c] -= 0x30;
     }
@@ -1679,7 +1672,8 @@ draw(void)
       glBindTexture(GL_TEXTURE_2D, numbers);
       glBegin(GL_QUADS);
 
-      for (c = 0, ns = 0; c < 7; c++, ns += NUMSIZE)
+      float ns = 0.0;
+      for (size_t c = 0; c < 7; c++, ns += NUMSIZE)
         {
 
           glTexCoord2d(nums[c] * .090909, 1.0);
@@ -1752,7 +1746,6 @@ main(int argc, char** argv)
 {
   (void)argc;
 
-  int c = 0;
   int w = 0, h = 0;
   RECT rect = {0};
   float fogc[] = {1.0, .8, .4, .0};
@@ -1841,12 +1834,12 @@ main(int argc, char** argv)
   shot = load_wav("shoot.wav");
   whistle = load_wav("whistle.wav");
 
-  for (c = 0; c < SAMPS; c++)
+  for (size_t c = 0; c < SAMPS; c++)
     {
-      sprintf(samp, "fur%i.wav", c + 1);
+      sprintf(samp, "fur%lu.wav", c + 1);
       printf("Loading %s\n", samp);
       furtalk[c] = load_wav(samp);
-      sprintf(samp, "die%i.wav", c + 1);
+      sprintf(samp, "die%lu.wav", c + 1);
       printf("Loading %s\n", samp);
       die[c] = load_wav(samp);
     }
