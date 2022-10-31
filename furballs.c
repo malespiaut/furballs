@@ -1101,7 +1101,7 @@ shoot()
 }
 
 // updates blood particles
-void
+static void
 update_blood(BLOOD* b, int num)
 {
   int c, pic_x, pic_y, pr, pg, pb, pix;
@@ -1142,7 +1142,7 @@ update_blood(BLOOD* b, int num)
 }
 
 // updates furballs
-void
+static void
 update_ballz()
 {
   int c, i;
@@ -1171,7 +1171,7 @@ update_ballz()
           // updates position
           fur->x += cos(fur->a) * fur->speed;
           fur->z += sin(fur->a) * fur->speed;
-          fur->y = fur->scale * (fur->ultimate ? 1 : 8) + ABS(sin(fur->iq) * fur->bounce_rate);
+          fur->y = fur->scale * (fur->ultimate > FLT_EPSILON ? 1 : 8) + ABS(sin(fur->iq) * fur->bounce_rate);
 
           // keeps inside the world
           if (fur->x < 0)
@@ -1208,7 +1208,7 @@ update_ballz()
 // second is grass height
 // third is entity distribution, a specific colour represents one entity
 // made so for quick level editing
-BUFFER*
+static BUFFER*
 generate_world_map(const char* grass_file, const char* height_file, const char* entity_file, int density)
 {
   BUFFER* b;
