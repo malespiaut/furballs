@@ -154,28 +154,28 @@ int frames = 0,   // frames rendered
   state = IDLE;   // player state
 volatile int tim; // threaded timing variable
 
-float playerx, playery, playerz, // player position
-  lookx, looky, lookz, lookf;    // player look direction
+float playerx = 0.0, playery = 0.0, playerz = 0.0, // player position
+  lookx = 0.0, looky = 0.0, lookz = 0.0, lookf = 0.0;    // player look direction
 
-BUFFER *ultimate_furball, // base buffer for ultimate furball (with ahir)
-  *casual_furball;        // base buffer for simple furball
+BUFFER *ultimate_furball = NULL, // base buffer for ultimate furball (with ahir)
+  *casual_furball = NULL;        // base buffer for simple furball
 
 // vertex buffers for world entities
-BUFFER *grass, *tall_tree, *withered_bush, *cactus, *palm,
-  *stick, *pine, *hut, *fence, *church, *brickhouse;
+BUFFER *grass = NULL, *tall_tree = NULL, *withered_bush = NULL, *cactus = NULL, *palm = NULL,
+  *stick = NULL, *pine = NULL, *hut = NULL, *fence = NULL, *church = NULL, *brickhouse = NULL;
 
-BITMAP* ground_bmp;           // ground colour
+BITMAP* ground_bmp = NULL;           // ground colour
 float bounce = BOUNCE_RATE;   // player bounce rate
-FURBALL* ballz[BALLZ];        // furballs
-int mx, my;                   // mouse delta position
-BLOOD blood[PARTICLES];       // particles
-ENTITY ents[MAX_ENTITIES];    // entities (map objects) array
+FURBALL* ballz[BALLZ] = {NULL};        // furballs
+int mx = 0, my = 0;                   // mouse delta position
+BLOOD blood[PARTICLES] = {0};       // particles
+ENTITY ents[MAX_ENTITIES] = {0};    // entities (map objects) array
 int num_ents = 0;             // number of entities
 int game_state = INTRO;       // game state
-GLuint numbers, intro, outro; // textures
+GLuint numbers = 0, intro = 0, outro = 0; // textures
 
-SAMPLE *youknow, *furtalk[SAMPS], *die[SAMPS],
-  *slash, *music, *shot, *whistle; // sounds
+SAMPLE *youknow = NULL, *furtalk[SAMPS] = {NULL}, *die[SAMPS] = {NULL},
+  *slash = NULL, *music = NULL, *shot = NULL, *whistle = NULL; // sounds
 
 int talk_counter = TALK_DELAY, talking = 1; // furball talk timers
 int whistle_timeout = 100;                  // furball whistle timeout
@@ -229,7 +229,7 @@ length3v(float* a)
 static float
 dist3v(float* a, float* b)
 {
-  float x = NAN, y = NAN, z = NAN;
+  float x = 0.0, y = 0.0, z = 0.0;
   x = a[0] - b[0];
   y = a[1] - b[1];
   z = a[2] - b[2];
@@ -276,7 +276,7 @@ vboize(BUFFER* b)
 static void
 draw_buffer_ex(BUFFER* b, float x, float y, float z, float sx, float sy, float sz, float point_size, float angle)
 {
-  float dist = NAN, psize = NAN, scale = NAN;
+  float dist = 0.0, psize = 0.0, scale = 0.0;
   scale = sx;
   dist = sqrt((x - playerx) * (x - playerx) + (y - playery) * (y - playery) + (z - playerz) * (z - playerz));
 
@@ -321,7 +321,7 @@ draw_buffer(BUFFER* b, float x, float y, float z, float scale, float angle)
 static void
 draw_eyes(FURBALL* f)
 {
-  float x1 = 1.2, y = 10, z1 = 1, x2 = 1.2, z2 = 1, s = NAN;
+  float x1 = 1.2, y = 10, z1 = 1, x2 = 1.2, z2 = 1, s = 0.0;
   // haired furballs are bigger
   x1 *= cos(f->a) * (f->ultimate > FLT_EPSILON ? 1 : 10);
   z1 *= sin(f->a) * (f->ultimate > FLT_EPSILON ? 1 : 8);
@@ -368,7 +368,7 @@ static void
 draw_furball_ultimate(FURBALL* f)
 {
   int c = 0, x = 0, y = 0, z = 0, v = 0;
-  float *vertex = NULL, *basevertex = NULL, dir[3], dist = NAN, lsize = NAN, *colour = NULL, *basecolour = NULL;
+  float *vertex = NULL, *basevertex = NULL, dir[3] = {0.0}, dist = 0.0, lsize = 0.0, *colour = NULL, *basecolour = NULL;
 
   // fetches base vertex buffer for augmentation
   vertex = f->mine->vtx;
@@ -422,7 +422,7 @@ draw_furball_ultimate(FURBALL* f)
 static void
 draw_furball_normal(FURBALL* f)
 {
-  float stretch = NAN, displace = NAN;
+  float stretch = 0.0, displace = 0.0;
 
   stretch = 1.0 + pow(ABS(f->y - f->trail[1][1]) * .1, 2);
   displace = f->y - f->trail[1][1];
@@ -451,7 +451,7 @@ draw_blood(BLOOD* b, int num)
 static void
 draw_furball(FURBALL* f)
 {
-  float x = NAN, y = NAN, z = NAN;
+  float x = 0.0, y = 0.0, z = 0.0;
   x = f->x - playerx;
   y = f->y - playery;
   z = f->z - playerz;
@@ -490,7 +490,7 @@ static void
 draw_ents()
 {
   int c = 0;
-  float x = NAN, z = NAN, dist = NAN;
+  float x = 0.0, z = 0.0, dist = 0.0;
   for (c = 0; c < num_ents; c++)
     {
       x = ents[c].x - playerx;
@@ -512,7 +512,7 @@ static void
 draw_tree()
 {
   int c = 0, x = 0, y = 0, pix = 0;
-  float fx = NAN, fy = NAN, fs = NAN, r = NAN, g = NAN, b = NAN, xx = NAN, yy = NAN;
+  float fx = 0.0, fy = 0.0, fs = 0.0, r = 0.0, g = 0.0, b = 0.0, xx = 0.0, yy = 0.0;
 
   // draws array of ground quads
   glBegin(GL_QUADS);
@@ -577,7 +577,7 @@ generate_cloud_single(const char* filename, int density)
   BUFFER* b = NULL;
   BITMAP* bmp = NULL;
   int x = 0, y = 0, z = 0, d = 0, size_x = 0, size_y = 0, size_z = 0, point_counter = 0, img_x = 0, img_y = 0, col = 0, c_x = 0, c_z = 0;
-  float deviation = NAN, *vertex = NULL, *colour = NULL, colour_deviation = NAN;
+  float deviation = 0.0, *vertex = NULL, *colour = NULL, colour_deviation = 0.0;
   printf("Creating cloud from %s...\n", filename);
   deviation = .4f;
   colour_deviation = .03f;
@@ -645,7 +645,7 @@ generate_cloud_double(const char* filename_x, const char* filename_z, int densit
   BITMAP *bmpx = NULL, *bmpz = NULL;
   int x = 0, y = 0, z = 0, d = 0, size_x = 0, size_y = 0, size_z = 0, point_counter = 0, img_x = 0, img_y = 0;
   int img_z = 0, col1 = 0, col2 = 0, c_x = 0, c_z = 0;
-  float deviation = NAN, *vertex = NULL, *colour = NULL, colour_deviation = NAN;
+  float deviation = 0.0, *vertex = NULL, *colour = NULL, colour_deviation = 0.0;
   deviation = .4f;
   colour_deviation = .03f;
   bmpx = load_bmp(filename_x, 0);
@@ -712,7 +712,7 @@ generate_cloud_triple(const char* filename_x, const char* filename_z, const char
   BITMAP *bmpx = NULL, *bmpz = NULL, *bmpy = NULL;
   int x = 0, y = 0, z = 0, d = 0, size_x = 0, size_y = 0, size_z = 0, point_counter = 0, img_x = 0, img_y = 0;
   int img_z = 0, col1 = 0, col2 = 0, col3 = 0, c_x = 0, c_z = 0;
-  float deviation = NAN, *vertex = NULL, *colour = NULL, colour_deviation = NAN;
+  float deviation = 0.0, *vertex = NULL, *colour = NULL, colour_deviation = 0.0;
   deviation = .4f;
   colour_deviation = .03f;
   bmpx = load_bmp(filename_x, 0);
@@ -833,9 +833,9 @@ generate_furball_ultimate(float size, int cuts, int density)
 {
   BUFFER* b = NULL;
   int x = 0, y = 0, z = 0, c = 0, point_counter = 0;
-  float fx = NAN, fy = NAN, fz = NAN, *vertex = NULL, *colour = NULL;
-  float deviation = NAN, colour_deviation = NAN;
-  float hair_colour = NAN, hair_distance = NAN;
+  float fx = 0.0, fy = 0.0, fz = 0.0, *vertex = NULL, *colour = NULL;
+  float deviation = 0.0, colour_deviation = 0.0;
+  float hair_colour = 0.0, hair_distance = 0.0;
   deviation = size * .1f;
   colour_deviation = .03;
 
@@ -919,8 +919,8 @@ generate_furball_normal(float size, int cuts, int density)
 {
   BUFFER* b = NULL;
   int x = 0, y = 0, z = 0, c = 0, point_counter = 0;
-  float fx = NAN, fy = NAN, fz = NAN, *vertex = NULL, *colour = NULL;
-  float deviation = NAN, colour_deviation = NAN, colour_factor = NAN;
+  float fx = 0.0, fy = 0.0, fz = 0.0, *vertex = NULL, *colour = NULL;
+  float deviation = 0.0, colour_deviation = 0.0, colour_factor = 0.0;
   deviation = size * .3f;
   colour_deviation = .08;
 
@@ -972,7 +972,7 @@ static void
 create_ballz()
 {
   int c = 0, is_good = 0;
-  float x = NAN, y = NAN, z = NAN, r = NAN, g = NAN, b = NAN;
+  float x = 0.0, y = 0.0, z = 0.0, r = 0.0, g = 0.0, b = 0.0;
   for (c = 0; c < BALLZ; c++)
     {
       // if is_good, then it's 'ultimate' == hairy
@@ -1040,7 +1040,7 @@ shoot()
 {
   int c = 0, h = 0;
   FURBALL* hitball = 0;
-  float p[3], b[3], m[3], p_minus_b[3], t0 = NAN, pdist = NAN, rdist = NAN, rhit[3];
+  float p[3] = {0.0}, b[3] = {0.0}, m[3] = {0.0}, p_minus_b[3] = {0.0}, t0 = 0.0, pdist = 0.0, rdist = 0.0, rhit[3] = {0.0};
   play_sample(shot, 255, 128, 1000, 0);
   // gets shoot position and direction
   b[0] = playerx;
@@ -1214,7 +1214,7 @@ generate_world_map(const char* grass_file, const char* height_file, const char* 
   BUFFER* b = NULL;
   BITMAP *bmpg = NULL, *bmph = NULL, *bmph_t = NULL, *bmpg_t = NULL;
   int x = 0, y = 0, d = 0, size_x = 0, size_y = 0, line_counter = 0, col = 0;
-  float *vertex = NULL, *colour = NULL, colour_deviation = NAN, grass_x = NAN, grass_y = NAN, grass_h = 0.0, patch_size = NAN;
+  float *vertex = NULL, *colour = NULL, colour_deviation = 0.0, grass_x = 0.0, grass_y = 0.0, grass_h = 0.0, patch_size = 0.0;
   printf("Creating grass from %s...\n", grass_file);
 
   // randomisation constants
@@ -1553,8 +1553,8 @@ static void
 draw(void)
 {
   int c = 0;
-  float ns = NAN;
-  char nums[16];
+  float ns = 0.0;
+  char nums[16] = {0};
   int left = 0;
 
   // checks for number of furballs left
@@ -1752,7 +1752,7 @@ main(int argc, char** argv)
   int w = 0, h = 0;
   RECT rect = {0};
   float fogc[] = {1.0, .8, .4, .0};
-  char samp[64];
+  char samp[64] = {0};
 
   h = rect.bottom - rect.top;
   w = rect.right - rect.left;
