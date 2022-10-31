@@ -1554,7 +1554,6 @@ draw(void)
 {
   clock_t clk;
   int c;
-  float mx, my;
   float ns;
   char nums[16];
   int left = 0;
