@@ -1214,11 +1214,10 @@ generate_world_map(const char* grass_file, const char* height_file, const char* 
   BUFFER* b;
   BITMAP *bmpg, *bmph, *bmph_t, *bmpg_t;
   int x, y, d, size_x, size_y, line_counter, col;
-  float deviation, *vertex, *colour, colour_deviation, grass_x, grass_y, grass_h, patch_size;
+  float *vertex, *colour, colour_deviation, grass_x, grass_y, grass_h, patch_size;
   printf("Creating grass from %s...\n", grass_file);
 
   // randomisation constants
-  deviation = .4f;
   colour_deviation = .1f;
 
   // lofi gets smaller bitmaps
