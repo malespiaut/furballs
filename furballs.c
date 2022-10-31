@@ -914,7 +914,7 @@ generate_furball_ultimate(float size, int cuts, int density)
 }
 
 // egnerates a simple furball
-BUFFER*
+static BUFFER*
 generate_furball_normal(float size, int cuts, int density)
 {
   BUFFER* b;
@@ -968,7 +968,7 @@ generate_furball_normal(float size, int cuts, int density)
 }
 
 // creates all the furballs
-void
+static void
 create_ballz()
 {
   int c, is_good;
@@ -1013,7 +1013,7 @@ create_ballz()
 ////////////////////////////////////////////////////
 
 // creates [num] blood particles at [b] buffer
-void
+static void
 explode(BLOOD* b, int num, float x, float y, float z)
 {
   int c;
@@ -1035,7 +1035,7 @@ explode(BLOOD* b, int num, float x, float y, float z)
 }
 
 // shoots gun
-int
+static int
 shoot()
 {
   int c, h = 0;
