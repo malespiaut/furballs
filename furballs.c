@@ -198,7 +198,9 @@ isExtensionSupported(const char* extension)
   /* Extension names should not have spaces. */
   where = (GLubyte*)strchr(extension, ' ');
   if (where || *extension == '\0')
-    return 0;
+    {
+      return 0;
+    }
   extensions = glGetString(GL_EXTENSIONS);
   /* It takes a bit of care to be fool-proof about parsing the
      OpenGL extensions string. Don't be fooled by sub-strings,
@@ -208,11 +210,17 @@ isExtensionSupported(const char* extension)
     {
       where = (GLubyte*)strstr((const char*)start, extension);
       if (!where)
-        break;
+        {
+          break;
+        }
       terminator = where + strlen(extension);
       if (where == start || *(where - 1) == ' ')
-        if (*terminator == ' ' || *terminator == '\0')
-          return 1;
+        {
+          if (*terminator == ' ' || *terminator == '\0')
+            {
+              return 1;
+            }
+        }
       start = terminator;
     }
   return 0;
@@ -256,9 +264,13 @@ static void
 vboize(BUFFER* b)
 {
   if (LOFI)
-    return;
+    {
+      return;
+    }
   if (!isExtensionSupported("GL_ARB_vertex_buffer_object"))
-    return;
+    {
+      return;
+    }
   printf("Vboizing buffer with %lu elements\n", b->size);
   b->hardware = 1;
   glGenBuffers(1, &(b->vtx_handle));
@@ -287,7 +299,9 @@ draw_buffer_ex(BUFFER* b, float x, float y, float z, float sx, float sy, float s
   // calculates point size from distance
   psize = SCREEN_W * (scale) / dist;
   if (psize < .01)
-    return;
+    {
+      return;
+    }
   glPointSize(psize * point_size);
   glPushMatrix();
   glScaled(sx, sy, sz);
@@ -344,7 +358,9 @@ draw_eyes(FURBALL* f)
     }
   // if the size is too small, no use drawing eyes
   if (s < 2.0)
-    return;
+    {
+      return;
+    }
   glPointSize(s * 4);
   glPushMatrix();
   glScaled(f->scale, f->scale, f->scale);
@@ -392,13 +408,17 @@ draw_furball_ultimate(FURBALL* f)
                   dir[1] = (f->trail[c][1] - f->y);
                   dir[2] = (f->trail[c][2] - f->z);
                   for (size_t v = 0; v < 3; v++)
-                    vertex[v] = basevertex[v] + (dir[v]);
+                    {
+                      vertex[v] = basevertex[v] + (dir[v]);
+                    }
 
                   dir[0] = f->trail[c + 1][0] - f->x;
                   dir[1] = f->trail[c + 1][1] - f->y;
                   dir[2] = f->trail[c + 1][2] - f->z;
                   for (size_t v = 0; v < 3; v++)
-                    vertex[3 + v] = basevertex[3 + v] + (dir[v]);
+                    {
+                      vertex[3 + v] = basevertex[3 + v] + (dir[v]);
+                    }
                   vertex += 6;
                   basevertex += 6;
                   colour += 6;
@@ -414,7 +434,9 @@ draw_furball_ultimate(FURBALL* f)
   lsize = 640 / dist;
   // if it's too small, no use drawing
   if (lsize < .01)
-    return;
+    {
+      return;
+    }
   glLineWidth(lsize);
   draw_buffer(f->mine, f->x, f->y, f->z, f->scale, 0);
 }
@@ -430,7 +452,9 @@ draw_furball_normal(FURBALL* f)
   stretch = 1.0 + pow(ABS(f->y - f->trail[1][1]) * .1, 2);
   displace = f->y - f->trail[1][1];
   if (stretch > 3.0)
-    stretch = 3.0;
+    {
+      stretch = 3.0;
+    }
 
   draw_buffer_ex(f->mine, f->x, f->y - displace, f->z, f->scale, f->scale * stretch, f->scale, 1.0, 0.0);
 }
@@ -462,9 +486,13 @@ draw_furball(FURBALL* f)
       if (f->exists)
         {
           if (f->ultimate > FLT_EPSILON)
-            draw_furball_ultimate(f);
+            {
+              draw_furball_ultimate(f);
+            }
           else
-            draw_furball_normal(f);
+            {
+              draw_furball_normal(f);
+            }
           draw_eyes(f);
         }
       if (f->dying)
@@ -981,7 +1009,9 @@ create_ballz(void)
 
       // no hairy furballs for lofi version
       if (LOFI)
-        is_good = 0;
+        {
+          is_good = 0;
+        }
 
       // randomises colour and position
       r = ((rand() % 256) / 256.0);
@@ -1000,11 +1030,17 @@ create_ballz(void)
 
       // adjusts ai for hairy furball
       if (is_good)
-        ballz[c]->smart *= .2;
+        {
+          ballz[c]->smart *= .2;
+        }
       if (!is_good)
-        ballz[c]->scale = .2 + ((rand() % 256) / 256.0) * .15;
+        {
+          ballz[c]->scale = .2 + ((rand() % 256) / 256.0) * .15;
+        }
       else
-        ballz[c]->scale = 1.0 + ((rand() % 256) / 256.0) * 3.0;
+        {
+          ballz[c]->scale = 1.0 + ((rand() % 256) / 256.0) * 3.0;
+        }
       ballz[c]->dying = 0;
     }
 }
@@ -1175,13 +1211,21 @@ update_ballz(void)
 
           // keeps inside the world
           if (fur->x < 0)
-            fur->x = 0;
+            {
+              fur->x = 0;
+            }
           if (fur->z < 0)
-            fur->z = 0;
+            {
+              fur->z = 0;
+            }
           if (fur->x > WORLD_SIZE)
-            fur->x = WORLD_SIZE;
+            {
+              fur->x = WORLD_SIZE;
+            }
           if (fur->z > WORLD_SIZE)
-            fur->z = WORLD_SIZE;
+            {
+              fur->z = WORLD_SIZE;
+            }
 
           // wites down trail for hair rendering
           for (i = TRAIL; i > 0; i--)
@@ -1460,7 +1504,9 @@ timer_proc(void)
         }
       // shift makes you run faster
       if (key[KEY_LSHIFT])
-        move_spd *= 2;
+        {
+          move_spd *= 2;
+        }
 
       // rotates camera using mouse input
       get_mouse_mickeys(&mx, &my);
@@ -1498,7 +1544,9 @@ timer_proc(void)
 
       // if not walking, sets idle state
       if (!key[KEY_UP] && !key[KEY_DOWN] && state != IDLE)
-        state = IDLE;
+        {
+          state = IDLE;
+        }
 
       // if not moving, add breathing effect
       if (state == STOP)
@@ -1515,7 +1563,9 @@ timer_proc(void)
         }
       // shoots
       if (mouse_b)
-        shoot();
+        {
+          shoot();
+        }
     }
 
   bounce = BOUNCE_RATE;
@@ -1535,13 +1585,21 @@ timer_proc(void)
 
   // keeps player inside the world
   if (playerx > (WORLD_SIZE - 50.0))
-    playerx = (WORLD_SIZE - 50.0);
+    {
+      playerx = (WORLD_SIZE - 50.0);
+    }
   if (playerz > (WORLD_SIZE - 50.0))
-    playerz = (WORLD_SIZE - 50.0);
+    {
+      playerz = (WORLD_SIZE - 50.0);
+    }
   if (playerx < 50.0)
-    playerx = 50.0;
+    {
+      playerx = 50.0;
+    }
   if (playerz < 50.0)
-    playerz = 50.0;
+    {
+      playerz = 50.0;
+    }
 
   // updates furballs
   update_ballz();
@@ -1558,20 +1616,28 @@ draw(void)
   for (size_t c = 0; c < BALLZ; c++)
     {
       if (ballz[c]->exists)
-        left++;
+        {
+          left++;
+        }
     }
 
   // a cheatcode ;)
   if (key[KEY_Y])
-    left = 0;
+    {
+      left = 0;
+    }
 
   // sets state to outro if all furballs are dead
   if (!left)
-    game_state = OUTRO;
+    {
+      game_state = OUTRO;
+    }
 
   // stop furball talking if you killed too much
   if (left < 100)
-    talking = 0;
+    {
+      talking = 0;
+    }
   sprintf(nums, "%03i:%03i", left, BALLZ);
 
   // up sets furball count display
