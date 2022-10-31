@@ -108,10 +108,10 @@ typedef struct BUFFER
 // blood particle struct
 typedef struct BLOOD
 {
-  float x, y, z;    // paritcle position
-  float r, g, b, a; // colour
-  float vx, vy, vz; // velocity
-  float s;          // size
+  double x, y, z;    // paritcle position
+  double r, g, b, a; // colour
+  double vx, vy, vz; // velocity
+  double s;          // size
   int alive;        // update flag
 } BLOOD;
 
@@ -285,9 +285,9 @@ draw_buffer_ex(BUFFER* b, float x, float y, float z, float sx, float sy, float s
     return;
   glPointSize(psize * point_size);
   glPushMatrix();
-  glScalef(sx, sy, sz);
-  glTranslatef(x / sx, y / sy, z / sz);
-  glRotatef(angle, 0, 1, 0);
+  glScaled(sx, sy, sz);
+  glTranslated(x / sx, y / sy, z / sz);
+  glRotated(angle, 0, 1, 0);
 
   // draws a VBO or vertex array
   if (b->hardware)
@@ -342,20 +342,20 @@ draw_eyes(FURBALL* f)
     return;
   glPointSize(s * 4);
   glPushMatrix();
-  glScalef(f->scale, f->scale, f->scale);
-  glTranslatef(f->x / f->scale, f->y / f->scale, f->z / f->scale);
+  glScaled(f->scale, f->scale, f->scale);
+  glTranslated(f->x / f->scale, f->y / f->scale, f->z / f->scale);
 
   // draws eyes
   glBegin(GL_POINTS);
-  glColor3f(1, 1, 1);
-  glVertex3f(x1, y, z1);
-  glVertex3f(x2, y, z2);
+  glColor3d(1, 1, 1);
+  glVertex3d(x1, y, z1);
+  glVertex3d(x2, y, z2);
   glEnd();
   glPointSize(s * 2);
   glBegin(GL_POINTS);
-  glColor3f(0, 0, 0);
-  glVertex3f(x1 * 1.2, y, z1 * 1.2);
-  glVertex3f(x2 * 1.2, y, z2 * 1.2);
+  glColor3d(0, 0, 0);
+  glVertex3d(x1 * 1.2, y, z1 * 1.2);
+  glVertex3d(x2 * 1.2, y, z2 * 1.2);
   glEnd();
   glPopMatrix();
 }
@@ -442,8 +442,8 @@ draw_blood(BLOOD* b, int num)
   glBegin(GL_POINTS);
   for (c = 0; c < num; c++)
     {
-      glColor3fv(&(b[c].r));
-      glVertex3fv(&(b[c].x));
+      glColor3dv(&(b[c].r));
+      glVertex3dv(&(b[c].x));
     }
   glEnd();
 }
@@ -544,11 +544,11 @@ draw_tree()
                   b *= .8;
                 }
 
-              glColor3f(r, g, b);
-              glVertex3f(fx, 0.0, fy);
-              glVertex3f(fx, 0.0, fy + fs);
-              glVertex3f(fx + fs, 0.0, fy + fs);
-              glVertex3f(fx + fs, 0.0, fy);
+              glColor3d(r, g, b);
+              glVertex3d(fx, 0.0, fy);
+              glVertex3d(fx, 0.0, fy + fs);
+              glVertex3d(fx + fs, 0.0, fy + fs);
+              glVertex3d(fx + fs, 0.0, fy);
             }
         }
     }
@@ -1613,16 +1613,16 @@ draw(void)
   glPushMatrix();
 
   // Set the camera
-  glRotatef(DEG(lookx), 1, 0, 0);
-  glRotatef(DEG(looky) + 90.0, 0, 1, 0);
-  glRotatef(DEG(lookz), 0, 0, 1);
-  glTranslatef(-playerx, -playery, -playerz);
+  glRotated(DEG(lookx), 1, 0, 0);
+  glRotated(DEG(looky) + 90.0, 0, 1, 0);
+  glRotated(DEG(lookz), 0, 0, 1);
+  glTranslated(-playerx, -playery, -playerz);
 
   // Save the camera matrix
   glMatrixMode(GL_MODELVIEW);
   glPushMatrix();
   glLoadIdentity();
-  glTranslatef(0, sin(lookx * 1.333), 0);
+  glTranslated(0, sin(lookx * 1.333), 0);
   glMatrixMode(GL_PROJECTION);
   glPushMatrix();
   glLoadIdentity();
@@ -1631,24 +1631,24 @@ draw(void)
 
   // draws backgorund
   glBegin(GL_QUADS);
-  glColor3f(1.0, .8, .4);
-  glVertex2f(-1, .5);
-  glVertex2f(1, .5);
-  glColor3f(1.0, .85, .6);
-  glVertex2f(1, .2);
-  glVertex2f(-1, .2);
+  glColor3d(1.0, .8, .4);
+  glVertex2d(-1, .5);
+  glVertex2d(1, .5);
+  glColor3d(1.0, .85, .6);
+  glVertex2d(1, .2);
+  glVertex2d(-1, .2);
 
-  glVertex2f(-1, .2);
-  glVertex2f(1, .2);
-  glColor3f(1.0, .9, .8);
-  glVertex2f(1, 0);
-  glVertex2f(-1, 0);
+  glVertex2d(-1, .2);
+  glVertex2d(1, .2);
+  glColor3d(1.0, .9, .8);
+  glVertex2d(1, 0);
+  glVertex2d(-1, 0);
 
-  glVertex2f(-1, 0);
-  glVertex2f(1, 0);
-  glColor3f(0, 0, 0);
-  glVertex2f(1, -1);
-  glVertex2f(-1, -1);
+  glVertex2d(-1, 0);
+  glVertex2d(1, 0);
+  glColor3d(0, 0, 0);
+  glVertex2d(1, -1);
+  glVertex2d(-1, -1);
   glEnd();
 
   glDepthMask(GL_TRUE);
@@ -1659,7 +1659,7 @@ draw(void)
   glPopMatrix();
 
   // Translate and rotate the object
-  glColor3f(1.0, 1.0, 1.0);
+  glColor3d(1.0, 1.0, 1.0);
 
   // draws world
   draw_tree();
@@ -1670,7 +1670,7 @@ draw(void)
   glPopMatrix();
 
   glDisable(GL_TEXTURE_2D);
-  glColor3f(1.0, 1.0, 1.0);
+  glColor3d(1.0, 1.0, 1.0);
   mx = (mouse_x - 160) / 160.0;
   my = -(mouse_y - 120) / 120.0;
 
@@ -1681,8 +1681,8 @@ draw(void)
 
       // draws crosshair
       glBegin(GL_POINTS);
-      glColor4f(1.0, 1.0, 1.0, 1.0);
-      glVertex2f(0, 0);
+      glColor4d(1.0, 1.0, 1.0, 1.0);
+      glVertex2d(0, 0);
       glEnd();
 
       // draws numbers
@@ -1693,14 +1693,14 @@ draw(void)
       for (c = 0, ns = 0; c < 7; c++, ns += NUMSIZE)
         {
 
-          glTexCoord2f(nums[c] * .090909f, 1.0);
-          glVertex2f(-1.0 + ns, 1.0);
-          glTexCoord2f((nums[c] + 1) * .090909f, 1.0);
-          glVertex2f(-1.0 + ns + (NUMSIZE * 1.2), 1.0);
-          glTexCoord2f((nums[c] + 1) * .090909f, 0.0);
-          glVertex2f(-1.0 + ns + (NUMSIZE * 1.2), 1.0 - NUMSIZE);
-          glTexCoord2f(nums[c] * .090909f, 0.0);
-          glVertex2f(-1.0 + ns, 1.0 - NUMSIZE);
+          glTexCoord2d(nums[c] * .090909f, 1.0);
+          glVertex2d(-1.0 + ns, 1.0);
+          glTexCoord2d((nums[c] + 1) * .090909f, 1.0);
+          glVertex2d(-1.0 + ns + (NUMSIZE * 1.2), 1.0);
+          glTexCoord2d((nums[c] + 1) * .090909f, 0.0);
+          glVertex2d(-1.0 + ns + (NUMSIZE * 1.2), 1.0 - NUMSIZE);
+          glTexCoord2d(nums[c] * .090909f, 0.0);
+          glVertex2d(-1.0 + ns, 1.0 - NUMSIZE);
         }
 
       glEnd();
@@ -1713,14 +1713,14 @@ draw(void)
       glEnable(GL_TEXTURE_2D);
       glBindTexture(GL_TEXTURE_2D, intro);
       glBegin(GL_QUADS);
-      glTexCoord2f(0.0, 1.0);
-      glVertex2f(-1.0, 1.0);
-      glTexCoord2f(1.0, 1.0);
-      glVertex2f(1.0, 1.0);
-      glTexCoord2f(1.0, 0.0);
-      glVertex2f(1.0, -1.0);
-      glTexCoord2f(0.0, 0.0);
-      glVertex2f(-1.0, -1.0);
+      glTexCoord2d(0.0, 1.0);
+      glVertex2d(-1.0, 1.0);
+      glTexCoord2d(1.0, 1.0);
+      glVertex2d(1.0, 1.0);
+      glTexCoord2d(1.0, 0.0);
+      glVertex2d(1.0, -1.0);
+      glTexCoord2d(0.0, 0.0);
+      glVertex2d(-1.0, -1.0);
       glEnd();
       glDisable(GL_TEXTURE_2D);
     }
@@ -1731,14 +1731,14 @@ draw(void)
       glEnable(GL_TEXTURE_2D);
       glBindTexture(GL_TEXTURE_2D, outro);
       glBegin(GL_QUADS);
-      glTexCoord2f(0.0, 1.0);
-      glVertex2f(-1.0, 1.0);
-      glTexCoord2f(1.0, 1.0);
-      glVertex2f(1.0, 1.0);
-      glTexCoord2f(1.0, 0.0);
-      glVertex2f(1.0, -1.0);
-      glTexCoord2f(0.0, 0.0);
-      glVertex2f(-1.0, -1.0);
+      glTexCoord2d(0.0, 1.0);
+      glVertex2d(-1.0, 1.0);
+      glTexCoord2d(1.0, 1.0);
+      glVertex2d(1.0, 1.0);
+      glTexCoord2d(1.0, 0.0);
+      glVertex2d(1.0, -1.0);
+      glTexCoord2d(0.0, 0.0);
+      glVertex2d(-1.0, -1.0);
       glEnd();
       glDisable(GL_TEXTURE_2D);
     }
