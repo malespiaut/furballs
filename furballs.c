@@ -1740,7 +1740,7 @@ timer(void)
 {
   tim++;
 }
-END_OF_FUNCTION(timer);
+END_OF_FUNCTION(timer)
 
 // application entry point
 int
