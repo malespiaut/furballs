@@ -19,6 +19,7 @@
 // included allegro to get a kickstart for the tight deadline
 #include <math.h>      // just math
 #include <stdio.h>     // standard
+#include <string.h>    // for isExtensionSupported
 
 #include <SOIL/SOIL.h> // Simple OpenGL Image Loader
 #include <alleggl.h>   // gl helper for allegro
@@ -183,8 +184,7 @@ int whistle_timeout = 100;                  // furball whistle timeout
 ////////////////////////////////////////////////////
 
 // checks if GL extension is supported (stolen)
-#include <string.h>
-int
+static int
 isExtensionSupported(const char* extension)
 {
   const GLubyte* extensions = NULL;
