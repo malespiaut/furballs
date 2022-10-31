@@ -473,7 +473,7 @@ draw_furball(FURBALL* f)
 }
 
 // draws all furballs
-void
+static void
 draw_ballz()
 {
   int c;
@@ -486,7 +486,7 @@ draw_ballz()
 
 // draws all entities
 // actually draws only the ones that are close enough
-void
+static void
 draw_ents()
 {
   int c;
@@ -508,7 +508,7 @@ draw_ents()
 // but a series of quads, drawn only near the player
 // this saves cpu and gpu from dynamic texture updates
 // it also draws everything else :P
-void
+static void
 draw_tree()
 {
   clock_t clk;
