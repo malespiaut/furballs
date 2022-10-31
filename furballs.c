@@ -17,9 +17,10 @@
 
 // standard includes
 // included allegro to get a kickstart for the tight deadline
-#include <math.h>      // just math
-#include <stdio.h>     // standard
-#include <string.h>    // for isExtensionSupported
+#include <float.h>  // for FLT_EPSILON
+#include <math.h>   // just math
+#include <stdio.h>  // standard
+#include <string.h> // for isExtensionSupported
 
 #include <SOIL/SOIL.h> // Simple OpenGL Image Loader
 #include <alleggl.h>   // gl helper for allegro
@@ -49,10 +50,10 @@
 #define IDLE 2
 #define STOP 3
 
-#define HEIGHT 10.0      // height of camera/player
+#define HEIGHT 10.0     // height of camera/player
 #define BOUNCE_RATE 2.0 // player jump rate
-#define NUMSIZE .1f      // size of onscreen numbers
-#define FUR_SLICE 8      // not used DELME
+#define NUMSIZE .1f     // size of onscreen numbers
+#define FUR_SLICE 8     // not used DELME
 
 // game state
 #define INTRO 1
@@ -65,9 +66,9 @@
 // graphics quality settings
 #if LOFI == 1
 #define DRAW_DIST 500.0 // rendering / fog distance
-#define PARTICLES 128    // number of max onscreen particles
-#define BALLZ 666        // number of furballs
-#define TRAIL 1          // hair length for hairy furballs
+#define PARTICLES 128   // number of max onscreen particles
+#define BALLZ 666       // number of furballs
+#define TRAIL 1         // hair length for hairy furballs
 #define LINE_WIDTH 24.0 // line width for grass
 #else
 #define LINE_WIDTH 12.0
@@ -113,7 +114,7 @@ typedef struct BLOOD
   double r, g, b, a; // colour
   double vx, vy, vz; // velocity
   double s;          // size
-  int alive;        // update flag
+  int alive;         // update flag
 } BLOOD;
 
 // furball (a dynamic vertex buffer + AI)
@@ -322,16 +323,16 @@ draw_eyes(FURBALL* f)
 {
   float x1 = 1.2, y = 10, z1 = 1, x2 = 1.2, z2 = 1, s;
   // haired furballs are bigger
-  x1 *= cos(f->a) * (f->ultimate ? 1 : 10);
-  z1 *= sin(f->a) * (f->ultimate ? 1 : 8);
+  x1 *= cos(f->a) * (f->ultimate > FLT_EPSILON ? 1 : 10);
+  z1 *= sin(f->a) * (f->ultimate > FLT_EPSILON ? 1 : 8);
 
-  x2 *= cos(-f->a) * (f->ultimate ? 1 : 10);
-  z2 *= sin(-f->a) * (f->ultimate ? 1 : 8);
-  y = (f->ultimate ? 1.5 : 10);
+  x2 *= cos(-f->a) * (f->ultimate > FLT_EPSILON ? 1 : 10);
+  z2 *= sin(-f->a) * (f->ultimate > FLT_EPSILON ? 1 : 8);
+  y = (f->ultimate > FLT_EPSILON ? 1.5 : 10);
 
   // gets point size for this furball
   glGetFloatv(GL_POINT_SIZE, &s);
-  if (f->ultimate)
+  if (f->ultimate > FLT_EPSILON)
     {
       // gets line width if it's a hairy one
       glGetFloatv(GL_LINE_WIDTH, &s);
