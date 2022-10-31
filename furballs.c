@@ -576,7 +576,7 @@ generate_cloud_single(const char* filename, int density)
 {
   BUFFER* b;
   BITMAP* bmp;
-  int x, y, z, d, size_x, size_y, size_z, point_counter, img_x, img_y, col, c_x, c_y, c_z;
+  int x, y, z, d, size_x, size_y, size_z, point_counter, img_x, img_y, col, c_x, c_z;
   float deviation, *vertex, *colour, colour_deviation;
   printf("Creating cloud from %s...\n", filename);
   deviation = .4f;
@@ -597,7 +597,6 @@ generate_cloud_single(const char* filename, int density)
   colour = b->clr;
   c_x = size_x / 2;
   c_z = size_z / 2;
-  c_y = size_y / 2;
   printf("Beggining clouding...\n");
   for (x = 0; x < size_x; x++)
     {
