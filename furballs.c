@@ -1416,8 +1416,6 @@ timer_proc(void)
 {
   int c;
   float move_spd = MOVE_SPEED;
-  clock_t clk;
-  clk = clock();
 
   // if it's intro, waits for space
   if (game_state == INTRO)
