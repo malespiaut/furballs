@@ -1552,7 +1552,6 @@ timer_proc(void)
 static void
 draw(void)
 {
-  clock_t clk;
   int c;
   float ns;
   char nums[16];
@@ -1583,7 +1582,6 @@ draw(void)
     {
       nums[c] -= 0x30;
     }
-  clk = clock();
 
   // basic gl frame setup
   glMatrixMode(GL_PROJECTION);
