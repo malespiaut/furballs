@@ -571,7 +571,7 @@ draw_tree()
 
 // generates a mesh from one bitmap
 // by 'spinning it' around Y axis
-BUFFER*
+static BUFFER*
 generate_cloud_single(const char* filename, int density)
 {
   BUFFER* b;
