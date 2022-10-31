@@ -1389,7 +1389,7 @@ generate_world_map(const char* grass_file, const char* height_file, const char* 
 }
 
 // generate everything batch
-void
+static void
 generate_stuff()
 {
   // generate_font("cartographer.ttf",1000);
@@ -1411,7 +1411,7 @@ generate_stuff()
 
 // timed function that updates everything
 // and handles input
-void
+static void
 timer_proc(void)
 {
   int c;
