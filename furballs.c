@@ -275,12 +275,12 @@ vboize(BUFFER* b)
   b->hardware = 1;
   glGenBuffers(1, &(b->vtx_handle));
   glBindBuffer(GL_ARRAY_BUFFER, b->vtx_handle);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 3 * b->size, b->vtx, GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)(sizeof(float) * 3 * b->size), b->vtx, GL_STATIC_DRAW);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 
   glGenBuffers(1, &(b->clr_handle));
   glBindBuffer(GL_ARRAY_BUFFER, b->clr_handle);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 3 * b->size, b->clr, GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)(sizeof(float) * 3 * b->size), b->clr, GL_STATIC_DRAW);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
   printf("Removing arrays...\n");
   free(b->vtx);
@@ -604,8 +604,8 @@ generate_cloud_single(const char* filename, size_t density)
 {
   BUFFER* b = NULL;
   BITMAP* bmp = NULL;
-  size_t size_x = 0, size_y = 0, size_z = 0, point_counter = 0, img_y = 0, c_x = 0, c_z = 0;
-  int img_x = 0, col = 0;
+  size_t point_counter = 0;
+  int size_x = 0, size_y = 0, size_z = 0, img_x = 0, img_y = 0, col = 0, c_x = 0, c_z = 0;
   float deviation = 0.0, *vertex = NULL, *colour = NULL, colour_deviation = 0.0;
   printf("Creating cloud from %s...\n", filename);
   deviation = .4;
@@ -614,12 +614,12 @@ generate_cloud_single(const char* filename, size_t density)
   size_x = bmp->w;
   size_y = bmp->h;
   size_z = bmp->w;
-  printf("Dimensions are: %lu x %lu x %lu\n", size_x, size_y, size_z);
+  printf("Dimensions are: %d x %d x %d\n", size_x, size_y, size_z);
 
   // allocates a too large buffer, or too small, if of higher density
   b = malloc(sizeof(BUFFER));
-  b->vtx = malloc(size_x * size_y * size_z * 3 * sizeof(float));
-  b->clr = malloc(size_x * size_y * size_z * 3 * sizeof(float));
+  b->vtx = malloc((size_t)(size_x * size_y * size_z * 3) * sizeof(float));
+  b->clr = malloc((size_t)(size_x * size_y * size_z * 3) * sizeof(float));
   b->hardware = 0;
   point_counter = 0;
   vertex = b->vtx;
@@ -627,11 +627,11 @@ generate_cloud_single(const char* filename, size_t density)
   c_x = size_x / 2;
   c_z = size_z / 2;
   printf("Beggining clouding...\n");
-  for (size_t x = 0; x < size_x; x++)
+  for (int x = 0; x < size_x; x++)
     {
-      for (size_t y = 0; y < size_y; y++)
+      for (int y = 0; y < size_y; y++)
         {
-          for (size_t z = 0; z < size_z; z++)
+          for (int z = 0; z < size_z; z++)
             {
               for (size_t d = 0; d < density; d++)
                 {
@@ -672,7 +672,8 @@ generate_cloud_double(const char* filename_x, const char* filename_z, size_t den
 {
   BUFFER* b = NULL;
   BITMAP *bmpx = NULL, *bmpz = NULL;
-  int size_x = 0, size_y = 0, size_z = 0, point_counter = 0, img_x = 0, img_y = 0;
+  size_t point_counter = 0;
+  int size_x = 0, size_y = 0, size_z = 0, img_x = 0, img_y = 0;
   int img_z = 0, col1 = 0, col2 = 0, c_x = 0, c_z = 0;
   float deviation = 0.0, *vertex = NULL, *colour = NULL, colour_deviation = 0.0;
   deviation = .4;
@@ -685,8 +686,8 @@ generate_cloud_double(const char* filename_x, const char* filename_z, size_t den
 
   // another bad malloc
   b = malloc(sizeof(BUFFER));
-  b->vtx = malloc(size_x * size_y * size_z * 3 * sizeof(float));
-  b->clr = malloc(size_x * size_y * size_z * 3 * sizeof(float));
+  b->vtx = malloc((size_t)(size_x * size_y * size_z * 3) * sizeof(float));
+  b->clr = malloc((size_t)(size_x * size_y * size_z * 3) * sizeof(float));
   b->hardware = 0;
   point_counter = 0;
   vertex = b->vtx;
@@ -729,7 +730,7 @@ generate_cloud_double(const char* filename_x, const char* filename_z, size_t den
   vboize(b);
   destroy_bitmap(bmpx);
   destroy_bitmap(bmpz);
-  printf("Created cloud of %i points!\n", point_counter);
+  printf("Created cloud of %lu points!\n", point_counter);
   return b;
 }
 
@@ -739,7 +740,8 @@ generate_cloud_triple(const char* filename_x, const char* filename_z, const char
 {
   BUFFER* b = NULL;
   BITMAP *bmpx = NULL, *bmpz = NULL, *bmpy = NULL;
-  int size_x = 0, size_y = 0, size_z = 0, point_counter = 0, img_x = 0, img_y = 0;
+  size_t point_counter = 0;
+  int size_x = 0, size_y = 0, size_z = 0, img_x = 0, img_y = 0;
   int img_z = 0, col1 = 0, col2 = 0, col3 = 0, c_x = 0, c_z = 0;
   float deviation = 0.0, *vertex = NULL, *colour = NULL, colour_deviation = 0.0;
   deviation = .4;
@@ -750,12 +752,12 @@ generate_cloud_triple(const char* filename_x, const char* filename_z, const char
   size_x = bmpx->w;
   size_y = bmpx->h;
   size_z = bmpz->w;
-  printf("Dimensions are: %i x %i x %i\n", size_x, size_y, size_z);
+  printf("Dimensions are: %d x %d x %d\n", size_x, size_y, size_z);
 
   // bad malloc Mk.3
   b = malloc(sizeof(BUFFER));
-  b->vtx = malloc(size_x * size_y * size_z * 3 * sizeof(float));
-  b->clr = malloc(size_x * size_y * size_z * 3 * sizeof(float));
+  b->vtx = malloc((size_t)(size_x * size_y * size_z * 3) * sizeof(float));
+  b->clr = malloc((size_t)(size_x * size_y * size_z * 3) * sizeof(float));
   b->hardware = 0;
   point_counter = 0;
   vertex = b->vtx;
@@ -799,17 +801,17 @@ generate_cloud_triple(const char* filename_x, const char* filename_z, const char
   vboize(b);
   destroy_bitmap(bmpx);
   destroy_bitmap(bmpz);
-  printf("Created cloud of %i points!\n", point_counter);
+  printf("Created cloud of %lu points!\n", point_counter);
 
   return b;
 }
 
 //  this creates a furball instance
 static FURBALL*
-spawn_furball(float x, float y, float z, BUFFER* b, int density, int ultimate, float red, float green, float blue)
+spawn_furball(float x, float y, float z, BUFFER* b, size_t density, int ultimate, float red, float green, float blue)
 {
   FURBALL* f = NULL;
-  int bufsize = 0;
+  size_t bufsize = 0;
   float *colour = NULL, *basecolour = NULL;
 
   // number of mesh vertices is specified through density
@@ -861,7 +863,7 @@ static BUFFER*
 generate_furball_ultimate(float size, size_t cuts, size_t density)
 {
   BUFFER* b = NULL;
-  int point_counter = 0;
+  size_t point_counter = 0;
   float fx = 0.0, fy = 0.0, fz = 0.0, *vertex = NULL, *colour = NULL;
   float deviation = 0.0, colour_deviation = 0.0;
   float hair_colour = 0.0, hair_distance = 0.0;
@@ -937,7 +939,7 @@ generate_furball_ultimate(float size, size_t cuts, size_t density)
     }
   b->mode = GL_LINES;
   b->size = point_counter;
-  printf("Created furball of %i points!\n", point_counter);
+  printf("Created furball of %lu points!\n", point_counter);
 
   return b;
 }
@@ -947,7 +949,7 @@ static BUFFER*
 generate_furball_normal(float size, size_t cuts, size_t density)
 {
   BUFFER* b = NULL;
-  int point_counter = 0;
+  size_t point_counter = 0;
   float fx = 0.0, fy = 0.0, fz = 0.0, *vertex = NULL, *colour = NULL;
   float deviation = 0.0, colour_deviation = 0.0, colour_factor = 0.0;
   deviation = size * .3;
@@ -991,7 +993,7 @@ generate_furball_normal(float size, size_t cuts, size_t density)
     }
   b->mode = GL_POINTS;
   b->size = point_counter;
-  printf("Created furball of %i points!\n", point_counter);
+  printf("Created furball of %lu points!\n", point_counter);
 
   return b;
 }
@@ -1257,7 +1259,8 @@ generate_world_map(const char* grass_file, const char* height_file, const char* 
 {
   BUFFER* b = NULL;
   BITMAP *bmpg = NULL, *bmph = NULL, *bmph_t = NULL, *bmpg_t = NULL;
-  int size_x = 0, size_y = 0, line_counter = 0, col = 0;
+  int size_x = 0, size_y = 0, col = 0;
+  size_t line_counter = 0;
   float *vertex = NULL, *colour = NULL, colour_deviation = 0.0, grass_x = 0.0, grass_y = 0.0, grass_h = 0.0, patch_size = 0.0;
   printf("Creating grass from %s...\n", grass_file);
 
@@ -1287,8 +1290,8 @@ generate_world_map(const char* grass_file, const char* height_file, const char* 
 
   // allocates grass buffer
   b = malloc(sizeof(BUFFER));
-  b->vtx = malloc(size_x * size_y * density * 6 * sizeof(float));
-  b->clr = malloc(size_x * size_y * density * 6 * sizeof(float));
+  b->vtx = malloc((size_t)(size_x * size_y) * density * 6 * sizeof(float));
+  b->clr = malloc((size_t)(size_x * size_y) * density * 6 * sizeof(float));
   b->hardware = 0;
   line_counter = 0;
   vertex = b->vtx;
@@ -1325,7 +1328,7 @@ generate_world_map(const char* grass_file, const char* height_file, const char* 
             }
         }
     }
-  printf("Generated %i lines!\n", line_counter);
+  printf("Generated %lu lines!\n", line_counter);
   b->mode = GL_LINES;
   b->size = line_counter;
   vboize(b);
@@ -1819,7 +1822,7 @@ main(int argc, char** argv)
 
   h = rect.bottom - rect.top;
   w = rect.right - rect.left;
-  printf("Width: %i\nHeight: %i", w, h);
+  printf("Width: %d\nHeight: %d\n", w, h);
   // allegro setup
   allegro_init();
   install_allegro_gl();
