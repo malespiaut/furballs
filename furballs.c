@@ -1750,7 +1750,7 @@ main(int argc, char** argv)
 
   int c;
   int w, h;
-  RECT rect;
+  RECT rect = {0};
   float fogc[] = {1.0, .8, .4, .0};
   char samp[64];
 
