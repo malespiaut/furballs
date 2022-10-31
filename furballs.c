@@ -52,7 +52,7 @@
 
 #define HEIGHT 10.0     // height of camera/player
 #define BOUNCE_RATE 2.0 // player jump rate
-#define NUMSIZE .1f     // size of onscreen numbers
+#define NUMSIZE .1      // size of onscreen numbers
 #define FUR_SLICE 8     // not used DELME
 
 // game state
@@ -60,8 +60,8 @@
 #define PLAY 2
 #define OUTRO 3
 
-#define IQ 2       // furball bounces between change of direction
-#define SPEED 1.5f // furball speed
+#define IQ 2      // furball bounces between change of direction
+#define SPEED 1.5 // furball speed
 
 // graphics quality settings
 #if LOFI == 1
@@ -154,28 +154,28 @@ int frames = 0,   // frames rendered
   state = IDLE;   // player state
 volatile int tim; // threaded timing variable
 
-float playerx = 0.0, playery = 0.0, playerz = 0.0, // player position
-  lookx = 0.0, looky = 0.0, lookz = 0.0, lookf = 0.0;    // player look direction
+float playerx = 0.0, playery = 0.0, playerz = 0.0,    // player position
+  lookx = 0.0, looky = 0.0, lookz = 0.0, lookf = 0.0; // player look direction
 
 BUFFER *ultimate_furball = NULL, // base buffer for ultimate furball (with ahir)
   *casual_furball = NULL;        // base buffer for simple furball
 
 // vertex buffers for world entities
 BUFFER *grass = NULL, *tall_tree = NULL, *withered_bush = NULL, *cactus = NULL, *palm = NULL,
-  *stick = NULL, *pine = NULL, *hut = NULL, *fence = NULL, *church = NULL, *brickhouse = NULL;
+       *stick = NULL, *pine = NULL, *hut = NULL, *fence = NULL, *church = NULL, *brickhouse = NULL;
 
-BITMAP* ground_bmp = NULL;           // ground colour
-float bounce = BOUNCE_RATE;   // player bounce rate
-FURBALL* ballz[BALLZ] = {NULL};        // furballs
-int mx = 0, my = 0;                   // mouse delta position
-BLOOD blood[PARTICLES] = {0};       // particles
-ENTITY ents[MAX_ENTITIES] = {0};    // entities (map objects) array
-int num_ents = 0;             // number of entities
-int game_state = INTRO;       // game state
+BITMAP* ground_bmp = NULL;                // ground colour
+float bounce = BOUNCE_RATE;               // player bounce rate
+FURBALL* ballz[BALLZ] = {NULL};           // furballs
+int mx = 0, my = 0;                       // mouse delta position
+BLOOD blood[PARTICLES] = {0};             // particles
+ENTITY ents[MAX_ENTITIES] = {0};          // entities (map objects) array
+int num_ents = 0;                         // number of entities
+int game_state = INTRO;                   // game state
 GLuint numbers = 0, intro = 0, outro = 0; // textures
 
 SAMPLE *youknow = NULL, *furtalk[SAMPS] = {NULL}, *die[SAMPS] = {NULL},
-  *slash = NULL, *music = NULL, *shot = NULL, *whistle = NULL; // sounds
+       *slash = NULL, *music = NULL, *shot = NULL, *whistle = NULL; // sounds
 
 int talk_counter = TALK_DELAY, talking = 1; // furball talk timers
 int whistle_timeout = 100;                  // furball whistle timeout
@@ -579,8 +579,8 @@ generate_cloud_single(const char* filename, int density)
   int x = 0, y = 0, z = 0, d = 0, size_x = 0, size_y = 0, size_z = 0, point_counter = 0, img_x = 0, img_y = 0, col = 0, c_x = 0, c_z = 0;
   float deviation = 0.0, *vertex = NULL, *colour = NULL, colour_deviation = 0.0;
   printf("Creating cloud from %s...\n", filename);
-  deviation = .4f;
-  colour_deviation = .03f;
+  deviation = .4;
+  colour_deviation = .03;
   bmp = load_bmp(filename, 0);
   size_x = bmp->w;
   size_y = bmp->h;
@@ -646,8 +646,8 @@ generate_cloud_double(const char* filename_x, const char* filename_z, int densit
   int x = 0, y = 0, z = 0, d = 0, size_x = 0, size_y = 0, size_z = 0, point_counter = 0, img_x = 0, img_y = 0;
   int img_z = 0, col1 = 0, col2 = 0, c_x = 0, c_z = 0;
   float deviation = 0.0, *vertex = NULL, *colour = NULL, colour_deviation = 0.0;
-  deviation = .4f;
-  colour_deviation = .03f;
+  deviation = .4;
+  colour_deviation = .03;
   bmpx = load_bmp(filename_x, 0);
   bmpz = load_bmp(filename_z, 0);
   size_x = bmpx->w;
@@ -713,8 +713,8 @@ generate_cloud_triple(const char* filename_x, const char* filename_z, const char
   int x = 0, y = 0, z = 0, d = 0, size_x = 0, size_y = 0, size_z = 0, point_counter = 0, img_x = 0, img_y = 0;
   int img_z = 0, col1 = 0, col2 = 0, col3 = 0, c_x = 0, c_z = 0;
   float deviation = 0.0, *vertex = NULL, *colour = NULL, colour_deviation = 0.0;
-  deviation = .4f;
-  colour_deviation = .03f;
+  deviation = .4;
+  colour_deviation = .03;
   bmpx = load_bmp(filename_x, 0);
   bmpz = load_bmp(filename_z, 0);
   bmpy = load_bmp(filename_y, 0);
@@ -836,7 +836,7 @@ generate_furball_ultimate(float size, int cuts, int density)
   float fx = 0.0, fy = 0.0, fz = 0.0, *vertex = NULL, *colour = NULL;
   float deviation = 0.0, colour_deviation = 0.0;
   float hair_colour = 0.0, hair_distance = 0.0;
-  deviation = size * .1f;
+  deviation = size * .1;
   colour_deviation = .03;
 
   // allocates memory
@@ -921,7 +921,7 @@ generate_furball_normal(float size, int cuts, int density)
   int x = 0, y = 0, z = 0, c = 0, point_counter = 0;
   float fx = 0.0, fy = 0.0, fz = 0.0, *vertex = NULL, *colour = NULL;
   float deviation = 0.0, colour_deviation = 0.0, colour_factor = 0.0;
-  deviation = size * .3f;
+  deviation = size * .3;
   colour_deviation = .08;
 
   // allocates buffers
@@ -995,13 +995,13 @@ create_ballz()
 
       // sets up ai
       ballz[c]->iq = 0;
-      ballz[c]->smart = .05f + ((rand() % 256) / 256.0) * .15;
+      ballz[c]->smart = .05 + ((rand() % 256) / 256.0) * .15;
 
       // adjusts ai for hairy furball
       if (is_good)
         ballz[c]->smart *= .2;
       if (!is_good)
-        ballz[c]->scale = .2f + ((rand() % 256) / 256.0) * .15;
+        ballz[c]->scale = .2 + ((rand() % 256) / 256.0) * .15;
       else
         ballz[c]->scale = 1.0 + ((rand() % 256) / 256.0) * 3.0;
       ballz[c]->dying = 0;
@@ -1027,7 +1027,7 @@ explode(BLOOD* b, int num, float x, float y, float z)
       b[c].vx = ((((rand() % 512) / 256.0) - 1.0) * 4.0);
       b[c].vy = ((((rand() % 512) / 256.0) - 1.0) * 8.0);
       b[c].vz = ((((rand() % 512) / 256.0) - 1.0) * 4.0);
-      b[c].r = .6 + ((((rand() % 512) / 256.0) - 1.0) * .4f);
+      b[c].r = .6 + ((((rand() % 512) / 256.0) - 1.0) * .4);
       b[c].g = 0;
       b[c].b = 0;
       b[c].alive = 1;
@@ -1070,7 +1070,7 @@ shoot()
               rdist = length3v(rhit);
               if (rdist < 10.0)
                 {
-                  printf("hit with rdist: %f\n", rdist);
+                  printf("hit with rdist: %g\n", rdist);
                   if (dist3v(b, p) < pdist)
                     {
                       pdist = dist3v(b, p);
@@ -1166,7 +1166,7 @@ update_ballz()
             }
 
           // adjusts bounce rate
-          fur->bounce += .1f * SPEED;
+          fur->bounce += .1 * SPEED;
 
           // updates position
           fur->x += cos(fur->a) * fur->speed;
@@ -1218,7 +1218,7 @@ generate_world_map(const char* grass_file, const char* height_file, const char* 
   printf("Creating grass from %s...\n", grass_file);
 
   // randomisation constants
-  colour_deviation = .1f;
+  colour_deviation = .1;
 
   // lofi gets smaller bitmaps
   if (LOFI)
@@ -1261,7 +1261,7 @@ generate_world_map(const char* grass_file, const char* height_file, const char* 
               // colour and height get randomised a bit
               grass_x = ((x * WORLD_SIZE) / size_x) + ((((rand() % 512) / 512.0)) * patch_size);
               grass_y = ((y * WORLD_SIZE) / size_x) + ((((rand() % 512) / 512.0)) * patch_size);
-              grass_h = (.1 * getr(getpixel(bmph, x, y))) + ((((rand() % 512) / 512.0)) * (grass_h * .3f));
+              grass_h = (.1 * getr(getpixel(bmph, x, y))) + ((((rand() % 512) / 512.0)) * (grass_h * .3));
               vertex[0] = grass_x;
               vertex[1] = 0;
               vertex[2] = grass_y;
@@ -1272,9 +1272,9 @@ generate_world_map(const char* grass_file, const char* height_file, const char* 
               colour[3] = ((getr(col)) / 256.0) + ((((rand() % 512) / 256.0) - 1.0) * colour_deviation);
               colour[4] = ((getg(col)) / 256.0) + ((((rand() % 512) / 256.0) - 1.0) * colour_deviation);
               colour[5] = ((getb(col)) / 256.0) + ((((rand() % 512) / 256.0) - 1.0) * colour_deviation);
-              colour[0] = colour[3] * .5f;
-              colour[1] = colour[4] * .5f;
-              colour[2] = colour[5] * .5f;
+              colour[0] = colour[3] * .5;
+              colour[1] = colour[4] * .5;
+              colour[2] = colour[5] * .5;
               line_counter += 2;
               vertex += 6;
               colour += 6;
@@ -1678,13 +1678,13 @@ draw(void)
       for (c = 0, ns = 0; c < 7; c++, ns += NUMSIZE)
         {
 
-          glTexCoord2d(nums[c] * .090909f, 1.0);
+          glTexCoord2d(nums[c] * .090909, 1.0);
           glVertex2d(-1.0 + ns, 1.0);
-          glTexCoord2d((nums[c] + 1) * .090909f, 1.0);
+          glTexCoord2d((nums[c] + 1) * .090909, 1.0);
           glVertex2d(-1.0 + ns + (NUMSIZE * 1.2), 1.0);
-          glTexCoord2d((nums[c] + 1) * .090909f, 0.0);
+          glTexCoord2d((nums[c] + 1) * .090909, 0.0);
           glVertex2d(-1.0 + ns + (NUMSIZE * 1.2), 1.0 - NUMSIZE);
-          glTexCoord2d(nums[c] * .090909f, 0.0);
+          glTexCoord2d(nums[c] * .090909, 0.0);
           glVertex2d(-1.0 + ns, 1.0 - NUMSIZE);
         }
 
@@ -1800,7 +1800,7 @@ main(int argc, char** argv)
   glEnable(GL_FOG);
   glFogf(GL_FOG_MODE, GL_LINEAR);
 
-  glFogf(GL_FOG_START, DRAW_DIST * (LOFI ? .8f : .6f));
+  glFogf(GL_FOG_START, DRAW_DIST * (LOFI ? .8 : .6));
   glFogf(GL_FOG_END, DRAW_DIST);
   glFogfv(GL_FOG_COLOR, (GLfloat*)&fogc);
 
