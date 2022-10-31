@@ -368,9 +368,7 @@ static void
 draw_furball_ultimate(FURBALL* f)
 {
   int c, x, y, z, v;
-  float *vertex, *basevertex, dir[3], dist, lsize, deviation, *colour, *basecolour, colour_deviation;
-  deviation = 1;
-  colour_deviation = .2;
+  float *vertex, *basevertex, dir[3], dist, lsize, *colour, *basecolour;
 
   // fetches base vertex buffer for augmentation
   vertex = f->mine->vtx;
