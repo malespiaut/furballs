@@ -8,17 +8,43 @@ SRC_EXT = c
 # Path to the source directory, relative to the makefile
 SRC_PATH = .
 # Space-separated pkg-config libraries used by this project
-LIBS =
+LIBS = allegro allegrogl gl
 # General compiler flags
-COMPILE_FLAGS = -Wall -Wextra -Wpedantic
+STD_FLAGS = -std=c2x
+
+WARNING_FLAGS_DEFAULT = -Wall
+WARNING_FLAGS_DEFAULT += -Wextra
+WARNING_FLAGS_DEFAULT += -Wpedantic
+WARNING_FLAGS_DEFAULT += -Wshadow
+
+WARNING_FLAGS_EXTRA = -Waggregate-return
+WARNING_FLAGS_EXTRA += -Wcast-align=strict
+WARNING_FLAGS_EXTRA += -Wcast-qual
+WARNING_FLAGS_EXTRA += -Wconversion
+WARNING_FLAGS_EXTRA += -Wdeclaration-after-statement
+WARNING_FLAGS_EXTRA += -Wfloat-equal
+WARNING_FLAGS_EXTRA += -Wformat=2
+WARNING_FLAGS_EXTRA += -Wmissing-prototypes
+WARNING_FLAGS_EXTRA += -Wstrict-aliasing -fstrict-aliasing
+WARNING_FLAGS_EXTRA += -Wstrict-overflow=5
+WARNING_FLAGS_EXTRA += -Wstrict-prototypes
+WARNING_FLAGS_EXTRA += -Wswitch-default
+WARNING_FLAGS_EXTRA += -Wswitch-enum
+WARNING_FLAGS_EXTRA += -Wundef
+WARNING_FLAGS_EXTRA += -Wwrite-strings
+
+WARNING_FLAGS_ERROR = -Werror
+WARNING_FLAGS_ERROR += -Wfatal-errors
+
+COMPILE_FLAGS = $(STD_FLAGS) $(WARNING_FLAGS_DEFAULT) $(WARNING_FLAGS_EXTRA) $(WARNING_FLAGS_ERROR)
 # Additional release-specific flags
 RCOMPILE_FLAGS = -D NDEBUG -Ofast -g0 -s
 # Additional debug-specific flags
 DCOMPILE_FLAGS = -D DEBUG -O0 -ggdb3
 # Add additional include paths
-INCLUDES = -I $(SRC_PATH) -I /usr/include/allegro
+INCLUDES = -I $(SRC_PATH)
 # General linker settings
-LINK_FLAGS = -lm -lGL -lSOIL -lalleg -lalleggl
+LINK_FLAGS = -lm -lSOIL
 # Additional release-specific linker settings
 RLINK_FLAGS =
 # Additional debug-specific linker settings

@@ -17,15 +17,17 @@
 
 // standard includes
 // included allegro to get a kickstart for the tight deadline
-#include <SOIL/SOIL.h> // Simple OpenGL Image Loader
-#include <alleggl.h>   // gl helper for allegro
-#include <allegro.h>   // allegro - a game programming library
 #include <math.h>      // just math
 #include <stdio.h>     // standard
 
+#include <SOIL/SOIL.h> // Simple OpenGL Image Loader
+#include <alleggl.h>   // gl helper for allegro
+#include <allegro.h>   // allegro - a game programming library
 ////////////////////////////////////////////////////
 //////////////////////////////////////////////////// DEFINES
 ////////////////////////////////////////////////////
+
+#define M_PI 3.14159265358979323846 /* pi */
 
 // tweakable defines
 #define LOFI 0            // this disables VBOs, reduces drawing distance and furball complexity
