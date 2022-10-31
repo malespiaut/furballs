@@ -776,7 +776,7 @@ generate_cloud_triple(const char* filename_x, const char* filename_z, const char
 }
 
 //  this creates a furball instance
-FURBALL*
+static FURBALL*
 spawn_furball(float x, float y, float z, BUFFER* b, int density, int ultimate, float red, float green, float blue)
 {
   FURBALL* f;
@@ -828,7 +828,7 @@ spawn_furball(float x, float y, float z, BUFFER* b, int density, int ultimate, f
 }
 
 // generates a base buffer for hairy furball
-BUFFER*
+static BUFFER*
 generate_furball_ultimate(float size, int cuts, int density)
 {
   BUFFER* b;
