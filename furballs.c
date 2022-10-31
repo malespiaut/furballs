@@ -1735,7 +1735,7 @@ draw(void)
 }
 
 // timer thread
-void
+static void
 timer(void)
 {
   tim++;
