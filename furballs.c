@@ -705,7 +705,7 @@ generate_cloud_double(const char* filename_x, const char* filename_z, int densit
 }
 
 // generates a mesh from 3 projection images (front, side, top)
-BUFFER*
+static BUFFER*
 generate_cloud_triple(const char* filename_x, const char* filename_z, const char* filename_y, int density)
 {
   BUFFER* b;
