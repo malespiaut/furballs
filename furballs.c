@@ -459,7 +459,7 @@ draw_furball(FURBALL* f)
     {
       if (f->exists)
         {
-          if (f->ultimate)
+          if (f->ultimate > FLT_EPSILON)
             draw_furball_ultimate(f);
           else
             draw_furball_normal(f);
