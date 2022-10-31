@@ -835,9 +835,9 @@ generate_furball_ultimate(float size, int cuts, int density)
   int x, y, z, c, point_counter;
   float fx, fy, fz, *vertex, *colour;
   float deviation, colour_deviation;
+  float hair_colour, hair_distance;
   deviation = size * .1f;
   colour_deviation = .03;
-  float hair_colour, hair_distance;
 
   // allocates memory
   b = malloc(sizeof(BUFFER));
