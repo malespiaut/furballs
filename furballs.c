@@ -419,7 +419,7 @@ draw_furball_ultimate(FURBALL* f)
 // draws a simple furball from a vertex buffer
 // stretches it a bit according to vertical velocity
 // and displaces a bit (actually eyes look displaced this way)
-void
+static void
 draw_furball_normal(FURBALL* f)
 {
   float stretch, displace;
@@ -433,7 +433,7 @@ draw_furball_normal(FURBALL* f)
 }
 
 // draws a blood particles array and makes coffee
-void
+static void
 draw_blood(BLOOD* b, int num)
 {
   int c;
@@ -448,7 +448,7 @@ draw_blood(BLOOD* b, int num)
 }
 
 // draws a furball (picks one of the above and checks distance)
-void
+static void
 draw_furball(FURBALL* f)
 {
   float x, y, z;
