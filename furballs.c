@@ -1549,7 +1549,7 @@ timer_proc(void)
 }
 
 // rendering function
-void
+static void
 draw(void)
 {
   clock_t clk;
