@@ -29,7 +29,11 @@
 //////////////////////////////////////////////////// DEFINES
 ////////////////////////////////////////////////////
 
-#define M_PI 3.14159265358979323846 /* pi */
+#define kPi 3.14159265358979323846               /* pi */
+#define kPiDividedBy2 1.57079632679489661923     /* pi/2 */
+#define kPiDividedBy4 0.78539816339744830962     /* pi/4 */
+#define kPiMultipliedBy2 6.28318530717958647692  /* pi*2 */
+#define kPiMultipliedBy4 12.56637061435917295384 /* pi*4 */
 
 // tweakable defines
 #define LOFI 0            // this disables VBOs, reduces drawing distance and furball complexity
@@ -43,7 +47,7 @@
 
 // defines for calculation simplification
 #define FRAND(x) (((rand() % (int)x) * 1024.0) / 1024.0)
-#define DEG(n) ((n)*180.0 / M_PI)
+#define DEG(n) ((n)*180.0 / kPi)
 
 // player states
 #define WALK 1
@@ -854,9 +858,9 @@ generate_furball_ultimate(float size, int cuts, int density)
           for (z = 0; z < density; z++)
             {
               // generates a sphere of vertices
-              fx = (x * M_PI * 2) / (density - 1);
-              fy = (y * M_PI) / (density - 1);
-              fz = (z * M_PI * 2) / (density - 1);
+              fx = (x * kPiMultipliedBy2) / (density - 1);
+              fy = (y * kPi) / (density - 1);
+              fz = (z * kPiMultipliedBy2) / (density - 1);
 
               // generates protruding hair
               for (c = 0; c < cuts; c++)
@@ -939,9 +943,9 @@ generate_furball_normal(float size, int cuts, int density)
           for (z = 0; z < density; z++)
             {
               // gnerates vertex position in a sphere, and displaces a bit
-              fx = (x * M_PI * 2) / (density - 1);
-              fy = (y * M_PI) / (density - 1);
-              fz = (z * M_PI * 2) / (density - 1);
+              fx = (x * kPiMultipliedBy2) / (density - 1);
+              fy = (y * kPi) / (density - 1);
+              fz = (z * kPiMultipliedBy2) / (density - 1);
               for (c = 0; c < cuts; c++)
                 {
 
@@ -1159,9 +1163,9 @@ update_ballz()
           fur->iq -= fur->smart;
           if (fur->iq <= 0)
             {
-              fur->iq = (IQ + (rand() % IQ)) * M_PI;
+              fur->iq = (IQ + (rand() % IQ)) * kPi;
               fur->speed = ((rand() % 256) / 256.0) * SPEED;
-              fur->a = ((rand() % 256) / 256.0) * M_PI * 2;
+              fur->a = ((rand() % 256) / 256.0) * kPiMultipliedBy2;
               fur->bounce_rate = 10.0 + ((rand() % 256) / 256.0) * 40.0;
             }
 
@@ -1455,7 +1459,7 @@ timer_proc(void)
               for (c = 0; c < BALLZ; c++)
                 {
                   ballz[c]->a = atan2(-ballz[c]->z + playerz, -ballz[c]->x + playerx);
-                  ballz[c]->iq += M_PI * 4;
+                  ballz[c]->iq += kPiMultipliedBy4;
                 }
             }
         }
@@ -1467,8 +1471,8 @@ timer_proc(void)
       get_mouse_mickeys(&mx, &my);
       position_mouse(SCREEN_W / 2, mouse_y);
       update_blood(blood, PARTICLES);
-      lookx = (M_PI / 2) * (1.0 * (mouse_y - (SCREEN_H / 2))) / (SCREEN_H / 2.0);
-      looky += (M_PI) * (mx * 1.0) / (640 / 2.0);
+      lookx = kPiDividedBy2 * (1.0 * (mouse_y - (SCREEN_H / 2))) / (SCREEN_H / 2.0);
+      looky += kPi * (mx * 1.0) / (640 / 2.0);
 
       // moves player according to key input
       if (key[KEY_LEFT] || key[KEY_A])
@@ -1504,7 +1508,7 @@ timer_proc(void)
       // if not moving, add breathing effect
       if (state == STOP)
         {
-          if (ABS(playery - HEIGHT) > HAYSTACK * sin((playerx / WORLD_SIZE) * M_PI) * sin((playerx / WORLD_SIZE) * M_PI) * sin((playerz / WORLD_SIZE) * M_PI) * sin((playerz / WORLD_SIZE) * M_PI))
+          if (ABS(playery - HEIGHT) > HAYSTACK * sin((playerx / WORLD_SIZE) * kPi) * sin((playerx / WORLD_SIZE) * kPi) * sin((playerz / WORLD_SIZE) * kPi) * sin((playerz / WORLD_SIZE) * kPi))
             {
               playery -= SGN(playery - HEIGHT) * .4;
             }
@@ -1823,7 +1827,7 @@ main(int argc, char** argv)
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   playerx = 20.0;
   playerz = 20.0;
-  looky = M_PI / 4;
+  looky = kPiDividedBy4;
 
   get_mouse_mickeys(&mx, &my);
 
@@ -1851,7 +1855,7 @@ main(int argc, char** argv)
   playerx = 150;
   playery = HEIGHT;
   playerz = 150;
-  lookx = (M_PI / 2) * (1.0 * ((SCREEN_H / 2) - (SCREEN_W / 2))) / (SCREEN_W / 2.0);
+  lookx = kPiDividedBy2 * (1.0 * ((SCREEN_H / 2) - (SCREEN_W / 2))) / (SCREEN_W / 2.0);
   looky = 1.639519;
   lookz = 0;
 
