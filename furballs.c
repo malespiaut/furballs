@@ -104,7 +104,7 @@ typedef struct BUFFER
 {
   float *vtx, *clr;              // vertex and colour buffers
   GLuint vtx_handle, clr_handle; // VBO handles for the above
-  size_t size;                   // number of vertices
+  GLsizei size;                  // number of vertices
   int hardware;                  // is it VBO or array
   int frames;                    // number of frames
   int current_frame;             // currently playing frame
@@ -271,16 +271,23 @@ vboize(BUFFER* b)
     {
       return;
     }
-  printf("Vboizing buffer with %lu elements\n", b->size);
+
+  size_t nb_elements = 0;
+  if (b->size > 0)
+    {
+      nb_elements = sizeof(float) * 3 * (size_t)b->size;
+    }
+
+  printf("Vboizing buffer with %d elements\n", b->size);
   b->hardware = 1;
   glGenBuffers(1, &(b->vtx_handle));
   glBindBuffer(GL_ARRAY_BUFFER, b->vtx_handle);
-  glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)(sizeof(float) * 3 * b->size), b->vtx, GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, nb_elements, b->vtx, GL_STATIC_DRAW);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 
   glGenBuffers(1, &(b->clr_handle));
   glBindBuffer(GL_ARRAY_BUFFER, b->clr_handle);
-  glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)(sizeof(float) * 3 * b->size), b->clr, GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, nb_elements, b->clr, GL_STATIC_DRAW);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
   printf("Removing arrays...\n");
   free(b->vtx);
@@ -290,31 +297,31 @@ vboize(BUFFER* b)
 
 // renders a BUFFER at desired position
 static void
-draw_buffer_ex(BUFFER* b, float x, float y, float z, float sx, float sy, float sz, float point_size, float angle)
+draw_buffer_ex(BUFFER* b, double x, double y, double z, GLdouble sx, GLdouble sy, GLdouble sz, GLfloat point_size, GLdouble angle)
 {
-  float dist = 0.0, psize = 0.0, scale = 0.0;
-  scale = sx;
-  dist = sqrtf((x - playerx) * (x - playerx) + (y - playery) * (y - playery) + (z - playerz) * (z - playerz));
+  double dist = sqrt((x - playerx) * (x - playerx) + (y - playery) * (y - playery) + (z - playerz) * (z - playerz));
 
   // calculates point size from distance
-  psize = SCREEN_W * (scale) / dist;
-  if (psize < .01)
+  // sx is a scaling factor
+  GLfloat psize = (GLfloat)(SCREEN_W * sx / dist);
+  if (psize - 0.01f < FLT_EPSILON)
     {
       return;
     }
+
   glPointSize(psize * point_size);
   glPushMatrix();
   glScaled(sx, sy, sz);
   glTranslated(x / sx, y / sy, z / sz);
-  glRotated(angle, 0, 1, 0);
+  glRotated(angle, 0.0, 1.0, 0.0);
 
   // draws a VBO or vertex array
   if (b->hardware)
     {
       glBindBuffer(GL_ARRAY_BUFFER, b->vtx_handle);
-      glVertexPointer(3, GL_FLOAT, 0, 0);
+      glVertexPointer(3, GL_FLOAT, 0, NULL);
       glBindBuffer(GL_ARRAY_BUFFER, b->clr_handle);
-      glColorPointer(3, GL_FLOAT, 0, 0);
+      glColorPointer(3, GL_FLOAT, 0, NULL);
       glDrawArrays(b->mode, 0, b->size);
       glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
