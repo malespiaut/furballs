@@ -1023,8 +1023,8 @@ generate_furball_normal(GLfloat size, size_t cuts, size_t density)
 static void
 create_ballz(void)
 {
-  int is_good = 0;
-  GLfloat x = 0.0, y = 0.0, z = 0.0, r = 0.0, g = 0.0, b = 0.0;
+  int32_t is_good = 0;
+
   for (size_t c = 0; c < BALLZ; c++)
     {
       // if is_good, then it's 'ultimate' == hairy
@@ -1037,32 +1037,32 @@ create_ballz(void)
         }
 
       // randomises colour and position
-      r = ((rand() % 256) / 256.0);
-      g = ((rand() % 256) / 256.0);
-      b = ((rand() % 256) / 256.0);
-      x = ((rand() % 1024) / 1024.0) * WORLD_SIZE;
-      y = HEIGHT;
-      z = ((rand() % 1024) / 1024.0) * WORLD_SIZE;
+      GLfloat r = ((float)(rand() % 256) / 256.0f);
+      GLfloat g = ((float)(rand() % 256) / 256.0f);
+      GLfloat b = ((float)(rand() % 256) / 256.0f);
+      GLfloat x = ((float)(rand() % 1024) / 1024.0f) * WORLD_SIZE;
+      GLfloat y = HEIGHT;
+      GLfloat z = ((float)(rand() % 1024) / 1024.0f) * WORLD_SIZE;
 
       // creates the instance
-      ballz[c] = spawn_furball(x, y, z, is_good ? ultimate_furball : casual_furball, 8, is_good, r, g, b);
+      ballz[c] = spawn_furball(x, y, z, is_good ? ultimate_furball : casual_furball, 8, (float)is_good, r, g, b);
 
       // sets up ai
       ballz[c]->iq = 0;
-      ballz[c]->smart = .05 + ((rand() % 256) / 256.0) * .15;
+      ballz[c]->smart = 0.05f + ((float)(rand() % 256) / 256.0f) * 0.15f;
 
       // adjusts ai for hairy furball
       if (is_good)
         {
-          ballz[c]->smart *= .2;
+          ballz[c]->smart *= 0.2f;
         }
       if (!is_good)
         {
-          ballz[c]->scale = .2 + ((rand() % 256) / 256.0) * .15;
+          ballz[c]->scale = 0.2f + ((float)(rand() % 256) / 256.0f) * 0.15f;
         }
       else
         {
-          ballz[c]->scale = 1.0 + ((rand() % 256) / 256.0) * 3.0;
+          ballz[c]->scale = 1.0f + ((float)(rand() % 256) / 256.0f) * 3.0f;
         }
       ballz[c]->dying = 0;
     }
