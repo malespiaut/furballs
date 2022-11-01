@@ -615,7 +615,6 @@ generate_cloud_single(const char* filename, size_t density)
       return NULL;
     }
 
-  printf("Creating cloud from %s...\n", filename);
   GLfloat deviation = 0.4f;
   GLfloat colour_deviation = 0.03f;
 
@@ -637,8 +636,6 @@ generate_cloud_single(const char* filename, size_t density)
       size_z = 0;
     }
 
-  printf("Dimensions are: %d x %d x %d\n", size_x, size_y, size_z);
-
   // allocates a too large buffer, or too small, if of higher density
   BUFFER* b = malloc(sizeof(*b));
 
@@ -651,7 +648,6 @@ generate_cloud_single(const char* filename, size_t density)
   GLfloat* colour = b->clr;
   float c_x = (float)size_x / 2.0f;
   float c_z = (float)size_z / 2.0f;
-  printf("Beggining clouding...\n");
 
   for (float x = 0.0f; x < size_x; x += 1.0f)
     {
@@ -686,7 +682,6 @@ generate_cloud_single(const char* filename, size_t density)
   b->size = point_counter;
   b->mode = GL_POINTS;
   vboize(b);
-  printf("Created cloud of %d points!\n", point_counter);
   destroy_bitmap(bmp);
   return b;
 }
@@ -696,53 +691,69 @@ generate_cloud_single(const char* filename, size_t density)
 static BUFFER*
 generate_cloud_double(const char* filename_x, const char* filename_z, size_t density)
 {
-  BUFFER* b = NULL;
-  BITMAP *bmpx = NULL, *bmpz = NULL;
-  size_t point_counter = 0;
-  int size_x = 0, size_y = 0, size_z = 0, img_x = 0, img_y = 0;
-  int img_z = 0, col1 = 0, col2 = 0, c_x = 0, c_z = 0;
-  GLfloat deviation = 0.0, *vertex = NULL, *colour = NULL, colour_deviation = 0.0;
-  deviation = .4;
-  colour_deviation = .03;
-  bmpx = load_bmp(filename_x, 0);
-  bmpz = load_bmp(filename_z, 0);
-  size_x = bmpx->w;
-  size_y = bmpx->h;
-  size_z = bmpz->w;
+  if (!filename_x || !filename_z)
+    {
+      return NULL;
+    }
+
+  GLfloat deviation = 0.4f;
+  GLfloat colour_deviation = 0.03f;
+
+  BITMAP* bmpx = load_bmp(filename_x, NULL);
+  BITMAP* bmpz = load_bmp(filename_z, NULL);
+  int32_t size_x = bmpx->w;
+  int32_t size_y = bmpx->h;
+  int32_t size_z = bmpz->w;
+
+  if (size_x < 0)
+    {
+      size_x = 0;
+    }
+  if (size_y < 0)
+    {
+      size_y = 0;
+    }
+  if (size_z < 0)
+    {
+      size_z = 0;
+    }
 
   // another bad malloc
-  b = malloc(sizeof(BUFFER));
+  BUFFER* b = malloc(sizeof(BUFFER));
+
   b->vtx = malloc((size_t)(size_x * size_y * size_z * 3) * sizeof(GLfloat));
   b->clr = malloc((size_t)(size_x * size_y * size_z * 3) * sizeof(GLfloat));
   b->hardware = 0;
-  point_counter = 0;
-  vertex = b->vtx;
-  colour = b->clr;
-  c_x = size_x / 2;
-  c_z = size_z / 2;
-  for (int x = 0; x < size_x; x++)
+
+  GLsizei point_counter = 0;
+  GLfloat* vertex = b->vtx;
+  GLfloat* colour = b->clr;
+  float c_x = (float)size_x / 2.0f;
+  float c_z = (float)size_z / 2.0f;
+
+  for (float x = 0.0f; x < size_x; x += 1.0f)
     {
-      for (int y = 0; y < size_y; y++)
+      for (float y = 0.0f; y < size_y; y += 1.0f)
         {
-          for (int z = 0; z < size_z; z++)
+          for (float z = 0.0f; z < size_z; z += 1.0f)
             {
               for (size_t d = 0; d < density; d++)
                 {
                   // this tests the pixel against two projection images
                   // and sets the colour by averaging from those
-                  img_x = x;
-                  img_z = z;
-                  img_y = bmpx->h - y - 1;
-                  col1 = getpixel(bmpx, img_x, img_y);
-                  col2 = getpixel(bmpz, img_z, img_y);
+                  int32_t img_x = (int32_t)x;
+                  int32_t img_z = (int32_t)z;
+                  int32_t img_y = bmpx->h - (int32_t)y - 1;
+                  int32_t col1 = getpixel(bmpx, img_x, img_y);
+                  int32_t col2 = getpixel(bmpz, img_z, img_y);
                   if (col1 != makecol(255, 0, 255) && col2 != makecol(255, 0, 255) && img_x < bmpx->w && img_z < bmpz->w)
                     {
-                      vertex[0] = (1.0 * x) + ((((rand() % 512) / 256.0) - 1.0) * deviation) - c_x;
-                      vertex[1] = (1.0 * y) + ((((rand() % 512) / 256.0) - 1.0) * deviation);
-                      vertex[2] = (1.0 * z) + ((((rand() % 512) / 256.0) - 1.0) * deviation) - c_z;
-                      colour[0] = ((getr(col1) + getr(col2)) / 512.0) + ((((rand() % 512) / 256.0) - 1.0) * colour_deviation);
-                      colour[1] = ((getg(col1) + getg(col2)) / 512.0) + ((((rand() % 512) / 256.0) - 1.0) * colour_deviation);
-                      colour[2] = ((getb(col1) + getb(col2)) / 512.0) + ((((rand() % 512) / 256.0) - 1.0) * colour_deviation);
+                      vertex[0] = (1.0f * x) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * deviation) - c_x;
+                      vertex[1] = (1.0f * y) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * deviation);
+                      vertex[2] = (1.0f * z) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * deviation) - c_z;
+                      colour[0] = ((float)(getr(col1) + getr(col2)) / 512.0f) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
+                      colour[1] = ((float)(getg(col1) + getg(col2)) / 512.0f) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
+                      colour[2] = ((float)(getb(col1) + getb(col2)) / 512.0f) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
                       vertex += 3;
                       colour += 3;
                       point_counter++;
@@ -756,7 +767,6 @@ generate_cloud_double(const char* filename_x, const char* filename_z, size_t den
   vboize(b);
   destroy_bitmap(bmpx);
   destroy_bitmap(bmpz);
-  printf("Created cloud of %lu points!\n", point_counter);
   return b;
 }
 
