@@ -192,8 +192,8 @@ int whistle_timeout = 100;                  // furball whistle timeout
 static int
 isExtensionSupported(const char* extension)
 {
-  const GLubyte* extensions = NULL;
-  const GLubyte* start = NULL;
+  const GLubyte* extensions;
+  const GLubyte* start;
   GLubyte *where = NULL, *terminator = NULL;
   /* Extension names should not have spaces. */
   where = (GLubyte*)strchr(extension, ' ');
