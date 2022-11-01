@@ -158,8 +158,8 @@ int frames = 0,   // frames rendered
   state = IDLE;   // player state
 volatile int tim; // threaded timing variable
 
-GLfloat playerx = 0.0, playery = 0.0, playerz = 0.0,  // player position
-  lookx = 0.0, looky = 0.0, lookz = 0.0, lookf = 0.0; // player look direction
+GLfloat playerx = 0.0f, playery = 0.0f, playerz = 0.0f,   // player position
+  lookx = 0.0f, looky = 0.0f, lookz = 0.0f, lookf = 0.0f; // player look direction
 
 BUFFER *ultimate_furball = NULL, // base buffer for ultimate furball (with ahir)
   *casual_furball = NULL;        // base buffer for simple furball
