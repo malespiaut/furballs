@@ -21,7 +21,6 @@ WARNING_FLAGS_EXTRA = -Waggregate-return
 WARNING_FLAGS_EXTRA += -Wcast-align=strict
 WARNING_FLAGS_EXTRA += -Wcast-qual
 WARNING_FLAGS_EXTRA += -Wconversion
-WARNING_FLAGS_EXTRA += -Wdeclaration-after-statement
 WARNING_FLAGS_EXTRA += -Wfloat-equal
 WARNING_FLAGS_EXTRA += -Wformat=2
 WARNING_FLAGS_EXTRA += -Wmissing-prototypes
