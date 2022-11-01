@@ -119,7 +119,7 @@ typedef struct BLOOD
   GLfloat r, g, b, a; // colour
   GLfloat vx, vy, vz; // velocity
   GLfloat s;          // size
-  int alive;          // update flag
+  bool alive;         // update flag
 } BLOOD;
 
 // furball (a dynamic vertex buffer + AI)
@@ -1084,13 +1084,13 @@ explode(BLOOD* b, size_t num, GLfloat x, GLfloat y, GLfloat z)
       b[c].y = y;
       b[c].z = z;
       // random velocity and colour
-      b[c].vx = ((((rand() % 512) / 256.0) - 1.0) * 4.0);
-      b[c].vy = ((((rand() % 512) / 256.0) - 1.0) * 8.0);
-      b[c].vz = ((((rand() % 512) / 256.0) - 1.0) * 4.0);
-      b[c].r = .6 + ((((rand() % 512) / 256.0) - 1.0) * .4);
-      b[c].g = 0;
-      b[c].b = 0;
-      b[c].alive = 1;
+      b[c].vx = ((((float)(rand() % 512) / 256.0f) - 1.0f) * 4.0f);
+      b[c].vy = ((((float)(rand() % 512) / 256.0f) - 1.0f) * 8.0f);
+      b[c].vz = ((((float)(rand() % 512) / 256.0f) - 1.0f) * 4.0f);
+      b[c].r = 0.6f + ((((float)(rand() % 512) / 256.0f) - 1.0f) * 0.4f);
+      b[c].g = 0.0f;
+      b[c].b = 0.0f;
+      b[c].alive = true;
     }
 }
 
@@ -1183,7 +1183,7 @@ update_blood(BLOOD* b, size_t num)
           if (b[c].y < 0)
             {
               // no more updates for this one
-              b[c].alive = 0;
+              b[c].alive = false;
 
               // if was inside world sware, colours a pixel red
               pic_x = (b[c].x * ground_bmp->w) / (WORLD_SIZE);
