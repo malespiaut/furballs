@@ -841,34 +841,31 @@ generate_cloud_triple(const char* filename_x, const char* filename_z, const char
 
 //  this creates a furball instance
 static FURBALL*
-spawn_furball(GLfloat x, GLfloat y, GLfloat z, BUFFER* b, size_t density, int ultimate, GLfloat red, GLfloat green, GLfloat blue)
+spawn_furball(GLfloat x, GLfloat y, GLfloat z, BUFFER* b, size_t density, GLfloat ultimate, GLfloat red, GLfloat green, GLfloat blue)
 {
-  FURBALL* f = NULL;
-  size_t bufsize = 0;
-  GLfloat *colour = NULL, *basecolour = NULL;
+  // allocates memory
+  FURBALL* f = malloc(sizeof(*f));
+  f->mine = malloc(sizeof(*f->mine));
 
   // number of mesh vertices is specified through density
   // it represents, slices, sectors and depth
-  bufsize = density * density * density * TRAIL * (ultimate ? 12 : 3) * sizeof(GLfloat);
+  size_t bufsize = density * density * density * TRAIL * (ultimate > FLT_EPSILON ? 12 : 3) * sizeof(*f->mine->vtx);
 
-  // allocates memory
-  f = malloc(sizeof(FURBALL));
-  f->buf = b;
-  f->mine = malloc(sizeof(BUFFER));
   f->mine->vtx = malloc(bufsize);
   f->mine->clr = malloc(bufsize);
+  f->buf = b;
   f->mine->size = b->size;
-  f->mine->hardware = 0;
   f->mine->mode = b->mode;
+  f->mine->hardware = 0;
 
   // copies the buffer from base for dynamic updates
   memcpy(f->mine->vtx, f->buf->vtx, bufsize);
   memcpy(f->mine->clr, f->buf->clr, bufsize);
 
   // sets colour
-  colour = f->mine->clr;
-  basecolour = f->buf->clr;
-  for (size_t c = 0; c < f->mine->size; c++)
+  GLfloat* colour = f->mine->clr;
+  GLfloat* basecolour = f->buf->clr;
+  for (GLsizei c = 0; c < f->mine->size; c++)
     {
       colour[0] = basecolour[0] * red;
       colour[1] = basecolour[1] * green;
@@ -885,7 +882,7 @@ spawn_furball(GLfloat x, GLfloat y, GLfloat z, BUFFER* b, size_t density, int ul
   f->g = green;
   f->b = blue;
   f->density = density;
-  f->scale = 3;
+  f->scale = 3.0f;
   f->ultimate = ultimate;
   f->exists = 1;
   return f;
