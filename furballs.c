@@ -892,22 +892,18 @@ spawn_furball(GLfloat x, GLfloat y, GLfloat z, BUFFER* b, size_t density, GLfloa
 static BUFFER*
 generate_furball_ultimate(GLfloat size, size_t cuts, size_t density)
 {
-  BUFFER* b = NULL;
-  size_t point_counter = 0;
-  GLfloat fx = 0.0, fy = 0.0, fz = 0.0, *vertex = NULL, *colour = NULL;
-  GLfloat deviation = 0.0, colour_deviation = 0.0;
-  GLfloat hair_colour = 0.0, hair_distance = 0.0;
-  deviation = size * .1;
-  colour_deviation = .03;
+  GLfloat deviation = size * 0.1f;
+  GLfloat colour_deviation = 0.03f;
 
   // allocates memory
-  b = malloc(sizeof(BUFFER));
-  b->vtx = malloc(density * density * density * cuts * 12 * sizeof(GLfloat));
-  b->clr = malloc(density * density * density * cuts * 12 * sizeof(GLfloat));
+  BUFFER* b = malloc(sizeof(*b));
+  b->vtx = malloc(density * density * density * cuts * 12 * sizeof(*b->vtx));
+  b->clr = malloc(density * density * density * cuts * 12 * sizeof(*b->clr));
   b->hardware = 0;
-  point_counter = 0;
-  vertex = b->vtx;
-  colour = b->clr;
+  GLsizei point_counter = 0;
+  GLfloat* vertex = b->vtx;
+  GLfloat* colour = b->clr;
+
   for (size_t x = 0; x < density; x++)
     {
       for (size_t y = 0; y < density; y++)
@@ -915,28 +911,28 @@ generate_furball_ultimate(GLfloat size, size_t cuts, size_t density)
           for (size_t z = 0; z < density; z++)
             {
               // generates a sphere of vertices
-              fx = (x * kPiMultipliedBy2) / (density - 1);
-              fy = (y * kPi) / (density - 1);
-              fz = (z * kPiMultipliedBy2) / (density - 1);
+              GLfloat fx = ((float)x * kPiMultipliedBy2) / (float)(density - 1);
+              GLfloat fy = ((float)y * kPi) / (float)(density - 1);
+              GLfloat fz = ((float)z * kPiMultipliedBy2) / (float)(density - 1);
 
               // generates protruding hair
               for (size_t c = 0; c < cuts; c++)
                 {
 
-                  hair_colour = (.5 + .5 * (c * 1) / (cuts));
-                  hair_distance = size + (c * size) / (cuts);
+                  GLfloat hair_colour = 0.5f + 0.5f * (float)c / (float)(cuts);
+                  GLfloat hair_distance = size + ((float)c * size) / (float)(cuts);
 
                   // generates position only for the hair beginning
                   // rest is determined by velocity
                   // this generates startpoint
                   if (!c)
                     {
-                      vertex[0] = hair_distance * cosf(fx) * sinf(fy) + ((((rand() % 512) / 256.0) - 1.0) * deviation);
-                      vertex[1] = hair_distance * cosf(fy) + ((((rand() % 512) / 256.0) - 1.0) * deviation);
-                      vertex[2] = hair_distance * sinf(fz) * sinf(fy) + ((((rand() % 512) / 256.0) - 1.0) * deviation);
-                      colour[0] = hair_colour + ((((rand() % 512) / 256.0) - 1.0) * colour_deviation);
-                      colour[1] = hair_colour + ((((rand() % 512) / 256.0) - 1.0) * colour_deviation);
-                      colour[2] = hair_colour + ((((rand() % 512) / 256.0) - 1.0) * colour_deviation);
+                      vertex[0] = hair_distance * cosf(fx) * sinf(fy) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * deviation);
+                      vertex[1] = hair_distance * cosf(fy) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * deviation);
+                      vertex[2] = hair_distance * sinf(fz) * sinf(fy) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * deviation);
+                      colour[0] = hair_colour + ((((float)(rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
+                      colour[1] = hair_colour + ((((float)(rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
+                      colour[2] = hair_colour + ((((float)(rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
                     }
                   else
                     {
@@ -950,14 +946,14 @@ generate_furball_ultimate(GLfloat size, size_t cuts, size_t density)
 
                   // sets up hair endpoint
                   // hair is actually line list as opposed to a strip
-                  hair_colour = ((c + 1) * 1.0) / (cuts);
-                  hair_distance = size + ((c + 1) * size) / (cuts);
-                  vertex[3] = hair_distance * cosf(fx) * sinf(fy) + ((((rand() % 512) / 256.0) - 1.0) * deviation);
-                  vertex[4] = hair_distance * cosf(fy) + ((((rand() % 512) / 256.0) - 1.0) * deviation);
-                  vertex[5] = hair_distance * sinf(fz) * sinf(fy) + ((((rand() % 512) / 256.0) - 1.0) * deviation);
-                  colour[3] = hair_colour + ((((rand() % 512) / 256.0) - 1.0) * colour_deviation);
-                  colour[4] = hair_colour + ((((rand() % 512) / 256.0) - 1.0) * colour_deviation);
-                  colour[5] = hair_colour + ((((rand() % 512) / 256.0) - 1.0) * colour_deviation);
+                  hair_colour = ((float)(c + 1) * 1.0f) / (float)cuts;
+                  hair_distance = size + ((float)(c + 1) * size) / (float)cuts;
+                  vertex[3] = hair_distance * cosf(fx) * sinf(fy) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * deviation);
+                  vertex[4] = hair_distance * cosf(fy) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * deviation);
+                  vertex[5] = hair_distance * sinf(fz) * sinf(fy) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * deviation);
+                  colour[3] = hair_colour + ((((float)(rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
+                  colour[4] = hair_colour + ((((float)(rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
+                  colour[5] = hair_colour + ((((float)(rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
 
                   // witty pointer iterators
                   vertex += 6;
@@ -969,7 +965,6 @@ generate_furball_ultimate(GLfloat size, size_t cuts, size_t density)
     }
   b->mode = GL_LINES;
   b->size = point_counter;
-  printf("Created furball of %lu points!\n", point_counter);
 
   return b;
 }
