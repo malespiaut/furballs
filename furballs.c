@@ -460,16 +460,14 @@ draw_furball_ultimate(FURBALL* f)
 static void
 draw_furball_normal(FURBALL* f)
 {
-  float stretch = 0.0, displace = 0.0;
-
-  stretch = 1.0 + pow(ABS(f->y - f->trail[1][1]) * .1, 2);
-  displace = f->y - f->trail[1][1];
-  if (stretch > 3.0)
+  float stretch = 1.0f + powf(ABS(f->y - f->trail[1][1]) * 0.1f, 2.0f);
+  float displace = f->y - f->trail[1][1];
+  if (stretch - 3.0f > FLT_EPSILON)
     {
-      stretch = 3.0;
+      stretch = 3.0f;
     }
 
-  draw_buffer_ex(f->mine, f->x, f->y - displace, f->z, f->scale, f->scale * stretch, f->scale, 1.0, 0.0);
+  draw_buffer_ex(f->mine, f->x, f->y - displace, f->z, f->scale, f->scale * stretch, f->scale, 1.0f, 0.0f);
 }
 
 // draws a blood particles array and makes coffee
