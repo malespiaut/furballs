@@ -1203,28 +1203,26 @@ update_blood(BLOOD* b, size_t num)
 static void
 update_ballz(void)
 {
-  int i = 0;
-  FURBALL* fur = NULL;
   for (size_t c = 0; c < BALLZ; c++)
     {
       // if it's still alive
       if (ballz[c]->exists)
         {
-          fur = ballz[c];
+          FURBALL* fur = ballz[c];
 
           // decreases direction change counter
           // and changes movement direction if needed
           fur->iq -= fur->smart;
           if (fur->iq <= 0)
             {
-              fur->iq = (IQ + (rand() % IQ)) * kPi;
-              fur->speed = ((rand() % 256) / 256.0) * SPEED;
-              fur->a = ((rand() % 256) / 256.0) * kPiMultipliedBy2;
-              fur->bounce_rate = 10.0 + ((rand() % 256) / 256.0) * 40.0;
+              fur->iq = (IQ + (float)(rand() % IQ)) * 3; // kPi;
+              fur->speed = ((float)(rand() % 256) / 256.0f) * SPEED;
+              fur->a = ((float)(rand() % 256) / 256.0f) * kPiMultipliedBy2;
+              fur->bounce_rate = 10.0f + ((float)(rand() % 256) / 256.0f) * 40.0f;
             }
 
           // adjusts bounce rate
-          fur->bounce += .1 * SPEED;
+          fur->bounce += 0.1f * SPEED;
 
           // updates position
           fur->x += cosf(fur->a) * fur->speed;
@@ -1232,11 +1230,11 @@ update_ballz(void)
           fur->y = fur->scale * (fur->ultimate ? 1 : 8) + ABS(sinf(fur->iq) * fur->bounce_rate);
 
           // keeps inside the world
-          if (fur->x < 0)
+          if (fur->x < FLT_EPSILON)
             {
               fur->x = 0;
             }
-          if (fur->z < 0)
+          if (fur->z < FLT_EPSILON)
             {
               fur->z = 0;
             }
@@ -1250,7 +1248,7 @@ update_ballz(void)
             }
 
           // wites down trail for hair rendering
-          for (i = TRAIL; i > 0; i--)
+          for (ssize_t i = TRAIL; i > 0; i--)
             {
               fur->trail[i][0] = fur->trail[i - 1][0];
               fur->trail[i][1] = fur->trail[i - 1][1];
