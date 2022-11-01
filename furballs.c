@@ -973,21 +973,19 @@ generate_furball_ultimate(GLfloat size, size_t cuts, size_t density)
 static BUFFER*
 generate_furball_normal(GLfloat size, size_t cuts, size_t density)
 {
-  BUFFER* b = NULL;
-  size_t point_counter = 0;
-  GLfloat fx = 0.0, fy = 0.0, fz = 0.0, *vertex = NULL, *colour = NULL;
-  GLfloat deviation = 0.0, colour_deviation = 0.0, colour_factor = 0.0;
-  deviation = size * .3;
-  colour_deviation = .08;
+  GLfloat deviation = size * 0.3f;
+  GLfloat colour_deviation = 0.08f;
 
   // allocates buffers
-  b = malloc(sizeof(BUFFER));
-  b->vtx = malloc(density * density * density * cuts * 3 * sizeof(GLfloat));
-  b->clr = malloc(density * density * density * cuts * 3 * sizeof(GLfloat));
+  BUFFER* b = malloc(sizeof(*b));
+  b->vtx = malloc(density * density * density * cuts * 3 * sizeof(*b->vtx));
+  b->clr = malloc(density * density * density * cuts * 3 * sizeof(*b->clr));
   b->hardware = 0;
-  point_counter = 0;
-  vertex = b->vtx;
-  colour = b->clr;
+
+  GLsizei point_counter = 0;
+  GLfloat* vertex = b->vtx;
+  GLfloat* colour = b->clr;
+
   for (size_t x = 0; x < density; x++)
     {
       for (size_t y = 0; y < density; y++)
@@ -995,20 +993,19 @@ generate_furball_normal(GLfloat size, size_t cuts, size_t density)
           for (size_t z = 0; z < density; z++)
             {
               // gnerates vertex position in a sphere, and displaces a bit
-              fx = (x * kPiMultipliedBy2) / (density - 1);
-              fy = (y * kPi) / (density - 1);
-              fz = (z * kPiMultipliedBy2) / (density - 1);
+              GLfloat fx = ((float)x * kPiMultipliedBy2) / (float)(density - 1);
+              GLfloat fy = ((float)y * kPi) / (float)(density - 1);
+              GLfloat fz = ((float)z * kPiMultipliedBy2) / (float)(density - 1);
               for (size_t c = 0; c < cuts; c++)
                 {
+                  vertex[0] = size * cosf(fx) * sinf(fy) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * deviation);
+                  vertex[1] = size * cosf(fy) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * deviation);
+                  vertex[2] = size * sinf(fz) * sinf(fy) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * deviation);
 
-                  vertex[0] = size * cosf(fx) * sinf(fy) + ((((rand() % 512) / 256.0) - 1.0) * deviation);
-                  vertex[1] = size * cosf(fy) + ((((rand() % 512) / 256.0) - 1.0) * deviation);
-                  vertex[2] = size * sinf(fz) * sinf(fy) + ((((rand() % 512) / 256.0) - 1.0) * deviation);
-
-                  colour_factor = sqrtf(vertex[0] * vertex[0] + vertex[1] * vertex[1] + vertex[2] * vertex[2]) / size;
-                  colour[0] = colour_factor + ((((rand() % 512) / 256.0) - 1.0) * colour_deviation);
-                  colour[1] = colour_factor + ((((rand() % 512) / 256.0) - 1.0) * colour_deviation);
-                  colour[2] = colour_factor + ((((rand() % 512) / 256.0) - 1.0) * colour_deviation);
+                  GLfloat colour_factor = sqrtf(vertex[0] * vertex[0] + vertex[1] * vertex[1] + vertex[2] * vertex[2]) / size;
+                  colour[0] = colour_factor + ((((float)(rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
+                  colour[1] = colour_factor + ((((float)(rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
+                  colour[2] = colour_factor + ((((float)(rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
                   vertex += 3;
                   colour += 3;
                   point_counter++;
@@ -1018,7 +1015,6 @@ generate_furball_normal(GLfloat size, size_t cuts, size_t density)
     }
   b->mode = GL_POINTS;
   b->size = point_counter;
-  printf("Created furball of %lu points!\n", point_counter);
 
   return b;
 }
