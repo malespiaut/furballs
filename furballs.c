@@ -610,53 +610,71 @@ draw_tree(void)
 static BUFFER*
 generate_cloud_single(const char* filename, size_t density)
 {
-  BUFFER* b = NULL;
-  BITMAP* bmp = NULL;
-  size_t point_counter = 0;
-  int size_x = 0, size_y = 0, size_z = 0, img_x = 0, img_y = 0, col = 0, c_x = 0, c_z = 0;
-  GLfloat deviation = 0.0, *vertex = NULL, *colour = NULL, colour_deviation = 0.0;
+  if (!filename)
+    {
+      return NULL;
+    }
+
   printf("Creating cloud from %s...\n", filename);
-  deviation = .4;
-  colour_deviation = .03;
-  bmp = load_bmp(filename, 0);
-  size_x = bmp->w;
-  size_y = bmp->h;
-  size_z = bmp->w;
+  GLfloat deviation = 0.4f;
+  GLfloat colour_deviation = 0.03f;
+
+  BITMAP* bmp = load_bmp(filename, NULL);
+  int32_t size_x = bmp->w;
+  int32_t size_y = bmp->h;
+  int32_t size_z = bmp->w;
+
+  if (size_x < 0)
+    {
+      size_x = 0;
+    }
+  if (size_y < 0)
+    {
+      size_y = 0;
+    }
+  if (size_z < 0)
+    {
+      size_z = 0;
+    }
+
   printf("Dimensions are: %d x %d x %d\n", size_x, size_y, size_z);
 
   // allocates a too large buffer, or too small, if of higher density
-  b = malloc(sizeof(BUFFER));
-  b->vtx = malloc((size_t)(size_x * size_y * size_z * 3) * sizeof(GLfloat));
-  b->clr = malloc((size_t)(size_x * size_y * size_z * 3) * sizeof(GLfloat));
+  BUFFER* b = malloc(sizeof(*b));
+
+  b->vtx = malloc((size_t)(size_x * size_y * size_z) * 3 * sizeof(GLfloat));
+  b->clr = malloc((size_t)(size_x * size_y * size_z) * 3 * sizeof(GLfloat));
   b->hardware = 0;
-  point_counter = 0;
-  vertex = b->vtx;
-  colour = b->clr;
-  c_x = size_x / 2;
-  c_z = size_z / 2;
+
+  GLsizei point_counter = 0;
+  GLfloat* vertex = b->vtx;
+  GLfloat* colour = b->clr;
+  float c_x = (float)size_x / 2.0f;
+  float c_z = (float)size_z / 2.0f;
   printf("Beggining clouding...\n");
-  for (int x = 0; x < size_x; x++)
+
+  for (float x = 0.0f; x < size_x; x += 1.0f)
     {
-      for (int y = 0; y < size_y; y++)
+      for (float y = 0.0f; y < size_y; y += 1.0f)
         {
-          for (int z = 0; z < size_z; z++)
+          for (float z = 0.0f; z < size_z; z += 1.0f)
             {
               for (size_t d = 0; d < density; d++)
                 {
                   // tests a voxel against image, where y is y
                   // and x is distance from centre
                   // if ok, sets colour and displaces a bit
-                  img_x = floor(sqrtf((x - c_x) * (x - c_x) + (z - c_z) * (z - c_z))) + c_x;
-                  img_y = bmp->h - y - 1;
-                  col = getpixel(bmp, img_x, img_y);
+                  int32_t img_x = (int32_t)floorf(sqrtf((x - c_x) * (x - c_x) + (z - c_z) * (z - c_z)) + c_x);
+                  int32_t img_y = bmp->h - (int32_t)y - 1;
+                  int32_t col = getpixel(bmp, img_x, img_y);
                   if (col != makecol(255, 0, 255) && img_x < bmp->w)
                     {
-                      vertex[0] = (1.0 * x) + ((((rand() % 512) / 256.0) - 1.0) * deviation) - c_x;
-                      vertex[1] = (1.0 * y) + ((((rand() % 512) / 256.0) - 1.0) * deviation);
-                      vertex[2] = (1.0 * z) + ((((rand() % 512) / 256.0) - 1.0) * deviation) - c_z;
-                      colour[0] = (getr(col) / 256.0) + ((((rand() % 512) / 256.0) - 1.0) * colour_deviation);
-                      colour[1] = (getg(col) / 256.0) + ((((rand() % 512) / 256.0) - 1.0) * colour_deviation);
-                      colour[2] = (getb(col) / 256.0) + ((((rand() % 512) / 256.0) - 1.0) * colour_deviation);
+                      vertex[0] = (1.0f * x) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * deviation) - c_x;
+                      vertex[1] = (1.0f * y) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * deviation);
+                      vertex[2] = (1.0f * z) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * deviation) - c_z;
+                      colour[0] = ((float)getr(col) / 256.0f) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
+                      colour[1] = ((float)getg(col) / 256.0f) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
+                      colour[2] = ((float)getb(col) / 256.0f) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
                       vertex += 3;
                       colour += 3;
                       point_counter++;
@@ -668,7 +686,7 @@ generate_cloud_single(const char* filename, size_t density)
   b->size = point_counter;
   b->mode = GL_POINTS;
   vboize(b);
-  printf("Created cloud of %lu points!\n", point_counter);
+  printf("Created cloud of %d points!\n", point_counter);
   destroy_bitmap(bmp);
   return b;
 }
