@@ -297,13 +297,13 @@ vboize(BUFFER* b)
 
 // renders a BUFFER at desired position
 static void
-draw_buffer_ex(BUFFER* b, double x, double y, double z, GLdouble sx, GLdouble sy, GLdouble sz, GLfloat point_size, GLdouble angle)
+draw_buffer_ex(BUFFER* b, GLfloat x, GLfloat y, GLfloat z, GLfloat sx, GLfloat sy, GLfloat sz, GLfloat point_size, GLfloat angle)
 {
-  double dist = sqrt((x - playerx) * (x - playerx) + (y - playery) * (y - playery) + (z - playerz) * (z - playerz));
+  GLfloat dist = sqrtf((x - playerx) * (x - playerx) + (y - playery) * (y - playery) + (z - playerz) * (z - playerz));
 
   // calculates point size from distance
   // sx is a scaling factor
-  GLfloat psize = (GLfloat)(SCREEN_W * sx / dist);
+  GLfloat psize = (GLfloat)SCREEN_W * sx / dist;
   if (psize - 0.01f < FLT_EPSILON)
     {
       return;
@@ -311,9 +311,9 @@ draw_buffer_ex(BUFFER* b, double x, double y, double z, GLdouble sx, GLdouble sy
 
   glPointSize(psize * point_size);
   glPushMatrix();
-  glScaled(sx, sy, sz);
-  glTranslated(x / sx, y / sy, z / sz);
-  glRotated(angle, 0.0, 1.0, 0.0);
+  glScalef(sx, sy, sz);
+  glTranslatef(x / sx, y / sy, z / sz);
+  glRotatef(angle, 0.0, 1.0, 0.0);
 
   // draws a VBO or vertex array
   if (b->hardware)
@@ -346,14 +346,20 @@ draw_buffer(BUFFER* b, float x, float y, float z, float scale, float angle)
 static void
 draw_eyes(FURBALL* f)
 {
-  float x1 = 1.2, y = 10, z1 = 1, x2 = 1.2, z2 = 1, s = 0.0;
-  // haired furballs are bigger
-  x1 *= cosf(f->a) * (f->ultimate > FLT_EPSILON ? 1 : 10);
-  z1 *= sinf(f->a) * (f->ultimate > FLT_EPSILON ? 1 : 8);
+  float x1 = 1.2f;
+  float y = 10.0f;
+  float z1 = 1.0f;
+  float x2 = 1.2f;
+  float z2 = 1.0f;
+  GLfloat s = 0.0f;
 
-  x2 *= cosf(-f->a) * (f->ultimate > FLT_EPSILON ? 1 : 10);
-  z2 *= sinf(-f->a) * (f->ultimate > FLT_EPSILON ? 1 : 8);
-  y = (f->ultimate > FLT_EPSILON ? 1.5 : 10);
+  // haired furballs are bigger
+  x1 *= cosf(f->a) * (f->ultimate > FLT_EPSILON ? 1.0f : 10.0f);
+  z1 *= sinf(f->a) * (f->ultimate > FLT_EPSILON ? 1.0f : 8.0f);
+
+  x2 *= cosf(-f->a) * (f->ultimate > FLT_EPSILON ? 1.0f : 10.0f);
+  z2 *= sinf(-f->a) * (f->ultimate > FLT_EPSILON ? 1.0f : 8.0f);
+  y = (f->ultimate > FLT_EPSILON ? 1.5f : 10.0f);
 
   // gets point size for this furball
   glGetFloatv(GL_POINT_SIZE, &s);
@@ -361,29 +367,29 @@ draw_eyes(FURBALL* f)
     {
       // gets line width if it's a hairy one
       glGetFloatv(GL_LINE_WIDTH, &s);
-      s *= .25;
+      s *= 0.25f;
     }
   // if the size is too small, no use drawing eyes
-  if (s < 2.0)
+  if (s < 2.0f)
     {
       return;
     }
-  glPointSize(s * 4);
+  glPointSize(s * 4.0f);
   glPushMatrix();
-  glScaled(f->scale, f->scale, f->scale);
-  glTranslated(f->x / f->scale, f->y / f->scale, f->z / f->scale);
+  glScalef(f->scale, f->scale, f->scale);
+  glTranslatef(f->x / f->scale, f->y / f->scale, f->z / f->scale);
 
   // draws eyes
   glBegin(GL_POINTS);
-  glColor3d(1, 1, 1);
-  glVertex3d(x1, y, z1);
-  glVertex3d(x2, y, z2);
+  glColor3f(1.0f, 1.0f, 1.0f);
+  glVertex3f(x1, y, z1);
+  glVertex3f(x2, y, z2);
   glEnd();
-  glPointSize(s * 2);
+  glPointSize(s * 2.0f);
   glBegin(GL_POINTS);
-  glColor3d(0, 0, 0);
-  glVertex3d(x1 * 1.2, y, z1 * 1.2);
-  glVertex3d(x2 * 1.2, y, z2 * 1.2);
+  glColor3f(0.0f, 0.0f, 0.0f);
+  glVertex3f(x1 * 1.2f, y, z1 * 1.2f);
+  glVertex3f(x2 * 1.2f, y, z2 * 1.2f);
   glEnd();
   glPopMatrix();
 }
@@ -576,11 +582,11 @@ draw_tree(void)
                   b *= .8;
                 }
 
-              glColor3d(r, g, b);
-              glVertex3d(fx, 0.0, fy);
-              glVertex3d(fx, 0.0, fy + fs);
-              glVertex3d(fx + fs, 0.0, fy + fs);
-              glVertex3d(fx + fs, 0.0, fy);
+              glColor3f(r, g, b);
+              glVertex3f(fx, 0.0, fy);
+              glVertex3f(fx, 0.0, fy + fs);
+              glVertex3f(fx + fs, 0.0, fy + fs);
+              glVertex3f(fx + fs, 0.0, fy);
             }
         }
     }
@@ -1671,16 +1677,16 @@ draw(void)
   glPushMatrix();
 
   // Set the camera
-  glRotated(DEG(lookx), 1, 0, 0);
-  glRotated(DEG(looky) + 90.0, 0, 1, 0);
-  glRotated(DEG(lookz), 0, 0, 1);
-  glTranslated(-playerx, -playery, -playerz);
+  glRotatef(DEG(lookx), 1, 0, 0);
+  glRotatef(DEG(looky) + 90.0, 0, 1, 0);
+  glRotatef(DEG(lookz), 0, 0, 1);
+  glTranslatef(-playerx, -playery, -playerz);
 
   // Save the camera matrix
   glMatrixMode(GL_MODELVIEW);
   glPushMatrix();
   glLoadIdentity();
-  glTranslated(0, sinf(lookx * 1.333), 0);
+  glTranslatef(0, sinf(lookx * 1.333), 0);
   glMatrixMode(GL_PROJECTION);
   glPushMatrix();
   glLoadIdentity();
@@ -1689,24 +1695,24 @@ draw(void)
 
   // draws backgorund
   glBegin(GL_QUADS);
-  glColor3d(1.0, .8, .4);
-  glVertex2d(-1, .5);
-  glVertex2d(1, .5);
-  glColor3d(1.0, .85, .6);
-  glVertex2d(1, .2);
-  glVertex2d(-1, .2);
+  glColor3f(1.0, .8, .4);
+  glVertex2f(-1, .5);
+  glVertex2f(1, .5);
+  glColor3f(1.0, .85, .6);
+  glVertex2f(1, .2);
+  glVertex2f(-1, .2);
 
-  glVertex2d(-1, .2);
-  glVertex2d(1, .2);
-  glColor3d(1.0, .9, .8);
-  glVertex2d(1, 0);
-  glVertex2d(-1, 0);
+  glVertex2f(-1, .2);
+  glVertex2f(1, .2);
+  glColor3f(1.0, .9, .8);
+  glVertex2f(1, 0);
+  glVertex2f(-1, 0);
 
-  glVertex2d(-1, 0);
-  glVertex2d(1, 0);
-  glColor3d(0, 0, 0);
-  glVertex2d(1, -1);
-  glVertex2d(-1, -1);
+  glVertex2f(-1, 0);
+  glVertex2f(1, 0);
+  glColor3f(0, 0, 0);
+  glVertex2f(1, -1);
+  glVertex2f(-1, -1);
   glEnd();
 
   glDepthMask(GL_TRUE);
@@ -1717,7 +1723,7 @@ draw(void)
   glPopMatrix();
 
   // Translate and rotate the object
-  glColor3d(1.0, 1.0, 1.0);
+  glColor3f(1.0, 1.0, 1.0);
 
   // draws world
   draw_tree();
@@ -1728,7 +1734,7 @@ draw(void)
   glPopMatrix();
 
   glDisable(GL_TEXTURE_2D);
-  glColor3d(1.0, 1.0, 1.0);
+  glColor3f(1.0, 1.0, 1.0);
   mx = (mouse_x - 160) / 160.0;
   my = -(mouse_y - 120) / 120.0;
 
@@ -1739,8 +1745,8 @@ draw(void)
 
       // draws crosshair
       glBegin(GL_POINTS);
-      glColor4d(1.0, 1.0, 1.0, 1.0);
-      glVertex2d(0, 0);
+      glColor4f(1.0, 1.0, 1.0, 1.0);
+      glVertex2f(0, 0);
       glEnd();
 
       // draws numbers
@@ -1752,14 +1758,14 @@ draw(void)
       for (size_t c = 0; c < 7; c++, ns += NUMSIZE)
         {
 
-          glTexCoord2d(nums[c] * .090909, 1.0);
-          glVertex2d(-1.0 + ns, 1.0);
-          glTexCoord2d((nums[c] + 1) * .090909, 1.0);
-          glVertex2d(-1.0 + ns + (NUMSIZE * 1.2), 1.0);
-          glTexCoord2d((nums[c] + 1) * .090909, 0.0);
-          glVertex2d(-1.0 + ns + (NUMSIZE * 1.2), 1.0 - NUMSIZE);
-          glTexCoord2d(nums[c] * .090909, 0.0);
-          glVertex2d(-1.0 + ns, 1.0 - NUMSIZE);
+          glTexCoord2f(nums[c] * .090909, 1.0);
+          glVertex2f(-1.0 + ns, 1.0);
+          glTexCoord2f((nums[c] + 1) * .090909, 1.0);
+          glVertex2f(-1.0 + ns + (NUMSIZE * 1.2), 1.0);
+          glTexCoord2f((nums[c] + 1) * .090909, 0.0);
+          glVertex2f(-1.0 + ns + (NUMSIZE * 1.2), 1.0 - NUMSIZE);
+          glTexCoord2f(nums[c] * .090909, 0.0);
+          glVertex2f(-1.0 + ns, 1.0 - NUMSIZE);
         }
 
       glEnd();
@@ -1772,14 +1778,14 @@ draw(void)
       glEnable(GL_TEXTURE_2D);
       glBindTexture(GL_TEXTURE_2D, intro);
       glBegin(GL_QUADS);
-      glTexCoord2d(0.0, 1.0);
-      glVertex2d(-1.0, 1.0);
-      glTexCoord2d(1.0, 1.0);
-      glVertex2d(1.0, 1.0);
-      glTexCoord2d(1.0, 0.0);
-      glVertex2d(1.0, -1.0);
-      glTexCoord2d(0.0, 0.0);
-      glVertex2d(-1.0, -1.0);
+      glTexCoord2f(0.0, 1.0);
+      glVertex2f(-1.0, 1.0);
+      glTexCoord2f(1.0, 1.0);
+      glVertex2f(1.0, 1.0);
+      glTexCoord2f(1.0, 0.0);
+      glVertex2f(1.0, -1.0);
+      glTexCoord2f(0.0, 0.0);
+      glVertex2f(-1.0, -1.0);
       glEnd();
       glDisable(GL_TEXTURE_2D);
     }
@@ -1790,14 +1796,14 @@ draw(void)
       glEnable(GL_TEXTURE_2D);
       glBindTexture(GL_TEXTURE_2D, outro);
       glBegin(GL_QUADS);
-      glTexCoord2d(0.0, 1.0);
-      glVertex2d(-1.0, 1.0);
-      glTexCoord2d(1.0, 1.0);
-      glVertex2d(1.0, 1.0);
-      glTexCoord2d(1.0, 0.0);
-      glVertex2d(1.0, -1.0);
-      glTexCoord2d(0.0, 0.0);
-      glVertex2d(-1.0, -1.0);
+      glTexCoord2f(0.0, 1.0);
+      glVertex2f(-1.0, 1.0);
+      glTexCoord2f(1.0, 1.0);
+      glVertex2f(1.0, 1.0);
+      glTexCoord2f(1.0, 0.0);
+      glVertex2f(1.0, -1.0);
+      glTexCoord2f(0.0, 0.0);
+      glVertex2f(-1.0, -1.0);
       glEnd();
       glDisable(GL_TEXTURE_2D);
     }
