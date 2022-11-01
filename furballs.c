@@ -1164,36 +1164,34 @@ shoot(void)
 static void
 update_blood(BLOOD* b, size_t num)
 {
-  int pic_x = 0, pic_y = 0, pr = 0, pg = 0, pb = 0, pix = 0;
   for (size_t c = 0; c < num; c++)
     {
       // if the particle is alive...
       if (b[c].alive)
         {
-
           // updates position
           b[c].x += b[c].vx;
           b[c].y += b[c].vy;
           b[c].z += b[c].vz;
 
           // adds gravity
-          b[c].vy -= .6;
+          b[c].vy -= 0.6f;
 
           // if it hits the ground
-          if (b[c].y < 0)
+          if (b[c].y < 0.0f)
             {
               // no more updates for this one
               b[c].alive = false;
 
               // if was inside world sware, colours a pixel red
-              pic_x = (b[c].x * ground_bmp->w) / (WORLD_SIZE);
-              pic_y = (b[c].z * ground_bmp->h) / (WORLD_SIZE);
+              int32_t pic_x = ((int32_t)b[c].x * ground_bmp->w) / (int32_t)WORLD_SIZE;
+              int32_t pic_y = ((int32_t)b[c].z * ground_bmp->h) / (int32_t)WORLD_SIZE;
               if (pic_x >= 0 && pic_y >= 0 && pic_x < ground_bmp->w && pic_y < ground_bmp->h)
                 {
-                  pix = getpixel(ground_bmp, pic_x, pic_y);
-                  pr = (getr(pix) + b[c].r * 128) / 1.5;
-                  pg = (getg(pix) + b[c].g * 128) / 1.5;
-                  pb = (getb(pix) + b[c].b * 128) / 1.5;
+                  int32_t pix = getpixel(ground_bmp, pic_x, pic_y);
+                  int32_t pr = (int32_t)(((float)getr(pix) + b[c].r * 128.0f) / 1.5f);
+                  int32_t pg = (int32_t)(((float)getg(pix) + b[c].g * 128.0f) / 1.5f);
+                  int32_t pb = (int32_t)(((float)getb(pix) + b[c].b * 128.0f) / 1.5f);
                   putpixel(ground_bmp, pic_x, pic_y, makecol(pr, pg, pb));
                 }
             }
