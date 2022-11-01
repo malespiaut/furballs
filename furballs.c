@@ -234,7 +234,7 @@ isExtensionSupported(const char* extension)
 static float
 length3v(float* a)
 {
-  return sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);
+  return sqrtf(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);
 }
 
 // 2 point distance
@@ -245,7 +245,7 @@ dist3v(float* a, float* b)
   x = a[0] - b[0];
   y = a[1] - b[1];
   z = a[2] - b[2];
-  return sqrt(x * x + y * y + z * z);
+  return sqrtf(x * x + y * y + z * z);
 }
 
 // dot product
@@ -294,7 +294,7 @@ draw_buffer_ex(BUFFER* b, float x, float y, float z, float sx, float sy, float s
 {
   float dist = 0.0, psize = 0.0, scale = 0.0;
   scale = sx;
-  dist = sqrt((x - playerx) * (x - playerx) + (y - playery) * (y - playery) + (z - playerz) * (z - playerz));
+  dist = sqrtf((x - playerx) * (x - playerx) + (y - playery) * (y - playery) + (z - playerz) * (z - playerz));
 
   // calculates point size from distance
   psize = SCREEN_W * (scale) / dist;
@@ -341,11 +341,11 @@ draw_eyes(FURBALL* f)
 {
   float x1 = 1.2, y = 10, z1 = 1, x2 = 1.2, z2 = 1, s = 0.0;
   // haired furballs are bigger
-  x1 *= cos(f->a) * (f->ultimate > FLT_EPSILON ? 1 : 10);
-  z1 *= sin(f->a) * (f->ultimate > FLT_EPSILON ? 1 : 8);
+  x1 *= cosf(f->a) * (f->ultimate > FLT_EPSILON ? 1 : 10);
+  z1 *= sinf(f->a) * (f->ultimate > FLT_EPSILON ? 1 : 8);
 
-  x2 *= cos(-f->a) * (f->ultimate > FLT_EPSILON ? 1 : 10);
-  z2 *= sin(-f->a) * (f->ultimate > FLT_EPSILON ? 1 : 8);
+  x2 *= cosf(-f->a) * (f->ultimate > FLT_EPSILON ? 1 : 10);
+  z2 *= sinf(-f->a) * (f->ultimate > FLT_EPSILON ? 1 : 8);
   y = (f->ultimate > FLT_EPSILON ? 1.5 : 10);
 
   // gets point size for this furball
@@ -430,7 +430,7 @@ draw_furball_ultimate(FURBALL* f)
 
   // calculates line width and draws
 
-  dist = sqrt((f->x - playerx) * (f->x - playerx) + (f->y - playery) * (f->y - playery) + (f->z - playerz) * (f->z - playerz));
+  dist = sqrtf((f->x - playerx) * (f->x - playerx) + (f->y - playery) * (f->y - playery) + (f->z - playerz) * (f->z - playerz));
   lsize = 640 / dist;
   // if it's too small, no use drawing
   if (lsize < .01)
@@ -638,7 +638,7 @@ generate_cloud_single(const char* filename, size_t density)
                   // tests a voxel against image, where y is y
                   // and x is distance from centre
                   // if ok, sets colour and displaces a bit
-                  img_x = floor(sqrt((x - c_x) * (x - c_x) + (z - c_z) * (z - c_z))) + c_x;
+                  img_x = floor(sqrtf((x - c_x) * (x - c_x) + (z - c_z) * (z - c_z))) + c_x;
                   img_y = bmp->h - y - 1;
                   col = getpixel(bmp, img_x, img_y);
                   if (col != makecol(255, 0, 255) && img_x < bmp->w)
@@ -901,9 +901,9 @@ generate_furball_ultimate(float size, size_t cuts, size_t density)
                   // this generates startpoint
                   if (!c)
                     {
-                      vertex[0] = hair_distance * cos(fx) * sin(fy) + ((((rand() % 512) / 256.0) - 1.0) * deviation);
-                      vertex[1] = hair_distance * cos(fy) + ((((rand() % 512) / 256.0) - 1.0) * deviation);
-                      vertex[2] = hair_distance * sin(fz) * sin(fy) + ((((rand() % 512) / 256.0) - 1.0) * deviation);
+                      vertex[0] = hair_distance * cosf(fx) * sinf(fy) + ((((rand() % 512) / 256.0) - 1.0) * deviation);
+                      vertex[1] = hair_distance * cosf(fy) + ((((rand() % 512) / 256.0) - 1.0) * deviation);
+                      vertex[2] = hair_distance * sinf(fz) * sinf(fy) + ((((rand() % 512) / 256.0) - 1.0) * deviation);
                       colour[0] = hair_colour + ((((rand() % 512) / 256.0) - 1.0) * colour_deviation);
                       colour[1] = hair_colour + ((((rand() % 512) / 256.0) - 1.0) * colour_deviation);
                       colour[2] = hair_colour + ((((rand() % 512) / 256.0) - 1.0) * colour_deviation);
@@ -922,9 +922,9 @@ generate_furball_ultimate(float size, size_t cuts, size_t density)
                   // hair is actually line list as opposed to a strip
                   hair_colour = ((c + 1) * 1.0) / (cuts);
                   hair_distance = size + ((c + 1) * size) / (cuts);
-                  vertex[3] = hair_distance * cos(fx) * sin(fy) + ((((rand() % 512) / 256.0) - 1.0) * deviation);
-                  vertex[4] = hair_distance * cos(fy) + ((((rand() % 512) / 256.0) - 1.0) * deviation);
-                  vertex[5] = hair_distance * sin(fz) * sin(fy) + ((((rand() % 512) / 256.0) - 1.0) * deviation);
+                  vertex[3] = hair_distance * cosf(fx) * sinf(fy) + ((((rand() % 512) / 256.0) - 1.0) * deviation);
+                  vertex[4] = hair_distance * cosf(fy) + ((((rand() % 512) / 256.0) - 1.0) * deviation);
+                  vertex[5] = hair_distance * sinf(fz) * sinf(fy) + ((((rand() % 512) / 256.0) - 1.0) * deviation);
                   colour[3] = hair_colour + ((((rand() % 512) / 256.0) - 1.0) * colour_deviation);
                   colour[4] = hair_colour + ((((rand() % 512) / 256.0) - 1.0) * colour_deviation);
                   colour[5] = hair_colour + ((((rand() % 512) / 256.0) - 1.0) * colour_deviation);
@@ -976,11 +976,11 @@ generate_furball_normal(float size, size_t cuts, size_t density)
               for (size_t c = 0; c < cuts; c++)
                 {
 
-                  vertex[0] = size * cos(fx) * sin(fy) + ((((rand() % 512) / 256.0) - 1.0) * deviation);
-                  vertex[1] = size * cos(fy) + ((((rand() % 512) / 256.0) - 1.0) * deviation);
-                  vertex[2] = size * sin(fz) * sin(fy) + ((((rand() % 512) / 256.0) - 1.0) * deviation);
+                  vertex[0] = size * cosf(fx) * sinf(fy) + ((((rand() % 512) / 256.0) - 1.0) * deviation);
+                  vertex[1] = size * cosf(fy) + ((((rand() % 512) / 256.0) - 1.0) * deviation);
+                  vertex[2] = size * sinf(fz) * sinf(fy) + ((((rand() % 512) / 256.0) - 1.0) * deviation);
 
-                  colour_factor = sqrt(vertex[0] * vertex[0] + vertex[1] * vertex[1] + vertex[2] * vertex[2]) / size;
+                  colour_factor = sqrtf(vertex[0] * vertex[0] + vertex[1] * vertex[1] + vertex[2] * vertex[2]) / size;
                   colour[0] = colour_factor + ((((rand() % 512) / 256.0) - 1.0) * colour_deviation);
                   colour[1] = colour_factor + ((((rand() % 512) / 256.0) - 1.0) * colour_deviation);
                   colour[2] = colour_factor + ((((rand() % 512) / 256.0) - 1.0) * colour_deviation);
@@ -1084,9 +1084,9 @@ shoot(void)
   b[0] = playerx;
   b[1] = playery;
   b[2] = playerz;
-  m[0] = cos(looky) * cos(lookx);
-  m[1] = -sin(lookx);
-  m[2] = sin(looky) * cos(lookx);
+  m[0] = cosf(looky) * cosf(lookx);
+  m[1] = -sinf(lookx);
+  m[2] = sinf(looky) * cosf(lookx);
   pdist = 999999.0;
   for (size_t c = 0; c < BALLZ; c++)
     {
@@ -1207,9 +1207,9 @@ update_ballz(void)
           fur->bounce += .1 * SPEED;
 
           // updates position
-          fur->x += cos(fur->a) * fur->speed;
-          fur->z += sin(fur->a) * fur->speed;
-          fur->y = fur->scale * (fur->ultimate > FLT_EPSILON ? 1 : 8) + ABS(sin(fur->iq) * fur->bounce_rate);
+          fur->x += cosf(fur->a) * fur->speed;
+          fur->z += sinf(fur->a) * fur->speed;
+          fur->y = fur->scale * (fur->ultimate > FLT_EPSILON ? 1 : 8) + ABS(sinf(fur->iq) * fur->bounce_rate);
 
           // keeps inside the world
           if (fur->x < 0)
@@ -1521,27 +1521,27 @@ timer_proc(void)
       // moves player according to key input
       if (key[KEY_LEFT] || key[KEY_A])
         {
-          playerx += sin(looky) * move_spd;
-          playerz += -cos(looky) * move_spd;
+          playerx += sinf(looky) * move_spd;
+          playerz += -cosf(looky) * move_spd;
           state = WALK;
         }
       if (key[KEY_RIGHT] || key[KEY_D])
         {
-          playerx += -sin(looky) * move_spd;
-          playerz += cos(looky) * move_spd;
+          playerx += -sinf(looky) * move_spd;
+          playerz += cosf(looky) * move_spd;
           state = WALK;
         }
 
       if (key[KEY_UP] || key[KEY_W])
         {
-          playerx += cos(looky) * move_spd;
-          playerz += sin(looky) * move_spd;
+          playerx += cosf(looky) * move_spd;
+          playerz += sinf(looky) * move_spd;
           state = WALK;
         }
       if (key[KEY_DOWN] || key[KEY_S])
         {
-          playerx -= cos(looky) * move_spd;
-          playerz -= sin(looky) * move_spd;
+          playerx -= cosf(looky) * move_spd;
+          playerz -= sinf(looky) * move_spd;
           state = WALK;
         }
 
@@ -1554,7 +1554,7 @@ timer_proc(void)
       // if not moving, add breathing effect
       if (state == STOP)
         {
-          if (ABS(playery - HEIGHT) > HAYSTACK * sin((playerx / WORLD_SIZE) * kPi) * sin((playerx / WORLD_SIZE) * kPi) * sin((playerz / WORLD_SIZE) * kPi) * sin((playerz / WORLD_SIZE) * kPi))
+          if (ABS(playery - HEIGHT) > HAYSTACK * sinf((playerx / WORLD_SIZE) * kPi) * sinf((playerx / WORLD_SIZE) * kPi) * sinf((playerz / WORLD_SIZE) * kPi) * sinf((playerz / WORLD_SIZE) * kPi))
             {
               playery -= SGN(playery - HEIGHT) * .4;
             }
@@ -1577,13 +1577,13 @@ timer_proc(void)
   if (state == IDLE)
     {
       lookf += .2;
-      playery = HEIGHT + (bounce * .3 * (sin(lookf)));
+      playery = HEIGHT + (bounce * .3 * (sinf(lookf)));
     }
   if (state == WALK)
     {
       lookf += 0.1;
 
-      playery = HEIGHT + (bounce * (sin(lookf)));
+      playery = HEIGHT + (bounce * (sinf(lookf)));
     }
 
   // keeps player inside the world
@@ -1673,7 +1673,7 @@ draw(void)
   glMatrixMode(GL_MODELVIEW);
   glPushMatrix();
   glLoadIdentity();
-  glTranslated(0, sin(lookx * 1.333), 0);
+  glTranslated(0, sinf(lookx * 1.333), 0);
   glMatrixMode(GL_PROJECTION);
   glPushMatrix();
   glLoadIdentity();
