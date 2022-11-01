@@ -102,7 +102,7 @@ struct RECT
 // basic vertex buffer struct
 typedef struct BUFFER
 {
-  float *vtx, *clr;              // vertex and colour buffers
+  GLfloat *vtx, *clr;            // vertex and colour buffers
   GLuint vtx_handle, clr_handle; // VBO handles for the above
   GLsizei size;                  // number of vertices
   int hardware;                  // is it VBO or array
@@ -114,40 +114,40 @@ typedef struct BUFFER
 // blood particle struct
 typedef struct BLOOD
 {
-  double x, y, z;    // paritcle position
-  double r, g, b, a; // colour
-  double vx, vy, vz; // velocity
-  double s;          // size
-  int alive;         // update flag
+  GLfloat x, y, z;    // paritcle position
+  GLfloat r, g, b, a; // colour
+  GLfloat vx, vy, vz; // velocity
+  GLfloat s;          // size
+  int alive;          // update flag
 } BLOOD;
 
 // furball (a dynamic vertex buffer + AI)
 typedef struct FURBALL
 {
-  BUFFER *buf,               // base vertex buffer for augmentation
-    *mine;                   // actually drawn buffer
-  float x, y, z,             // position
-    scale,                   // size
-    r, g, b,                 // colour
-    ultimate,                // is it dynamic (the long-haired one
-    a,                       // angle of movement
-    bounce,                  // bounce rate
-    speed,                   // speed of movement
-    bounce_rate;             // base bounce rate
-  float trail[TRAIL + 1][3]; // 'hair' trail (only ultimate)
-  size_t density;            // points per voxel
-  int exists,                // render flag
-    dying;                   // blood render flag
-  BLOOD blood[PARTICLES];    // blood particles
-  float iq,                  // directiona change interval
-    smart;                   // iq base value
+  BUFFER *buf,                 // base vertex buffer for augmentation
+    *mine;                     // actually drawn buffer
+  GLfloat x, y, z,             // position
+    scale,                     // size
+    r, g, b,                   // colour
+    ultimate,                  // is it dynamic (the long-haired one
+    a,                         // angle of movement
+    bounce,                    // bounce rate
+    speed,                     // speed of movement
+    bounce_rate;               // base bounce rate
+  GLfloat trail[TRAIL + 1][3]; // 'hair' trail (only ultimate)
+  size_t density;              // points per voxel
+  int exists,                  // render flag
+    dying;                     // blood render flag
+  BLOOD blood[PARTICLES];      // blood particles
+  GLfloat iq,                  // directiona change interval
+    smart;                     // iq base value
 } FURBALL;
 
 // a buffer with position
 typedef struct ENTITY
 {
-  float x, y, z, s, a; // position, size, yaw (angle)
-  BUFFER* buf;         // vertex buffer
+  GLfloat x, y, z, s, a; // position, size, yaw (angle)
+  BUFFER* buf;           // vertex buffer
 } ENTITY;
 
 ////////////////////////////////////////////////////
@@ -158,7 +158,7 @@ int frames = 0,   // frames rendered
   state = IDLE;   // player state
 volatile int tim; // threaded timing variable
 
-float playerx = 0.0, playery = 0.0, playerz = 0.0,    // player position
+GLfloat playerx = 0.0, playery = 0.0, playerz = 0.0,  // player position
   lookx = 0.0, looky = 0.0, lookz = 0.0, lookf = 0.0; // player look direction
 
 BUFFER *ultimate_furball = NULL, // base buffer for ultimate furball (with ahir)
@@ -169,7 +169,7 @@ BUFFER *grass = NULL, *tall_tree = NULL, *withered_bush = NULL, *cactus = NULL, 
        *stick = NULL, *pine = NULL, *hut = NULL, *fence = NULL, *church = NULL, *brickhouse = NULL;
 
 BITMAP* ground_bmp = NULL;                // ground colour
-float bounce = BOUNCE_RATE;               // player bounce rate
+GLfloat bounce = BOUNCE_RATE;             // player bounce rate
 FURBALL* ballz[BALLZ] = {NULL};           // furballs
 int mx = 0, my = 0;                       // mouse delta position
 BLOOD blood[PARTICLES] = {0};             // particles
@@ -231,17 +231,17 @@ isExtensionSupported(const char* extension)
 ////////////////////////////////////////////////////
 
 // vector length
-static float
-length3v(float* a)
+static GLfloat
+length3v(GLfloat* a)
 {
   return sqrtf(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);
 }
 
 // 2 point distance
-static float
-dist3v(float* a, float* b)
+static GLfloat
+dist3v(GLfloat* a, GLfloat* b)
 {
-  float x = 0.0, y = 0.0, z = 0.0;
+  GLfloat x = 0.0, y = 0.0, z = 0.0;
   x = a[0] - b[0];
   y = a[1] - b[1];
   z = a[2] - b[2];
@@ -249,8 +249,8 @@ dist3v(float* a, float* b)
 }
 
 // dot product
-static float
-dot3v(float* a, float* b)
+static GLfloat
+dot3v(GLfloat* a, GLfloat* b)
 {
   return (a[0] * b[0] + a[1] * b[1] + a[2] * b[2]);
 }
@@ -275,7 +275,7 @@ vboize(BUFFER* b)
   GLsizeiptr nb_elements = 0;
   if (b->size > 0)
     {
-      nb_elements = (GLsizeiptr)sizeof(float) * 3 * b->size;
+      nb_elements = (GLsizeiptr)sizeof(GLfloat) * 3 * b->size;
     }
 
   printf("Vboizing buffer with %d elements\n", b->size);
@@ -337,7 +337,7 @@ draw_buffer_ex(BUFFER* b, GLfloat x, GLfloat y, GLfloat z, GLfloat sx, GLfloat s
 
 // simplified version of the above
 static void
-draw_buffer(BUFFER* b, float x, float y, float z, float scale, float angle)
+draw_buffer(BUFFER* b, GLfloat x, GLfloat y, GLfloat z, GLfloat scale, GLfloat angle)
 {
   draw_buffer_ex(b, x, y, z, scale, scale, scale, 1.0, angle);
 }
@@ -346,11 +346,11 @@ draw_buffer(BUFFER* b, float x, float y, float z, float scale, float angle)
 static void
 draw_eyes(FURBALL* f)
 {
-  float x1 = 1.2f;
-  float y = 10.0f;
-  float z1 = 1.0f;
-  float x2 = 1.2f;
-  float z2 = 1.0f;
+  GLfloat x1 = 1.2f;
+  GLfloat y = 10.0f;
+  GLfloat z1 = 1.0f;
+  GLfloat x2 = 1.2f;
+  GLfloat z2 = 1.0f;
   GLfloat s = 0.0f;
 
   // haired furballs are bigger
@@ -400,7 +400,7 @@ draw_eyes(FURBALL* f)
 static void
 draw_furball_ultimate(FURBALL* f)
 {
-  float *vertex = NULL, *basevertex = NULL, dir[3] = {0.0}, dist = 0.0, lsize = 0.0, *colour = NULL, *basecolour = NULL;
+  GLfloat *vertex = NULL, *basevertex = NULL, dir[3] = {0.0}, dist = 0.0, lsize = 0.0, *colour = NULL, *basecolour = NULL;
 
   // fetches base vertex buffer for augmentation
   vertex = f->mine->vtx;
@@ -460,8 +460,8 @@ draw_furball_ultimate(FURBALL* f)
 static void
 draw_furball_normal(FURBALL* f)
 {
-  float stretch = 1.0f + powf(ABS(f->y - f->trail[1][1]) * 0.1f, 2.0f);
-  float displace = f->y - f->trail[1][1];
+  GLfloat stretch = 1.0f + powf(ABS(f->y - f->trail[1][1]) * 0.1f, 2.0f);
+  GLfloat displace = f->y - f->trail[1][1];
   if (stretch - 3.0f > FLT_EPSILON)
     {
       stretch = 3.0f;
@@ -478,8 +478,8 @@ draw_blood(BLOOD* b, size_t num)
   glBegin(GL_POINTS);
   for (size_t c = 0; c < num; c++)
     {
-      glColor3dv(&(b[c].r));
-      glVertex3dv(&(b[c].x));
+      glColor3fv(&(b[c].r));
+      glVertex3fv(&(b[c].x));
     }
   glEnd();
 }
@@ -488,7 +488,7 @@ draw_blood(BLOOD* b, size_t num)
 static void
 draw_furball(FURBALL* f)
 {
-  float x = 0.0, y = 0.0, z = 0.0;
+  GLfloat x = 0.0, y = 0.0, z = 0.0;
   x = f->x - playerx;
   y = f->y - playery;
   z = f->z - playerz;
@@ -529,7 +529,7 @@ draw_ballz(void)
 static void
 draw_ents(void)
 {
-  float x = 0.0, z = 0.0, dist = 0.0;
+  GLfloat x = 0.0, z = 0.0, dist = 0.0;
   for (size_t c = 0; c < num_ents; c++)
     {
       x = ents[c].x - playerx;
@@ -551,7 +551,7 @@ static void
 draw_tree(void)
 {
   int c = 0, pix = 0;
-  float fx = 0.0, fy = 0.0, fs = 0.0, r = 0.0, g = 0.0, b = 0.0, xx = 0.0, yy = 0.0;
+  GLfloat fx = 0.0, fy = 0.0, fs = 0.0, r = 0.0, g = 0.0, b = 0.0, xx = 0.0, yy = 0.0;
 
   // draws array of ground quads
   glBegin(GL_QUADS);
@@ -617,7 +617,7 @@ generate_cloud_single(const char* filename, size_t density)
   BITMAP* bmp = NULL;
   size_t point_counter = 0;
   int size_x = 0, size_y = 0, size_z = 0, img_x = 0, img_y = 0, col = 0, c_x = 0, c_z = 0;
-  float deviation = 0.0, *vertex = NULL, *colour = NULL, colour_deviation = 0.0;
+  GLfloat deviation = 0.0, *vertex = NULL, *colour = NULL, colour_deviation = 0.0;
   printf("Creating cloud from %s...\n", filename);
   deviation = .4;
   colour_deviation = .03;
@@ -629,8 +629,8 @@ generate_cloud_single(const char* filename, size_t density)
 
   // allocates a too large buffer, or too small, if of higher density
   b = malloc(sizeof(BUFFER));
-  b->vtx = malloc((size_t)(size_x * size_y * size_z * 3) * sizeof(float));
-  b->clr = malloc((size_t)(size_x * size_y * size_z * 3) * sizeof(float));
+  b->vtx = malloc((size_t)(size_x * size_y * size_z * 3) * sizeof(GLfloat));
+  b->clr = malloc((size_t)(size_x * size_y * size_z * 3) * sizeof(GLfloat));
   b->hardware = 0;
   point_counter = 0;
   vertex = b->vtx;
@@ -686,7 +686,7 @@ generate_cloud_double(const char* filename_x, const char* filename_z, size_t den
   size_t point_counter = 0;
   int size_x = 0, size_y = 0, size_z = 0, img_x = 0, img_y = 0;
   int img_z = 0, col1 = 0, col2 = 0, c_x = 0, c_z = 0;
-  float deviation = 0.0, *vertex = NULL, *colour = NULL, colour_deviation = 0.0;
+  GLfloat deviation = 0.0, *vertex = NULL, *colour = NULL, colour_deviation = 0.0;
   deviation = .4;
   colour_deviation = .03;
   bmpx = load_bmp(filename_x, 0);
@@ -697,8 +697,8 @@ generate_cloud_double(const char* filename_x, const char* filename_z, size_t den
 
   // another bad malloc
   b = malloc(sizeof(BUFFER));
-  b->vtx = malloc((size_t)(size_x * size_y * size_z * 3) * sizeof(float));
-  b->clr = malloc((size_t)(size_x * size_y * size_z * 3) * sizeof(float));
+  b->vtx = malloc((size_t)(size_x * size_y * size_z * 3) * sizeof(GLfloat));
+  b->clr = malloc((size_t)(size_x * size_y * size_z * 3) * sizeof(GLfloat));
   b->hardware = 0;
   point_counter = 0;
   vertex = b->vtx;
@@ -754,7 +754,7 @@ generate_cloud_triple(const char* filename_x, const char* filename_z, const char
   size_t point_counter = 0;
   int size_x = 0, size_y = 0, size_z = 0, img_x = 0, img_y = 0;
   int img_z = 0, col1 = 0, col2 = 0, col3 = 0, c_x = 0, c_z = 0;
-  float deviation = 0.0, *vertex = NULL, *colour = NULL, colour_deviation = 0.0;
+  GLfloat deviation = 0.0, *vertex = NULL, *colour = NULL, colour_deviation = 0.0;
   deviation = .4;
   colour_deviation = .03;
   bmpx = load_bmp(filename_x, 0);
@@ -767,8 +767,8 @@ generate_cloud_triple(const char* filename_x, const char* filename_z, const char
 
   // bad malloc Mk.3
   b = malloc(sizeof(BUFFER));
-  b->vtx = malloc((size_t)(size_x * size_y * size_z * 3) * sizeof(float));
-  b->clr = malloc((size_t)(size_x * size_y * size_z * 3) * sizeof(float));
+  b->vtx = malloc((size_t)(size_x * size_y * size_z * 3) * sizeof(GLfloat));
+  b->clr = malloc((size_t)(size_x * size_y * size_z * 3) * sizeof(GLfloat));
   b->hardware = 0;
   point_counter = 0;
   vertex = b->vtx;
@@ -819,15 +819,15 @@ generate_cloud_triple(const char* filename_x, const char* filename_z, const char
 
 //  this creates a furball instance
 static FURBALL*
-spawn_furball(float x, float y, float z, BUFFER* b, size_t density, int ultimate, float red, float green, float blue)
+spawn_furball(GLfloat x, GLfloat y, GLfloat z, BUFFER* b, size_t density, int ultimate, GLfloat red, GLfloat green, GLfloat blue)
 {
   FURBALL* f = NULL;
   size_t bufsize = 0;
-  float *colour = NULL, *basecolour = NULL;
+  GLfloat *colour = NULL, *basecolour = NULL;
 
   // number of mesh vertices is specified through density
   // it represents, slices, sectors and depth
-  bufsize = density * density * density * TRAIL * (ultimate ? 12 : 3) * sizeof(float);
+  bufsize = density * density * density * TRAIL * (ultimate ? 12 : 3) * sizeof(GLfloat);
 
   // allocates memory
   f = malloc(sizeof(FURBALL));
@@ -871,20 +871,20 @@ spawn_furball(float x, float y, float z, BUFFER* b, size_t density, int ultimate
 
 // generates a base buffer for hairy furball
 static BUFFER*
-generate_furball_ultimate(float size, size_t cuts, size_t density)
+generate_furball_ultimate(GLfloat size, size_t cuts, size_t density)
 {
   BUFFER* b = NULL;
   size_t point_counter = 0;
-  float fx = 0.0, fy = 0.0, fz = 0.0, *vertex = NULL, *colour = NULL;
-  float deviation = 0.0, colour_deviation = 0.0;
-  float hair_colour = 0.0, hair_distance = 0.0;
+  GLfloat fx = 0.0, fy = 0.0, fz = 0.0, *vertex = NULL, *colour = NULL;
+  GLfloat deviation = 0.0, colour_deviation = 0.0;
+  GLfloat hair_colour = 0.0, hair_distance = 0.0;
   deviation = size * .1;
   colour_deviation = .03;
 
   // allocates memory
   b = malloc(sizeof(BUFFER));
-  b->vtx = malloc(density * density * density * cuts * 12 * sizeof(float));
-  b->clr = malloc(density * density * density * cuts * 12 * sizeof(float));
+  b->vtx = malloc(density * density * density * cuts * 12 * sizeof(GLfloat));
+  b->clr = malloc(density * density * density * cuts * 12 * sizeof(GLfloat));
   b->hardware = 0;
   point_counter = 0;
   vertex = b->vtx;
@@ -957,19 +957,19 @@ generate_furball_ultimate(float size, size_t cuts, size_t density)
 
 // egnerates a simple furball
 static BUFFER*
-generate_furball_normal(float size, size_t cuts, size_t density)
+generate_furball_normal(GLfloat size, size_t cuts, size_t density)
 {
   BUFFER* b = NULL;
   size_t point_counter = 0;
-  float fx = 0.0, fy = 0.0, fz = 0.0, *vertex = NULL, *colour = NULL;
-  float deviation = 0.0, colour_deviation = 0.0, colour_factor = 0.0;
+  GLfloat fx = 0.0, fy = 0.0, fz = 0.0, *vertex = NULL, *colour = NULL;
+  GLfloat deviation = 0.0, colour_deviation = 0.0, colour_factor = 0.0;
   deviation = size * .3;
   colour_deviation = .08;
 
   // allocates buffers
   b = malloc(sizeof(BUFFER));
-  b->vtx = malloc(density * density * density * cuts * 3 * sizeof(float));
-  b->clr = malloc(density * density * density * cuts * 3 * sizeof(float));
+  b->vtx = malloc(density * density * density * cuts * 3 * sizeof(GLfloat));
+  b->clr = malloc(density * density * density * cuts * 3 * sizeof(GLfloat));
   b->hardware = 0;
   point_counter = 0;
   vertex = b->vtx;
@@ -1014,7 +1014,7 @@ static void
 create_ballz(void)
 {
   int is_good = 0;
-  float x = 0.0, y = 0.0, z = 0.0, r = 0.0, g = 0.0, b = 0.0;
+  GLfloat x = 0.0, y = 0.0, z = 0.0, r = 0.0, g = 0.0, b = 0.0;
   for (size_t c = 0; c < BALLZ; c++)
     {
       // if is_good, then it's 'ultimate' == hairy
@@ -1064,7 +1064,7 @@ create_ballz(void)
 
 // creates [num] blood particles at [b] buffer
 static void
-explode(BLOOD* b, size_t num, float x, float y, float z)
+explode(BLOOD* b, size_t num, GLfloat x, GLfloat y, GLfloat z)
 {
   for (size_t c = 0; c < num; c++)
     {
@@ -1089,7 +1089,7 @@ shoot(void)
 {
   int h = 0;
   FURBALL* hitball = 0;
-  float p[3] = {0.0}, b[3] = {0.0}, m[3] = {0.0}, p_minus_b[3] = {0.0}, t0 = 0.0, pdist = 0.0, rdist = 0.0, rhit[3] = {0.0};
+  GLfloat p[3] = {0.0}, b[3] = {0.0}, m[3] = {0.0}, p_minus_b[3] = {0.0}, t0 = 0.0, pdist = 0.0, rdist = 0.0, rhit[3] = {0.0};
   play_sample(shot, 255, 128, 1000, 0);
   // gets shoot position and direction
   b[0] = playerx;
@@ -1272,7 +1272,7 @@ generate_world_map(const char* grass_file, const char* height_file, const char* 
   BITMAP *bmpg = NULL, *bmph = NULL, *bmph_t = NULL, *bmpg_t = NULL;
   int size_x = 0, size_y = 0, col = 0;
   size_t line_counter = 0;
-  float *vertex = NULL, *colour = NULL, colour_deviation = 0.0, grass_x = 0.0, grass_y = 0.0, grass_h = 0.0, patch_size = 0.0;
+  GLfloat *vertex = NULL, *colour = NULL, colour_deviation = 0.0, grass_x = 0.0, grass_y = 0.0, grass_h = 0.0, patch_size = 0.0;
   printf("Creating grass from %s...\n", grass_file);
 
   // randomisation constants
@@ -1301,8 +1301,8 @@ generate_world_map(const char* grass_file, const char* height_file, const char* 
 
   // allocates grass buffer
   b = malloc(sizeof(BUFFER));
-  b->vtx = malloc((size_t)(size_x * size_y) * density * 6 * sizeof(float));
-  b->clr = malloc((size_t)(size_x * size_y) * density * 6 * sizeof(float));
+  b->vtx = malloc((size_t)(size_x * size_y) * density * 6 * sizeof(GLfloat));
+  b->clr = malloc((size_t)(size_x * size_y) * density * 6 * sizeof(GLfloat));
   b->hardware = 0;
   line_counter = 0;
   vertex = b->vtx;
@@ -1472,7 +1472,7 @@ generate_stuff(void)
 static void
 timer_proc(void)
 {
-  float move_spd = MOVE_SPEED;
+  GLfloat move_spd = MOVE_SPEED;
 
   // if it's intro, waits for space
   if (game_state == INTRO)
@@ -1752,7 +1752,7 @@ draw(void)
       glBindTexture(GL_TEXTURE_2D, numbers);
       glBegin(GL_QUADS);
 
-      float ns = 0.0;
+      GLfloat ns = 0.0;
       for (size_t c = 0; c < 7; c++, ns += NUMSIZE)
         {
 
@@ -1828,7 +1828,7 @@ main(int argc, char** argv)
 
   int w = 0, h = 0;
   RECT rect = {0};
-  float fogc[] = {1.0, .8, .4, .0};
+  GLfloat fogc[] = {1.0, .8, .4, .0};
   char samp[64] = {0};
 
   h = rect.bottom - rect.top;
