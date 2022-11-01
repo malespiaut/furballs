@@ -29,57 +29,57 @@
 //////////////////////////////////////////////////// DEFINES
 ////////////////////////////////////////////////////
 
-#define kPi 3.14159265358979323846               /* pi */
-#define kPiDividedBy2 1.57079632679489661923     /* pi/2 */
-#define kPiDividedBy4 0.78539816339744830962     /* pi/4 */
-#define kPiMultipliedBy2 6.28318530717958647692  /* pi*2 */
-#define kPiMultipliedBy4 12.56637061435917295384 /* pi*4 */
+#define kPi 3.14159265358979323846f               /* pi */
+#define kPiDividedBy2 1.57079632679489661923f     /* pi/2 */
+#define kPiDividedBy4 0.78539816339744830962f     /* pi/4 */
+#define kPiMultipliedBy2 6.28318530717958647692f  /* pi*2 */
+#define kPiMultipliedBy4 12.56637061435917295384f /* pi*4 */
 
 // tweakable defines
-#define LOFI 0            // this disables VBOs, reduces drawing distance and furball complexity
-                          // HiFi version runs smoothly on a modern PC or decent laptop
-                          // LoFi version runs smoothly on a 10yo PC
-#define TURN_SPEED .1     // camera/player control sensitivity
-#define MOVE_SPEED 1.0    // camera/player move speed
-#define WORLD_SIZE 2000.0 // side of scene square
-#define GRID 256          // number of floor grid cells
-#define HAYSTACK 100.0    // player height above the ground modifier
+#define LOFI 0             // this disables VBOs, reduces drawing distance and furball complexity
+                           // HiFi version runs smoothly on a modern PC or decent laptop
+                           // LoFi version runs smoothly on a 10yo PC
+#define TURN_SPEED 0.1f    // camera/player control sensitivity
+#define MOVE_SPEED 1.0f    // camera/player move speed
+#define WORLD_SIZE 2000.0f // side of scene square
+#define GRID 256           // number of floor grid cells
+#define HAYSTACK 100.0f    // player height above the ground modifier
 
 // defines for calculation simplification
-#define FRAND(x) (((rand() % (int)x) * 1024.0) / 1024.0)
-#define DEG(n) ((n)*180.0 / kPi)
+#define FRAND(x) (((rand() % (int)x) * 1024.0f) / 1024.0f)
+#define DEG(n) ((n)*180.0f / kPi)
 
 // player states
 #define WALK 1
 #define IDLE 2
 #define STOP 3
 
-#define HEIGHT 10.0     // height of camera/player
-#define BOUNCE_RATE 2.0 // player jump rate
-#define NUMSIZE .1      // size of onscreen numbers
-#define FUR_SLICE 8     // not used DELME
+#define HEIGHT 10.0f     // height of camera/player
+#define BOUNCE_RATE 2.0f // player jump rate
+#define NUMSIZE 0.1f     // size of onscreen numbers
+#define FUR_SLICE 8      // not used DELME
 
 // game state
 #define INTRO 1
 #define PLAY 2
 #define OUTRO 3
 
-#define IQ 2      // furball bounces between change of direction
-#define SPEED 1.5 // furball speed
+#define IQ 2       // furball bounces between change of direction
+#define SPEED 1.5f // furball speed
 
 // graphics quality settings
 #if LOFI == 1
-#define DRAW_DIST 500.0 // rendering / fog distance
-#define PARTICLES 128   // number of max onscreen particles
-#define BALLZ 666       // number of furballs
-#define TRAIL 1         // hair length for hairy furballs
-#define LINE_WIDTH 24.0 // line width for grass
+#define DRAW_DIST 500.0f // rendering / fog distance
+#define PARTICLES 128    // number of max onscreen particles
+#define BALLZ 666        // number of furballs
+#define TRAIL 1          // hair length for hairy furballs
+#define LINE_WIDTH 24.0f // line width for grass
 #else
-#define LINE_WIDTH 12.0
+#define LINE_WIDTH 12.0f
 #define PARTICLES 256
 #define BALLZ 666
 #define TRAIL 4
-#define DRAW_DIST 2000.0
+#define DRAW_DIST 2000.0f
 #endif
 
 #define MAX_ENTITIES 1024 // max scene entities
@@ -550,41 +550,38 @@ draw_ents(void)
 static void
 draw_tree(void)
 {
-  int c = 0, pix = 0;
-  GLfloat fx = 0.0, fy = 0.0, fs = 0.0, r = 0.0, g = 0.0, b = 0.0, xx = 0.0, yy = 0.0;
-
   // draws array of ground quads
   glBegin(GL_QUADS);
-  for (int x = 0; x < ground_bmp->w; x++)
+  for (int32_t x = 0; x < ground_bmp->w; x++)
     {
-      for (int y = 0; y < ground_bmp->h; y++)
+      for (int32_t y = 0; y < ground_bmp->h; y++)
         {
-          fx = (x * WORLD_SIZE) / ground_bmp->w;
-          fy = (y * WORLD_SIZE) / ground_bmp->w;
-          fs = WORLD_SIZE / ground_bmp->w;
-          xx = fx - playerx;
-          yy = fy - playerz;
+          GLfloat fx = ((GLfloat)x * WORLD_SIZE) / (GLfloat)ground_bmp->w;
+          GLfloat fy = ((GLfloat)y * (int32_t)WORLD_SIZE) / (GLfloat)ground_bmp->w;
+          GLfloat fs = WORLD_SIZE / (GLfloat)ground_bmp->w;
+          GLfloat xx = fx - playerx;
+          GLfloat yy = fy - playerz;
 
           // if close enough, draws
           if (xx * xx + yy * yy < DRAW_DIST * DRAW_DIST)
             {
-              c = (x + y) & 1;
-              pix = getpixel(ground_bmp, x, y);
-              r = getr(pix) / 256.0;
-              g = getg(pix) / 256.0;
-              b = getb(pix) / 256.0;
+              int32_t c = (x + y) & 1;
+              int32_t pix = getpixel(ground_bmp, x, y);
+              GLfloat r = (GLfloat)getr(pix) / 256.0f;
+              GLfloat g = (GLfloat)getg(pix) / 256.0f;
+              GLfloat b = (GLfloat)getb(pix) / 256.0f;
               if (c)
                 {
-                  r *= .8;
-                  g *= .8;
-                  b *= .8;
+                  r *= 0.8f;
+                  g *= 0.8f;
+                  b *= 0.8f;
                 }
 
               glColor3f(r, g, b);
-              glVertex3f(fx, 0.0, fy);
-              glVertex3f(fx, 0.0, fy + fs);
-              glVertex3f(fx + fs, 0.0, fy + fs);
-              glVertex3f(fx + fs, 0.0, fy);
+              glVertex3f(fx, 0.0f, fy);
+              glVertex3f(fx, 0.0f, fy + fs);
+              glVertex3f(fx + fs, 0.0f, fy + fs);
+              glVertex3f(fx + fs, 0.0f, fy);
             }
         }
     }
@@ -595,7 +592,7 @@ draw_tree(void)
   draw_ents();
 
   // draws grass
-  draw_buffer(grass, 0, 0, 0, 1, 0);
+  draw_buffer(grass, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
 
   // draws furballs
   draw_ballz();
