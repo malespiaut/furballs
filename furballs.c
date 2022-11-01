@@ -272,10 +272,10 @@ vboize(BUFFER* b)
       return;
     }
 
-  size_t nb_elements = 0;
+  GLsizeiptr nb_elements = 0;
   if (b->size > 0)
     {
-      nb_elements = sizeof(float) * 3 * (size_t)b->size;
+      nb_elements = (GLsizeiptr)sizeof(float) * 3 * b->size;
     }
 
   printf("Vboizing buffer with %d elements\n", b->size);
