@@ -17,8 +17,9 @@
 
 // standard includes
 // included allegro to get a kickstart for the tight deadline
-#include <float.h>  // for FLT_EPSILON
-#include <math.h>   // just math
+#include <float.h> // for FLT_EPSILON
+#include <math.h>  // just math
+#include <stdbool.h>
 #include <stdio.h>  // standard
 #include <string.h> // for isExtensionSupported
 
@@ -128,9 +129,9 @@ typedef struct FURBALL
     *mine;                     // actually drawn buffer
   GLfloat x, y, z,             // position
     scale,                     // size
-    r, g, b,                   // colour
-    ultimate,                  // is it dynamic (the long-haired one
-    a,                         // angle of movement
+    r, g, b;                   // colour
+  bool ultimate;               // is it dynamic (the long-haired one
+  GLfloat a,                   // angle of movement
     bounce,                    // bounce rate
     speed,                     // speed of movement
     bounce_rate;               // base bounce rate
@@ -354,16 +355,16 @@ draw_eyes(FURBALL* f)
   GLfloat s = 0.0f;
 
   // haired furballs are bigger
-  x1 *= cosf(f->a) * (f->ultimate > FLT_EPSILON ? 1.0f : 10.0f);
-  z1 *= sinf(f->a) * (f->ultimate > FLT_EPSILON ? 1.0f : 8.0f);
+  x1 *= cosf(f->a) * (f->ultimate ? 1.0f : 10.0f);
+  z1 *= sinf(f->a) * (f->ultimate ? 1.0f : 8.0f);
 
-  x2 *= cosf(-f->a) * (f->ultimate > FLT_EPSILON ? 1.0f : 10.0f);
-  z2 *= sinf(-f->a) * (f->ultimate > FLT_EPSILON ? 1.0f : 8.0f);
-  y = (f->ultimate > FLT_EPSILON ? 1.5f : 10.0f);
+  x2 *= cosf(-f->a) * (f->ultimate ? 1.0f : 10.0f);
+  z2 *= sinf(-f->a) * (f->ultimate ? 1.0f : 8.0f);
+  y = (f->ultimate ? 1.5f : 10.0f);
 
   // gets point size for this furball
   glGetFloatv(GL_POINT_SIZE, &s);
-  if (f->ultimate > FLT_EPSILON)
+  if (f->ultimate)
     {
       // gets line width if it's a hairy one
       glGetFloatv(GL_LINE_WIDTH, &s);
@@ -496,7 +497,7 @@ draw_furball(FURBALL* f)
     {
       if (f->exists)
         {
-          if (f->ultimate > FLT_EPSILON)
+          if (f->ultimate)
             {
               draw_furball_ultimate(f);
             }
@@ -841,7 +842,7 @@ generate_cloud_triple(const char* filename_x, const char* filename_z, const char
 
 //  this creates a furball instance
 static FURBALL*
-spawn_furball(GLfloat x, GLfloat y, GLfloat z, BUFFER* b, size_t density, GLfloat ultimate, GLfloat red, GLfloat green, GLfloat blue)
+spawn_furball(GLfloat x, GLfloat y, GLfloat z, BUFFER* b, size_t density, bool ultimate, GLfloat red, GLfloat green, GLfloat blue)
 {
   // allocates memory
   FURBALL* f = malloc(sizeof(*f));
@@ -849,7 +850,7 @@ spawn_furball(GLfloat x, GLfloat y, GLfloat z, BUFFER* b, size_t density, GLfloa
 
   // number of mesh vertices is specified through density
   // it represents, slices, sectors and depth
-  size_t bufsize = density * density * density * TRAIL * (ultimate > FLT_EPSILON ? 12 : 3) * sizeof(*f->mine->vtx);
+  size_t bufsize = density * density * density * TRAIL * (ultimate ? 12 : 3) * sizeof(*f->mine->vtx);
 
   f->mine->vtx = malloc(bufsize);
   f->mine->clr = malloc(bufsize);
@@ -1023,7 +1024,7 @@ generate_furball_normal(GLfloat size, size_t cuts, size_t density)
 static void
 create_ballz(void)
 {
-  int32_t is_good = 0;
+  bool is_good = false;
 
   for (size_t c = 0; c < BALLZ; c++)
     {
@@ -1045,7 +1046,7 @@ create_ballz(void)
       GLfloat z = ((float)(rand() % 1024) / 1024.0f) * WORLD_SIZE;
 
       // creates the instance
-      ballz[c] = spawn_furball(x, y, z, is_good ? ultimate_furball : casual_furball, 8, (float)is_good, r, g, b);
+      ballz[c] = spawn_furball(x, y, z, is_good ? ultimate_furball : casual_furball, 8, is_good, r, g, b);
 
       // sets up ai
       ballz[c]->iq = 0;
@@ -1230,7 +1231,7 @@ update_ballz(void)
           // updates position
           fur->x += cosf(fur->a) * fur->speed;
           fur->z += sinf(fur->a) * fur->speed;
-          fur->y = fur->scale * (fur->ultimate > FLT_EPSILON ? 1 : 8) + ABS(sinf(fur->iq) * fur->bounce_rate);
+          fur->y = fur->scale * (fur->ultimate ? 1 : 8) + ABS(sinf(fur->iq) * fur->bounce_rate);
 
           // keeps inside the world
           if (fur->x < 0)
