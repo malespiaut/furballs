@@ -1276,20 +1276,21 @@ static BUFFER*
 generate_world_map(const char* grass_file, const char* height_file, const char* entity_file, size_t density)
 {
   BUFFER* b = NULL;
-  BITMAP *bmpg = NULL, *bmph = NULL, *bmph_t = NULL, *bmpg_t = NULL;
   int size_x = 0, size_y = 0, col = 0;
   size_t line_counter = 0;
-  GLfloat *vertex = NULL, *colour = NULL, colour_deviation = 0.0, grass_x = 0.0, grass_y = 0.0, grass_h = 0.0, patch_size = 0.0;
+  GLfloat *vertex = NULL, *colour = NULL, grass_x = 0.0f, grass_y = 0.0f, grass_h = 0.0f, patch_size = 0.0f;
   printf("Creating grass from %s...\n", grass_file);
 
   // randomisation constants
-  colour_deviation = .1;
+  GLfloat colour_deviation = 0.1f;
 
+  BITMAP* bmpg = NULL;
+  BITMAP* bmph = NULL;
   // lofi gets smaller bitmaps
   if (LOFI)
     {
-      bmpg_t = load_bmp(grass_file, 0);
-      bmph_t = load_bmp(height_file, 0);
+      BITMAP* bmpg_t = load_bmp(grass_file, 0);
+      BITMAP* bmph_t = load_bmp(height_file, 0);
       bmpg = create_bitmap(bmpg_t->w / 2, bmpg_t->h / 2);
       bmph = create_bitmap(bmph_t->w / 2, bmph_t->h / 2);
       stretch_blit(bmph_t, bmph, 0, 0, bmph_t->w, bmph_t->h, 0, 0, bmph_t->w / 2, bmph_t->h / 2);
