@@ -242,7 +242,7 @@ length3v(GLfloat* a)
 static GLfloat
 dist3v(GLfloat* a, GLfloat* b)
 {
-  GLfloat x = 0.0, y = 0.0, z = 0.0;
+  GLfloat x = 0.0f, y = 0.0f, z = 0.0f;
   x = a[0] - b[0];
   y = a[1] - b[1];
   z = a[2] - b[2];
@@ -314,7 +314,7 @@ draw_buffer_ex(BUFFER* b, GLfloat x, GLfloat y, GLfloat z, GLfloat sx, GLfloat s
   glPushMatrix();
   glScalef(sx, sy, sz);
   glTranslatef(x / sx, y / sy, z / sz);
-  glRotatef(angle, 0.0, 1.0, 0.0);
+  glRotatef(angle, 0.0f, 1.0f, 0.0f);
 
   // draws a VBO or vertex array
   if (b->hardware)
@@ -340,7 +340,7 @@ draw_buffer_ex(BUFFER* b, GLfloat x, GLfloat y, GLfloat z, GLfloat sx, GLfloat s
 static void
 draw_buffer(BUFFER* b, GLfloat x, GLfloat y, GLfloat z, GLfloat scale, GLfloat angle)
 {
-  draw_buffer_ex(b, x, y, z, scale, scale, scale, 1.0, angle);
+  draw_buffer_ex(b, x, y, z, scale, scale, scale, 1.0f, angle);
 }
 
 // draws eyes for a furball
@@ -401,7 +401,7 @@ draw_eyes(FURBALL* f)
 static void
 draw_furball_ultimate(FURBALL* f)
 {
-  GLfloat *vertex = NULL, *basevertex = NULL, dir[3] = {0.0}, dist = 0.0, lsize = 0.0, *colour = NULL, *basecolour = NULL;
+  GLfloat *vertex = NULL, *basevertex = NULL, dir[3] = {0.0f}, dist = 0.0f, lsize = 0.0f, *colour = NULL, *basecolour = NULL;
 
   // fetches base vertex buffer for augmentation
   vertex = f->mine->vtx;
@@ -447,7 +447,7 @@ draw_furball_ultimate(FURBALL* f)
   dist = sqrtf((f->x - playerx) * (f->x - playerx) + (f->y - playery) * (f->y - playery) + (f->z - playerz) * (f->z - playerz));
   lsize = 640 / dist;
   // if it's too small, no use drawing
-  if (lsize < .01)
+  if (lsize < 0.01f)
     {
       return;
     }
@@ -475,7 +475,7 @@ draw_furball_normal(FURBALL* f)
 static void
 draw_blood(BLOOD* b, size_t num)
 {
-  glPointSize(20.0);
+  glPointSize(20.0f);
   glBegin(GL_POINTS);
   for (size_t c = 0; c < num; c++)
     {
@@ -489,7 +489,7 @@ draw_blood(BLOOD* b, size_t num)
 static void
 draw_furball(FURBALL* f)
 {
-  GLfloat x = 0.0, y = 0.0, z = 0.0;
+  GLfloat x = 0.0f, y = 0.0f, z = 0.0f;
   x = f->x - playerx;
   y = f->y - playery;
   z = f->z - playerz;
@@ -530,7 +530,7 @@ draw_ballz(void)
 static void
 draw_ents(void)
 {
-  GLfloat x = 0.0, z = 0.0, dist = 0.0;
+  GLfloat x = 0.0f, z = 0.0f, dist = 0.0f;
   for (size_t c = 0; c < num_ents; c++)
     {
       x = ents[c].x - playerx;
@@ -1100,7 +1100,7 @@ shoot(void)
 {
   int h = 0;
   FURBALL* hitball = 0;
-  GLfloat p[3] = {0.0}, b[3] = {0.0}, m[3] = {0.0}, p_minus_b[3] = {0.0}, t0 = 0.0, pdist = 0.0, rdist = 0.0, rhit[3] = {0.0};
+  GLfloat p[3] = {0.0f}, b[3] = {0.0f}, m[3] = {0.0f}, p_minus_b[3] = {0.0f}, t0 = 0.0f, pdist = 0.0f, rdist = 0.0f, rhit[3] = {0.0f};
   play_sample(shot, 255, 128, 1000, 0);
   // gets shoot position and direction
   b[0] = playerx;
@@ -1128,7 +1128,7 @@ shoot(void)
               rhit[1] = p[1] - (b[1] + t0 * m[1]);
               rhit[2] = p[2] - (b[2] + t0 * m[2]);
               rdist = length3v(rhit);
-              if (rdist < 10.0)
+              if (rdist < 10.0f)
                 {
                   printf("hit with rdist: %g\n", rdist);
                   if (dist3v(b, p) < pdist)
@@ -1142,7 +1142,7 @@ shoot(void)
         }
     }
   // checks if furball is close enough to the ray to be hit
-  if (h && pdist < 300.0)
+  if (h && pdist < 300.0f)
     {
       // disables furball rendering
       hitball->exists = 0;
@@ -1325,9 +1325,9 @@ generate_world_map(const char* grass_file, const char* height_file, const char* 
             {
               // for each bitmap pixel it creates [density] grass blades
               // colour and height get randomised a bit
-              grass_x = ((x * WORLD_SIZE) / size_x) + ((((rand() % 512) / 512.0)) * patch_size);
-              grass_y = ((y * WORLD_SIZE) / size_x) + ((((rand() % 512) / 512.0)) * patch_size);
-              grass_h = (.1 * getr(getpixel(bmph, x, y))) + ((((rand() % 512) / 512.0)) * (grass_h * .3));
+              grass_x = ((x * WORLD_SIZE) / size_x) + ((((rand() % 512) / 512.0f)) * patch_size);
+              grass_y = ((y * WORLD_SIZE) / size_x) + ((((rand() % 512) / 512.0f)) * patch_size);
+              grass_h = (0.1f * getr(getpixel(bmph, x, y))) + ((((rand() % 512) / 512.0f)) * (grass_h * 0.3f));
               vertex[0] = grass_x;
               vertex[1] = 0;
               vertex[2] = grass_y;
@@ -1335,12 +1335,12 @@ generate_world_map(const char* grass_file, const char* height_file, const char* 
               vertex[4] = grass_h;
               vertex[5] = grass_y;
               col = getpixel(bmpg, x, y);
-              colour[3] = ((getr(col)) / 256.0) + ((((rand() % 512) / 256.0) - 1.0) * colour_deviation);
-              colour[4] = ((getg(col)) / 256.0) + ((((rand() % 512) / 256.0) - 1.0) * colour_deviation);
-              colour[5] = ((getb(col)) / 256.0) + ((((rand() % 512) / 256.0) - 1.0) * colour_deviation);
-              colour[0] = colour[3] * .5;
-              colour[1] = colour[4] * .5;
-              colour[2] = colour[5] * .5;
+              colour[3] = ((getr(col)) / 256.0f) + ((((rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
+              colour[4] = ((getg(col)) / 256.0f) + ((((rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
+              colour[5] = ((getb(col)) / 256.0f) + ((((rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
+              colour[0] = colour[3] * 0.5f;
+              colour[1] = colour[4] * 0.5f;
+              colour[2] = colour[5] * 0.5f;
               line_counter += 2;
               vertex += 6;
               colour += 6;
@@ -1364,9 +1364,9 @@ generate_world_map(const char* grass_file, const char* height_file, const char* 
       for (int y = 0; y < size_y; y++)
         {
           // iterates through pixel looking for values representing entities
-          grass_x = ((x * WORLD_SIZE) / size_x) + ((((rand() % 512) / 512.0)) * patch_size);
-          grass_y = ((y * WORLD_SIZE) / size_x) + ((((rand() % 512) / 512.0)) * patch_size);
-          grass_h = 1.0 + ((((rand() % 512) / 512.0)) * 1.0);
+          grass_x = ((x * WORLD_SIZE) / size_x) + ((((rand() % 512) / 512.0f)) * patch_size);
+          grass_y = ((y * WORLD_SIZE) / size_x) + ((((rand() % 512) / 512.0f)) * patch_size);
+          grass_h = 1.0f + ((((rand() % 512) / 512.0f)) * 1.0f);
           col = getpixel(bmph, x, y);
           if (col == makecol(0, 255, 0))
             {
@@ -1375,7 +1375,7 @@ generate_world_map(const char* grass_file, const char* height_file, const char* 
               ents[num_ents].y = 0;
               ents[num_ents].z = grass_y;
               ents[num_ents].s = grass_h * 4;
-              ents[num_ents].a = ((((rand() % 512) / 512.0)) * 360);
+              ents[num_ents].a = ((((rand() % 512) / 512.0f)) * 360);
               num_ents++;
             }
           if (col == makecol(255, 255, 128))
@@ -1385,7 +1385,7 @@ generate_world_map(const char* grass_file, const char* height_file, const char* 
               ents[num_ents].y = 0;
               ents[num_ents].z = grass_y;
               ents[num_ents].s = grass_h * 2;
-              ents[num_ents].a = ((((rand() % 512) / 512.0)) * 360);
+              ents[num_ents].a = ((((rand() % 512) / 512.0f)) * 360);
               num_ents++;
             }
           if (col == makecol(0, 128, 0))
@@ -1395,7 +1395,7 @@ generate_world_map(const char* grass_file, const char* height_file, const char* 
               ents[num_ents].y = 0;
               ents[num_ents].z = grass_y;
               ents[num_ents].s = grass_h * 3;
-              ents[num_ents].a = ((((rand() % 512) / 512.0)) * 360);
+              ents[num_ents].a = ((((rand() % 512) / 512.0f)) * 360);
               num_ents++;
             }
           if (col == makecol(128, 64, 64))
@@ -1405,7 +1405,7 @@ generate_world_map(const char* grass_file, const char* height_file, const char* 
               ents[num_ents].y = 0;
               ents[num_ents].z = grass_y;
               ents[num_ents].s = grass_h * 1.5;
-              ents[num_ents].a = ((((rand() % 512) / 512.0)) * 360);
+              ents[num_ents].a = ((((rand() % 512) / 512.0f)) * 360);
               num_ents++;
             }
           if (col == makecol(0, 255, 255))
@@ -1415,7 +1415,7 @@ generate_world_map(const char* grass_file, const char* height_file, const char* 
               ents[num_ents].y = 0;
               ents[num_ents].z = grass_y;
               ents[num_ents].s = grass_h * 3;
-              ents[num_ents].a = ((((rand() % 512) / 512.0)) * 360);
+              ents[num_ents].a = ((((rand() % 512) / 512.0f)) * 360);
               num_ents++;
             }
           if (col == makecol(255, 0, 0))
@@ -1425,7 +1425,7 @@ generate_world_map(const char* grass_file, const char* height_file, const char* 
               ents[num_ents].y = 0;
               ents[num_ents].z = grass_y;
               ents[num_ents].s = grass_h * 2;
-              ents[num_ents].a = (((rand() % 4)) * 90.0);
+              ents[num_ents].a = (((rand() % 4)) * 90.0f);
               num_ents++;
             }
           if (col == makecol(255, 128, 128))
@@ -1435,7 +1435,7 @@ generate_world_map(const char* grass_file, const char* height_file, const char* 
               ents[num_ents].y = 0;
               ents[num_ents].z = grass_y;
               ents[num_ents].s = grass_h * 6;
-              ents[num_ents].a = 90.0; //((((rand()%512)/512.0))*360);
+              ents[num_ents].a = 90.0f; //((((rand()%512)/512.0))*360);
               num_ents++;
             }
           if (col == makecol(128, 0, 0))
@@ -1444,8 +1444,8 @@ generate_world_map(const char* grass_file, const char* height_file, const char* 
               ents[num_ents].x = grass_x;
               ents[num_ents].y = 0;
               ents[num_ents].z = grass_y;
-              ents[num_ents].s = grass_h * 1.5;
-              ents[num_ents].a = (((rand() % 4)) * 90.0);
+              ents[num_ents].s = grass_h * 1.5f;
+              ents[num_ents].a = (((rand() % 4)) * 90.0f);
               num_ents++;
             }
         }
@@ -1459,8 +1459,8 @@ static void
 generate_stuff(void)
 {
   // generate_font("cartographer.ttf",1000);
-  ultimate_furball = generate_furball_ultimate(1.0, TRAIL, 8);
-  casual_furball = generate_furball_normal(8.0, TRAIL, 8);
+  ultimate_furball = generate_furball_ultimate(1.0f, TRAIL, 8);
+  casual_furball = generate_furball_normal(8.0f, TRAIL, 8);
   tall_tree = generate_cloud_triple("tall_tree.bmp", "tall_tree.bmp", "tall_tree_top.bmp", 1);
   withered_bush = generate_cloud_double("small_bush_left.bmp", "small_bush_front.bmp", 1);
   cactus = generate_cloud_double("cactus_front.bmp", "cactus_side.bmp", 1);
@@ -1519,7 +1519,7 @@ timer_proc(void)
               play_sample(whistle, 255, 128, 1000, 0);
               for (size_t c = 0; c < BALLZ; c++)
                 {
-                  ballz[c]->a = atan2(-ballz[c]->z + playerz, -ballz[c]->x + playerx);
+                  ballz[c]->a = atan2f(-ballz[c]->z + playerz, -ballz[c]->x + playerx);
                   ballz[c]->iq += kPiMultipliedBy4;
                 }
             }
@@ -1534,8 +1534,8 @@ timer_proc(void)
       get_mouse_mickeys(&mx, &my);
       position_mouse(SCREEN_W / 2, mouse_y);
       update_blood(blood, PARTICLES);
-      lookx = kPiDividedBy2 * (1.0 * (mouse_y - (SCREEN_H / 2))) / (SCREEN_H / 2.0);
-      looky += kPi * (mx * 1.0) / (640 / 2.0);
+      lookx = kPiDividedBy2 * (1.0f * (mouse_y - (SCREEN_H / 2))) / (SCREEN_H / 2.0f);
+      looky += kPi * (mx * 1.0f) / (640 / 2.0f);
 
       // moves player according to key input
       if (key[KEY_LEFT] || key[KEY_A])
@@ -1575,12 +1575,12 @@ timer_proc(void)
         {
           if (ABS(playery - HEIGHT) > HAYSTACK * sinf((playerx / WORLD_SIZE) * kPi) * sinf((playerx / WORLD_SIZE) * kPi) * sinf((playerz / WORLD_SIZE) * kPi) * sinf((playerz / WORLD_SIZE) * kPi))
             {
-              playery -= SGN(playery - HEIGHT) * .4;
+              playery -= SGN(playery - HEIGHT) * 0.4f;
             }
           else
             {
               state = IDLE;
-              lookf = 0.0;
+              lookf = 0.0f;
             }
         }
       // shoots
@@ -1595,32 +1595,32 @@ timer_proc(void)
   // if idle, add breathe effect aswell
   if (state == IDLE)
     {
-      lookf += .2;
-      playery = HEIGHT + (bounce * .3 * (sinf(lookf)));
+      lookf += 0.2f;
+      playery = HEIGHT + (bounce * 0.3f * (sinf(lookf)));
     }
   if (state == WALK)
     {
-      lookf += 0.1;
+      lookf += 0.1f;
 
       playery = HEIGHT + (bounce * (sinf(lookf)));
     }
 
   // keeps player inside the world
-  if (playerx > (WORLD_SIZE - 50.0))
+  if (playerx > (WORLD_SIZE - 50.0f))
     {
-      playerx = (WORLD_SIZE - 50.0);
+      playerx = (WORLD_SIZE - 50.0f);
     }
-  if (playerz > (WORLD_SIZE - 50.0))
+  if (playerz > (WORLD_SIZE - 50.0f))
     {
-      playerz = (WORLD_SIZE - 50.0);
+      playerz = (WORLD_SIZE - 50.0f);
     }
-  if (playerx < 50.0)
+  if (playerx < 50.0f)
     {
-      playerx = 50.0;
+      playerx = 50.0f;
     }
-  if (playerz < 50.0)
+  if (playerz < 50.0f)
     {
-      playerz = 50.0;
+      playerz = 50.0f;
     }
 
   // updates furballs
@@ -1672,7 +1672,7 @@ draw(void)
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
   glPushMatrix();
-  glFrustum(-((1.0 * SCREEN_W) / SCREEN_H), (1.0 * SCREEN_W) / SCREEN_H, -1.0, 1.0, 1.0, DRAW_DIST);
+  glFrustum(-((1.0f * SCREEN_W) / SCREEN_H), (1.0f * SCREEN_W) / SCREEN_H, -1.0f, 1.0f, 1.0f, DRAW_DIST);
   glMatrixMode(GL_MODELVIEW);
 
   // Clear the RGB buffer and the depth buffer
@@ -1683,16 +1683,16 @@ draw(void)
   glPushMatrix();
 
   // Set the camera
-  glRotatef(DEG(lookx), 1, 0, 0);
-  glRotatef(DEG(looky) + 90.0, 0, 1, 0);
-  glRotatef(DEG(lookz), 0, 0, 1);
+  glRotatef(DEG(lookx), 1.0f, 0.0f, 0.0f);
+  glRotatef(DEG(looky) + 90.0f, 0.0f, 1.0f, 0.0f);
+  glRotatef(DEG(lookz), 0.0f, 0.0f, 1.0f);
   glTranslatef(-playerx, -playery, -playerz);
 
   // Save the camera matrix
   glMatrixMode(GL_MODELVIEW);
   glPushMatrix();
   glLoadIdentity();
-  glTranslatef(0, sinf(lookx * 1.333), 0);
+  glTranslatef(0.0f, sinf(lookx * 1.333f), 0.0f);
   glMatrixMode(GL_PROJECTION);
   glPushMatrix();
   glLoadIdentity();
@@ -1701,24 +1701,24 @@ draw(void)
 
   // draws backgorund
   glBegin(GL_QUADS);
-  glColor3f(1.0, .8, .4);
-  glVertex2f(-1, .5);
-  glVertex2f(1, .5);
-  glColor3f(1.0, .85, .6);
-  glVertex2f(1, .2);
-  glVertex2f(-1, .2);
+  glColor3f(1.0f, 0.8f, 0.4f);
+  glVertex2f(-1.0f, 0.5f);
+  glVertex2f(1.0f, 0.5f);
+  glColor3f(1.0f, 0.85f, 0.6f);
+  glVertex2f(1.0f, 0.2f);
+  glVertex2f(-1.0f, 0.2f);
 
-  glVertex2f(-1, .2);
-  glVertex2f(1, .2);
-  glColor3f(1.0, .9, .8);
-  glVertex2f(1, 0);
-  glVertex2f(-1, 0);
+  glVertex2f(-1.0f, 0.2f);
+  glVertex2f(1.0f, 0.2f);
+  glColor3f(1.0f, 0.9f, 0.8f);
+  glVertex2f(1.0f, 0.0f);
+  glVertex2f(-1.0f, 0.0f);
 
-  glVertex2f(-1, 0);
-  glVertex2f(1, 0);
-  glColor3f(0, 0, 0);
-  glVertex2f(1, -1);
-  glVertex2f(-1, -1);
+  glVertex2f(-1.0f, 0.0f);
+  glVertex2f(1.0f, 0.0f);
+  glColor3f(0.0f, 0.0f, 0.0f);
+  glVertex2f(1.0f, -1.0f);
+  glVertex2f(-1.0f, -1.0f);
   glEnd();
 
   glDepthMask(GL_TRUE);
@@ -1729,7 +1729,7 @@ draw(void)
   glPopMatrix();
 
   // Translate and rotate the object
-  glColor3f(1.0, 1.0, 1.0);
+  glColor3f(1.0f, 1.0f, 1.0f);
 
   // draws world
   draw_tree();
@@ -1740,19 +1740,19 @@ draw(void)
   glPopMatrix();
 
   glDisable(GL_TEXTURE_2D);
-  glColor3f(1.0, 1.0, 1.0);
-  mx = (mouse_x - 160) / 160.0;
-  my = -(mouse_y - 120) / 120.0;
+  glColor3f(1.0f, 1.0f, 1.0f);
+  mx = (mouse_x - 160) / 160.0f;
+  my = -(mouse_y - 120) / 120.0f;
 
-  glPointSize(3.0);
+  glPointSize(3.0f);
   glDisable(GL_DEPTH_TEST);
   if (game_state == PLAY)
     {
 
       // draws crosshair
       glBegin(GL_POINTS);
-      glColor4f(1.0, 1.0, 1.0, 1.0);
-      glVertex2f(0, 0);
+      glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+      glVertex2f(0.0f, 0.0f);
       glEnd();
 
       // draws numbers
@@ -1760,18 +1760,18 @@ draw(void)
       glBindTexture(GL_TEXTURE_2D, numbers);
       glBegin(GL_QUADS);
 
-      GLfloat ns = 0.0;
+      GLfloat ns = 0.0f;
       for (size_t c = 0; c < 7; c++, ns += NUMSIZE)
         {
 
-          glTexCoord2f(nums[c] * .090909, 1.0);
-          glVertex2f(-1.0 + ns, 1.0);
-          glTexCoord2f((nums[c] + 1) * .090909, 1.0);
-          glVertex2f(-1.0 + ns + (NUMSIZE * 1.2), 1.0);
-          glTexCoord2f((nums[c] + 1) * .090909, 0.0);
-          glVertex2f(-1.0 + ns + (NUMSIZE * 1.2), 1.0 - NUMSIZE);
-          glTexCoord2f(nums[c] * .090909, 0.0);
-          glVertex2f(-1.0 + ns, 1.0 - NUMSIZE);
+          glTexCoord2f(nums[c] * 0.090909f, 1.0f);
+          glVertex2f(-1.0f + ns, 1.0f);
+          glTexCoord2f((nums[c] + 1) * 0.090909f, 1.0f);
+          glVertex2f(-1.0f + ns + (NUMSIZE * 1.2f), 1.0f);
+          glTexCoord2f((nums[c] + 1) * 0.090909f, 0.0f);
+          glVertex2f(-1.0f + ns + (NUMSIZE * 1.2f), 1.0f - NUMSIZE);
+          glTexCoord2f(nums[c] * 0.090909f, 0.0);
+          glVertex2f(-1.0f + ns, 1.0f - NUMSIZE);
         }
 
       glEnd();
@@ -1784,14 +1784,14 @@ draw(void)
       glEnable(GL_TEXTURE_2D);
       glBindTexture(GL_TEXTURE_2D, intro);
       glBegin(GL_QUADS);
-      glTexCoord2f(0.0, 1.0);
-      glVertex2f(-1.0, 1.0);
-      glTexCoord2f(1.0, 1.0);
-      glVertex2f(1.0, 1.0);
-      glTexCoord2f(1.0, 0.0);
-      glVertex2f(1.0, -1.0);
-      glTexCoord2f(0.0, 0.0);
-      glVertex2f(-1.0, -1.0);
+      glTexCoord2f(0.0f, 1.0f);
+      glVertex2f(-1.0f, 1.0f);
+      glTexCoord2f(1.0f, 1.0f);
+      glVertex2f(1.0f, 1.0f);
+      glTexCoord2f(1.0f, 0.0f);
+      glVertex2f(1.0f, -1.0f);
+      glTexCoord2f(0.0f, 0.0f);
+      glVertex2f(-1.0f, -1.0f);
       glEnd();
       glDisable(GL_TEXTURE_2D);
     }
@@ -1802,14 +1802,14 @@ draw(void)
       glEnable(GL_TEXTURE_2D);
       glBindTexture(GL_TEXTURE_2D, outro);
       glBegin(GL_QUADS);
-      glTexCoord2f(0.0, 1.0);
-      glVertex2f(-1.0, 1.0);
-      glTexCoord2f(1.0, 1.0);
-      glVertex2f(1.0, 1.0);
-      glTexCoord2f(1.0, 0.0);
-      glVertex2f(1.0, -1.0);
-      glTexCoord2f(0.0, 0.0);
-      glVertex2f(-1.0, -1.0);
+      glTexCoord2f(0.0f, 1.0f);
+      glVertex2f(-1.0f, 1.0f);
+      glTexCoord2f(1.0f, 1.0f);
+      glVertex2f(1.0f, 1.0f);
+      glTexCoord2f(1.0f, 0.0f);
+      glVertex2f(1.0f, -1.0f);
+      glTexCoord2f(0.0f, 0.0f);
+      glVertex2f(-1.0f, -1.0f);
       glEnd();
       glDisable(GL_TEXTURE_2D);
     }
@@ -1836,7 +1836,7 @@ main(int argc, char** argv)
 
   int w = 0, h = 0;
   RECT rect = {0};
-  GLfloat fogc[] = {1.0, .8, .4, .0};
+  GLfloat fogc[] = {1.0f, 0.8f, 0.4f, 0.0f};
   char samp[64] = {0};
 
   h = rect.bottom - rect.top;
@@ -1875,8 +1875,8 @@ main(int argc, char** argv)
   glEnable(GL_DEPTH_TEST);
   glCullFace(GL_FRONT_AND_BACK);
   glDisable(GL_CULL_FACE);
-  glLineWidth(12.0);
-  glPointSize(26.0);
+  glLineWidth(12.0f);
+  glPointSize(26.0f);
   glHint(GL_LINE_SMOOTH_HINT, GL_FASTEST);
   glHint(GL_POINT_SMOOTH_HINT, GL_FASTEST);
   glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
@@ -1885,7 +1885,7 @@ main(int argc, char** argv)
   glEnable(GL_FOG);
   glFogf(GL_FOG_MODE, GL_LINEAR);
 
-  glFogf(GL_FOG_START, DRAW_DIST * (LOFI ? .8 : .6));
+  glFogf(GL_FOG_START, DRAW_DIST * (LOFI ? 0.8f : 0.6f));
   glFogf(GL_FOG_END, DRAW_DIST);
   glFogfv(GL_FOG_COLOR, (GLfloat*)&fogc);
 
@@ -1901,13 +1901,13 @@ main(int argc, char** argv)
   generate_stuff();
 
   // more gl setup
-  glClearColor(1.0, .8, .4, .0);
+  glClearColor(1.0f, 0.8f, 0.4f, 0.0f);
   glEnable(GL_BLEND);
   glEnable(GL_ALPHA_TEST);
-  glAlphaFunc(GL_GREATER, .3);
+  glAlphaFunc(GL_GREATER, 0.3f);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  playerx = 20.0;
-  playerz = 20.0;
+  playerx = 20.0f;
+  playerz = 20.0f;
   looky = kPiDividedBy4;
 
   get_mouse_mickeys(&mx, &my);
@@ -1936,8 +1936,8 @@ main(int argc, char** argv)
   playerx = 150;
   playery = HEIGHT;
   playerz = 150;
-  lookx = kPiDividedBy2 * (1.0 * ((SCREEN_H / 2) - (SCREEN_W / 2))) / (SCREEN_W / 2.0);
-  looky = 1.639519;
+  lookx = kPiDividedBy2 * (1.0f * ((SCREEN_H / 2) - (SCREEN_W / 2))) / (SCREEN_W / 2.0f);
+  looky = 1.639519f;
   lookz = 0;
 
   // plays music
