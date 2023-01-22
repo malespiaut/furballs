@@ -1315,7 +1315,7 @@ generate_world_map(const char* grass_file, const char* height_file, const char* 
   line_counter = 0;
   vertex = b->vtx;
   colour = b->clr;
-  patch_size = WORLD_SIZE / bmpg->w;
+  patch_size = WORLD_SIZE / (float)bmpg->w;
   printf("Beggining clouding...\n"); // actually grassing
   for (int x = 0; x < size_x; x++)
     {
