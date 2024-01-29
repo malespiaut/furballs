@@ -1,15 +1,7 @@
 ---
 Language: Cpp
-BasedOnStyle: GNU
-AllowShortBlocksOnASingleLine: Empty
-AllowShortEnumsOnASingleLine: false
-AllowShortFunctionsOnASingleLine: None
+BasedOnStyle: Mozilla
+AlwaysBreakAfterReturnType: TopLevelDefinitions
+BreakBeforeBraces: Allman
 ColumnLimit: 0
-ConstructorInitializerIndentWidth: 2
-ContinuationIndentWidth: 2
 Cpp11BracedListStyle: true
-IndentCaseBlocks: true
-IndentGotoLabels: false
-PointerAlignment: Left
-SpaceBeforeParens: ControlStatements
-TabWidth: 2
