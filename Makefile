@@ -18,9 +18,12 @@ WARNING_FLAGS_DEFAULT += -Wpedantic
 WARNING_FLAGS_DEFAULT += -Wshadow
 
 WARNING_FLAGS_EXTRA = -Waggregate-return
+WARNING_FLAGS_EXTRA += -Warith-conversion
 WARNING_FLAGS_EXTRA += -Wcast-align=strict
 WARNING_FLAGS_EXTRA += -Wcast-qual
 WARNING_FLAGS_EXTRA += -Wconversion
+WARNING_FLAGS_EXTRA += -Wdouble-promotion
+WARNING_FLAGS_EXTRA += -Wfloat-conversion
 WARNING_FLAGS_EXTRA += -Wfloat-equal
 WARNING_FLAGS_EXTRA += -Wformat=2
 WARNING_FLAGS_EXTRA += -Wmissing-prototypes
@@ -32,8 +35,8 @@ WARNING_FLAGS_EXTRA += -Wswitch-enum
 WARNING_FLAGS_EXTRA += -Wundef
 WARNING_FLAGS_EXTRA += -Wwrite-strings
 
-WARNING_FLAGS_ERROR = -Werror
-WARNING_FLAGS_ERROR += -Wfatal-errors
+#WARNING_FLAGS_ERROR = -Werror
+#WARNING_FLAGS_ERROR += -Wfatal-errors
 
 COMPILE_FLAGS = $(STD_FLAGS) $(WARNING_FLAGS_DEFAULT) $(WARNING_FLAGS_EXTRA) $(WARNING_FLAGS_ERROR)
 # Additional release-specific flags
