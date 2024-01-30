@@ -31,6 +31,9 @@
 //////////////////////////////////////////////////// DEFINES
 ////////////////////////////////////////////////////
 
+#define kScreenWidth 1920
+#define kScreenHeight 1200
+
 #define kPi 3.14159265358979323846f               /* pi */
 #define kPiDividedBy2 1.57079632679489661923f     /* pi/2 */
 #define kPiDividedBy4 0.78539816339744830962f     /* pi/4 */
@@ -369,7 +372,7 @@ draw_buffer_ex(Buffer* b, float x, float y, float z, float sx, float sy, float s
 
   // calculates point size from distance
   // sx is a scaling factor
-  float psize = (float)SCREEN_W * sx / dist;
+  float psize = (float)kScreenWidth * sx / dist;
   if (psize - 0.01f < FLT_EPSILON)
   {
     return;
@@ -1567,7 +1570,7 @@ timer_proc(void)
   // if it's intro, waits for space
   if (game_state == INTRO)
   {
-    position_mouse(SCREEN_W / 2, SCREEN_H / 2);
+    position_mouse(kScreenWidth / 2, kScreenHeight / 2);
     if (key[KEY_SPACE])
     {
       play_sample(youknow, 255, 128, 1000, 0);
@@ -1614,12 +1617,12 @@ timer_proc(void)
 
     // rotates camera using mouse input
     get_mouse_mickeys(&mx, &my);
-    position_mouse(SCREEN_W / 2, mouse_y);
+    position_mouse(kScreenWidth / 2, mouse_y);
     update_blood(blood, kParticles);
     // XXX: Original
-    //  lookx = kPiDividedBy2 * (1.0f * (float)(mouse_y - (SCREEN_H / 2))) / (float)(SCREEN_H / 2);
+    //  lookx = kPiDividedBy2 * (1.0f * (float)(mouse_y - (kScreenHeight / 2))) / (float)(kScreenHeight / 2);
     //  looky += kPi * ((float)mx * 1.0f) / (640 / 2.0f);
-    lookx = kPiDividedBy2 * (float)(mouse_y - (SCREEN_H / 2)) / (float)(SCREEN_H / 2);
+    lookx = kPiDividedBy2 * (float)(mouse_y - (kScreenHeight / 2)) / (float)(kScreenHeight / 2);
     looky += kPi * (float)mx / (640 / 2.0f);
 
     // moves player according to key input
@@ -1757,7 +1760,7 @@ draw(void)
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
   glPushMatrix();
-  glFrustum(-(float)(SCREEN_W / SCREEN_H), (float)(SCREEN_W / SCREEN_H), -1.0f, 1.0f, 1.0f, kDrawDist);
+  glFrustum(-(float)(kScreenWidth / kScreenHeight), (float)(kScreenWidth / kScreenHeight), -1.0f, 1.0f, 1.0f, kDrawDist);
   glMatrixMode(GL_MODELVIEW);
 
   // Clear the RGB buffer and the depth buffer
@@ -1919,14 +1922,9 @@ main(int argc, char** argv)
 {
   (void)argc;
 
-  int32_t w = 0;
-  int32_t h = 0;
-  Rectangle rect = {0};
   float fogc[] = {1.0f, 0.8f, 0.4f, 0.0f};
   char samp[64] = {0};
 
-  h = rect.bottom - rect.top;
-  w = rect.right - rect.left;
   // printf("Width: %d\nHeight: %d\n", w, h);
   //  allegro setup
   allegro_init();
@@ -1939,7 +1937,7 @@ main(int argc, char** argv)
   allegro_gl_set(AGL_DOUBLEBUFFER, 1);
   allegro_gl_set(AGL_SUGGEST, AGL_COLOR_DEPTH | AGL_Z_DEPTH | AGL_DOUBLEBUFFER | AGL_FULLSCREEN);
 
-  if (set_gfx_mode(GFX_OPENGL, w, h, 0, 0) < 0)
+  if (set_gfx_mode(GFX_OPENGL, kScreenWidth, kScreenHeight, 0, 0) < 0)
   {
     allegro_message("Error setting OpenGL graphics mode:\n%s\n"
                     "Allegro GL error : %s\n",
@@ -2022,7 +2020,7 @@ main(int argc, char** argv)
   playerx = 150;
   playery = kHeight;
   playerz = 150;
-  lookx = kPiDividedBy2 * (float)((SCREEN_H / 2) - (SCREEN_W / 2)) / (float)(SCREEN_W / 2);
+  lookx = kPiDividedBy2 * (float)((kScreenHeight / 2) - (kScreenWidth / 2)) / (float)(kScreenWidth / 2);
   looky = 1.639519f;
   lookz = 0;
 
