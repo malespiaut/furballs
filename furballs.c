@@ -519,7 +519,7 @@ draw_furball_ultimate(Furball* f)
   // calculates line width and draws
 
   dist = sqrtf((f->x - playerx) * (f->x - playerx) + (f->y - playery) * (f->y - playery) + (f->z - playerz) * (f->z - playerz));
-  lsize = 640 / dist;
+  lsize = kScreenWidth / dist;
   // if it's too small, no use drawing
   if (lsize < 0.01f)
   {
@@ -1621,9 +1621,9 @@ timer_proc(void)
     update_blood(blood, kParticles);
     // XXX: Original
     //  lookx = kPiDividedBy2 * (1.0f * (float)(mouse_y - (kScreenHeight / 2))) / (float)(kScreenHeight / 2);
-    //  looky += kPi * ((float)mx * 1.0f) / (640 / 2.0f);
+    //  looky += kPi * ((float)mx * 1.0f) / (kScreenWidth / 2.0f);
     lookx = kPiDividedBy2 * (float)(mouse_y - (kScreenHeight / 2)) / (float)(kScreenHeight / 2);
-    looky += kPi * (float)mx / (640 / 2.0f);
+    looky += kPi * (float)mx / (kScreenWidth / 2.0f);
 
     // moves player according to key input
     if (key[KEY_LEFT] || key[KEY_A])
