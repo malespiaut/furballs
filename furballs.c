@@ -201,8 +201,7 @@ int32_t frames = 0;   // frames rendered
 int32_t state = IDLE; // player state
 volatile int32_t tim; // threaded timing variable
 
-// Vec3 player = (Vec3){.x = 0.0f, .y = 0.0f, .z = 0.0f};
-Vec3 player = {0.0f, 0.0f, 0.0f};
+Vec3 player = {.x = 0.0f, .y = 0.0f, .z = 0.0f};
 float lookx = 0.0f; // player look direction
 float looky = 0.0f; // player look direction
 float lookz = 0.0f; // player look direction
@@ -1180,15 +1179,15 @@ shoot(void)
 {
   int32_t h = 0;
   Furball* hitball = 0;
-  Vec3 p_minus_b = (Vec3){0.0f};
+  Vec3 p_minus_b = {.x = 0.0f, .y = 0.0f, .z = 0.0f};
   float t0 = 0.0f;
   float rdist = 0.0f;
   float rhit[3] = {0.0f};
 
   play_sample(shot, 255, 128, 1000, 0);
   // gets shoot position and direction
-  Vec3 p = (Vec3){0.0f};
-  Vec3 m = (Vec3){.x = cosf(looky) * cosf(lookx), .y = -sinf(lookx), .z = sinf(looky) * cosf(lookx)};
+  Vec3 p = {.x = 0.0f, .y = 0.0f, .z = 0.0f};
+  Vec3 m = {.x = cosf(looky) * cosf(lookx), .y = -sinf(lookx), .z = sinf(looky) * cosf(lookx)};
   // float pdist = 999999.0f;
   float pdist = 3.40282347e+38F; // XXX: MAXFLOAT
   for (size_t c = 0; c < kBallz; c++)
