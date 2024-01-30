@@ -201,13 +201,12 @@ int32_t frames = 0;   // frames rendered
 int32_t state = IDLE; // player state
 volatile int32_t tim; // threaded timing variable
 
-float playerx = 0.0f; // player position
-float playery = 0.0f; // player position
-float playerz = 0.0f; // player position
-float lookx = 0.0f;   // player look direction
-float looky = 0.0f;   // player look direction
-float lookz = 0.0f;   // player look direction
-float lookf = 0.0f;   // player look direction
+// Vec3 player = (Vec3){.x = 0.0f, .y = 0.0f, .z = 0.0f};
+Vec3 player = {0.0f, 0.0f, 0.0f};
+float lookx = 0.0f; // player look direction
+float looky = 0.0f; // player look direction
+float lookz = 0.0f; // player look direction
+float lookf = 0.0f; // player look direction
 
 Buffer* ultimate_furball = NULL; // base buffer for ultimate furball (with ahir)
 Buffer* casual_furball = NULL;   // base buffer for simple furball
@@ -306,22 +305,30 @@ length3v(float* a)
 
 // 2 point distance
 static float
-dist3v(float* a, float* b)
+vec3_dist(Vec3 a, Vec3 b)
 {
+  /*
   float x = 0.0f;
   float y = 0.0f;
   float z = 0.0f;
   x = a[0] - b[0];
   y = a[1] - b[1];
   z = a[2] - b[2];
+
   return sqrtf(x * x + y * y + z * z);
+  */
+  float dx = b.x - a.x;
+  float dy = b.y - a.y;
+  float dz = b.z - a.z;
+  return sqrtf(dx * dx + dy * dy + dz + dz);
 }
 
 // dot product
 static float
-dot3v(float* a, float* b)
+vec3_dot(Vec3 a, Vec3 b)
 {
-  return (a[0] * b[0] + a[1] * b[1] + a[2] * b[2]);
+  return (a.x * b.x + a.y * b.y + a.z * b.z);
+  // return (a[0] * b[0] + a[1] * b[1] + a[2] * b[2]);
 }
 
 ////////////////////////////////////////////////////
@@ -368,7 +375,7 @@ vboize(Buffer* b)
 static void
 draw_buffer_ex(Buffer* b, float x, float y, float z, float sx, float sy, float sz, float point_size, float angle)
 {
-  float dist = sqrtf((x - playerx) * (x - playerx) + (y - playery) * (y - playery) + (z - playerz) * (z - playerz));
+  float dist = sqrtf((x - player.x) * (x - player.x) + (y - player.y) * (y - player.y) + (z - player.z) * (z - player.z));
 
   // calculates point size from distance
   // sx is a scaling factor
@@ -518,7 +525,7 @@ draw_furball_ultimate(Furball* f)
 
   // calculates line width and draws
 
-  dist = sqrtf((f->x - playerx) * (f->x - playerx) + (f->y - playery) * (f->y - playery) + (f->z - playerz) * (f->z - playerz));
+  dist = sqrtf((f->x - player.x) * (f->x - player.x) + (f->y - player.y) * (f->y - player.y) + (f->z - player.z) * (f->z - player.z));
   lsize = kScreenWidth / dist;
   // if it's too small, no use drawing
   if (lsize < 0.01f)
@@ -563,9 +570,9 @@ draw_blood(Blood* b, size_t num)
 static void
 draw_furball(Furball* f)
 {
-  float x = f->x - playerx;
-  float y = f->y - playery;
-  float z = f->z - playerz;
+  float x = f->x - player.x;
+  float y = f->y - player.y;
+  float z = f->z - player.z;
 
   if ((x * x + y * y + z * z) < kDrawDist * kDrawDist)
   {
@@ -606,8 +613,8 @@ draw_ents(void)
 {
   for (size_t c = 0; c < num_ents; c++)
   {
-    float x = ents[c].x - playerx;
-    float z = (ents[c].z) - playerz;
+    float x = ents[c].x - player.x;
+    float z = (ents[c].z) - player.z;
     float dist = (x * x + z * z) - 32 * 32 * ents[c].s * ents[c].s;
     if (dist < kDrawDist * kDrawDist)
     {
@@ -633,8 +640,8 @@ draw_tree(void)
       float fx = ((float)x * kWorldSize) / (float)ground_bmp->w;
       float fy = ((float)y * (int32_t)kWorldSize) / (float)ground_bmp->w;
       float fs = kWorldSize / (float)ground_bmp->w;
-      float xx = fx - playerx;
-      float yy = fy - playerz;
+      float xx = fx - player.x;
+      float yy = fy - player.z;
 
       // if close enough, draws
       if (xx * xx + yy * yy < kDrawDist * kDrawDist)
@@ -1173,22 +1180,15 @@ shoot(void)
 {
   int32_t h = 0;
   Furball* hitball = 0;
-  float p[3] = {0.0f};
-  float b[3] = {0.0f};
-  float m[3] = {0.0f};
-  float p_minus_b[3] = {0.0f};
+  Vec3 p_minus_b = (Vec3){0.0f};
   float t0 = 0.0f;
   float rdist = 0.0f;
   float rhit[3] = {0.0f};
 
   play_sample(shot, 255, 128, 1000, 0);
   // gets shoot position and direction
-  b[0] = playerx;
-  b[1] = playery;
-  b[2] = playerz;
-  m[0] = cosf(looky) * cosf(lookx);
-  m[1] = -sinf(lookx);
-  m[2] = sinf(looky) * cosf(lookx);
+  Vec3 p = (Vec3){0.0f};
+  Vec3 m = (Vec3){.x = cosf(looky) * cosf(lookx), .y = -sinf(lookx), .z = sinf(looky) * cosf(lookx)};
   // float pdist = 999999.0f;
   float pdist = 3.40282347e+38F; // XXX: MAXFLOAT
   for (size_t c = 0; c < kBallz; c++)
@@ -1196,25 +1196,25 @@ shoot(void)
     // picks furball closest to the ray
     if (ballz[c]->exists)
     {
-      p[0] = ballz[c]->x;
-      p[1] = ballz[c]->y;
-      p[2] = ballz[c]->z;
-      p_minus_b[0] = p[0] - b[0];
-      p_minus_b[1] = p[1] - b[1];
-      p_minus_b[2] = p[2] - b[2];
-      t0 = dot3v(m, p_minus_b) / dot3v(m, m);
+      p.x = ballz[c]->x;
+      p.y = ballz[c]->y;
+      p.z = ballz[c]->z;
+      p_minus_b.x = p.x - player.x;
+      p_minus_b.y = p.y - player.y;
+      p_minus_b.z = p.z - player.z;
+      t0 = vec3_dot(m, p_minus_b) / vec3_dot(m, m);
       if (t0 > 0)
       {
-        rhit[0] = p[0] - (b[0] + t0 * m[0]);
-        rhit[1] = p[1] - (b[1] + t0 * m[1]);
-        rhit[2] = p[2] - (b[2] + t0 * m[2]);
+        rhit[0] = p.x - (player.x + t0 * m.x);
+        rhit[1] = p.y - (player.y + t0 * m.y);
+        rhit[2] = p.z - (player.z + t0 * m.z);
         rdist = length3v(rhit);
         if (rdist < 10.0f)
         {
           // printf("hit with rdist: %g\n", (double)rdist);
-          if (dist3v(b, p) < pdist)
+          if (vec3_dist(player, p) < pdist)
           {
-            pdist = dist3v(b, p);
+            pdist = vec3_dist(player, p);
             h = 1;
             hitball = ballz[c];
           }
@@ -1604,7 +1604,7 @@ timer_proc(void)
         play_sample(whistle, 255, 128, 1000, 0);
         for (size_t c = 0; c < kBallz; c++)
         {
-          ballz[c]->a = atan2f(-ballz[c]->z + playerz, -ballz[c]->x + playerx);
+          ballz[c]->a = atan2f(-ballz[c]->z + player.z, -ballz[c]->x + player.x);
           ballz[c]->iq += kPiMultipliedBy4;
         }
       }
@@ -1628,27 +1628,27 @@ timer_proc(void)
     // moves player according to key input
     if (key[KEY_LEFT] || key[KEY_A])
     {
-      playerx += sinf(looky) * move_spd;
-      playerz += -cosf(looky) * move_spd;
+      player.x += sinf(looky) * move_spd;
+      player.z += -cosf(looky) * move_spd;
       state = WALK;
     }
     if (key[KEY_RIGHT] || key[KEY_D])
     {
-      playerx += -sinf(looky) * move_spd;
-      playerz += cosf(looky) * move_spd;
+      player.x += -sinf(looky) * move_spd;
+      player.z += cosf(looky) * move_spd;
       state = WALK;
     }
 
     if (key[KEY_UP] || key[KEY_W])
     {
-      playerx += cosf(looky) * move_spd;
-      playerz += sinf(looky) * move_spd;
+      player.x += cosf(looky) * move_spd;
+      player.z += sinf(looky) * move_spd;
       state = WALK;
     }
     if (key[KEY_DOWN] || key[KEY_S])
     {
-      playerx -= cosf(looky) * move_spd;
-      playerz -= sinf(looky) * move_spd;
+      player.x -= cosf(looky) * move_spd;
+      player.z -= sinf(looky) * move_spd;
       state = WALK;
     }
 
@@ -1661,9 +1661,9 @@ timer_proc(void)
     // if not moving, add breathing effect
     if (state == STOP)
     {
-      if (ABS(playery - kHeight) > kHaystack * sinf((playerx / kWorldSize) * kPi) * sinf((playerx / kWorldSize) * kPi) * sinf((playerz / kWorldSize) * kPi) * sinf((playerz / kWorldSize) * kPi))
+      if (ABS(player.y - kHeight) > kHaystack * sinf((player.x / kWorldSize) * kPi) * sinf((player.x / kWorldSize) * kPi) * sinf((player.z / kWorldSize) * kPi) * sinf((player.z / kWorldSize) * kPi))
       {
-        playery -= SGN(playery - kHeight) * 0.4f;
+        player.y -= SGN(player.y - kHeight) * 0.4f;
       }
       else
       {
@@ -1684,31 +1684,31 @@ timer_proc(void)
   if (state == IDLE)
   {
     lookf += 0.2f;
-    playery = kHeight + (bounce * 0.3f * (sinf(lookf)));
+    player.y = kHeight + (bounce * 0.3f * (sinf(lookf)));
   }
   if (state == WALK)
   {
     lookf += 0.1f;
 
-    playery = kHeight + (bounce * (sinf(lookf)));
+    player.y = kHeight + (bounce * (sinf(lookf)));
   }
 
   // keeps player inside the world
-  if (playerx > (kWorldSize - 50.0f))
+  if (player.x > (kWorldSize - 50.0f))
   {
-    playerx = (kWorldSize - 50.0f);
+    player.x = (kWorldSize - 50.0f);
   }
-  if (playerz > (kWorldSize - 50.0f))
+  if (player.z > (kWorldSize - 50.0f))
   {
-    playerz = (kWorldSize - 50.0f);
+    player.z = (kWorldSize - 50.0f);
   }
-  if (playerx < 50.0f)
+  if (player.x < 50.0f)
   {
-    playerx = 50.0f;
+    player.x = 50.0f;
   }
-  if (playerz < 50.0f)
+  if (player.z < 50.0f)
   {
-    playerz = 50.0f;
+    player.z = 50.0f;
   }
 
   // updates furballs
@@ -1774,7 +1774,7 @@ draw(void)
   glRotatef(DEG(lookx), 1.0f, 0.0f, 0.0f);
   glRotatef(DEG(looky) + 90.0f, 0.0f, 1.0f, 0.0f);
   glRotatef(DEG(lookz), 0.0f, 0.0f, 1.0f);
-  glTranslatef(-playerx, -playery, -playerz);
+  glTranslatef(-player.x, -player.y, -player.z);
 
   // Save the camera matrix
   glMatrixMode(GL_MODELVIEW);
@@ -1990,8 +1990,8 @@ main(int argc, char** argv)
   glEnable(GL_ALPHA_TEST);
   glAlphaFunc(GL_GREATER, 0.3f);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  playerx = 20.0f;
-  playerz = 20.0f;
+  player.x = 20.0f;
+  player.z = 20.0f;
   looky = kPiDividedBy4;
 
   get_mouse_mickeys(&mx, &my);
@@ -2017,9 +2017,9 @@ main(int argc, char** argv)
   }
 
   // sets player initial position and direction
-  playerx = 150;
-  playery = kHeight;
-  playerz = 150;
+  player.x = 150;
+  player.y = kHeight;
+  player.z = 150;
   lookx = kPiDividedBy2 * (float)((kScreenHeight / 2) - (kScreenWidth / 2)) / (float)(kScreenWidth / 2);
   looky = 1.639519f;
   lookz = 0;
