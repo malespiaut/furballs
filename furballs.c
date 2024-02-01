@@ -324,7 +324,6 @@ static float
 vec3_dot(Vec3 a, Vec3 b)
 {
   return (a.x * b.x + a.y * b.y + a.z * b.z);
-  // return (a[0] * b[0] + a[1] * b[1] + a[2] * b[2]);
 }
 
 ////////////////////////////////////////////////////
@@ -790,7 +789,7 @@ generate_cloud_double(const char* filename_x, const char* filename_z, size_t den
   float* colour = b->clr;
   Vec3 c = {.x = (float)size.x / 2.0f, .y = 0.0f, .z = (float)size.z / 2.0f};
 
-  for (int32_t x = 0.; x < size.x; ++x)
+  for (int32_t x = 0; x < size.x; ++x)
   {
     for (int32_t y = 0; y < size.y; ++y)
     {
