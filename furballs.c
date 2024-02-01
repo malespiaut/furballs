@@ -41,14 +41,12 @@
 #define kPiMultipliedBy4 12.56637061435917295384f /* pi*4 */
 
 // tweakable defines
-#define LOFI 0 // this disables VBOs, reduces drawing distance and furball complexity
-               // HiFi version runs smoothly on a modern PC or decent laptop
-               // LoFi version runs smoothly on a 10yo PC
-// #define kTurnSpeed 0.1f    // camera/player control sensitivity
+#define LOFI 0             // this disables VBOs, reduces drawing distance and furball complexity
+                           // HiFi version runs smoothly on a modern PC or decent laptop
+                           // LoFi version runs smoothly on a 10yo PC
 #define kMoveSpeed 1.0f    // camera/player move speed
 #define kWorldSize 2000.0f // side of scene square
-// #define kGrid 256           // number of floor grid cells
-#define kHaystack 100.0f // player height above the ground modifier
+#define kHaystack 100.0f   // player height above the ground modifier
 
 // defines for calculation simplification
 #define FRAND(x) (((rand() % (int)x) * 1024.0f) / 1024.0f)
@@ -62,7 +60,6 @@
 #define kHeight 10.0f    // height of camera/player
 #define kBounceRate 2.0f // player jump rate
 #define kNumSize 0.1f    // size of onscreen numbers
-// #define kFurSlice 8      // not used DELME
 
 // game state
 #define INTRO 1
@@ -103,6 +100,15 @@ struct Vec3
   float z;
 };
 
+typedef struct Vec3i Vec3i;
+struct Vec3i
+{
+  int32_t x;
+  int32_t y;
+  int32_t z;
+};
+
+/*
 typedef struct Color Color;
 struct Color
 {
@@ -111,7 +117,9 @@ struct Color
   float b;
   float a; // Alpha component for transparency
 };
+*/
 
+/*
 typedef struct Rectangle Rectangle;
 struct Rectangle
 {
@@ -120,6 +128,7 @@ struct Rectangle
   int32_t right;
   int32_t bottom;
 };
+*/
 
 // basic vertex buffer struct
 typedef struct Buffer Buffer;
@@ -185,11 +194,11 @@ struct Furball
 typedef struct Entity Entity;
 struct Entity
 {
-  float x;     // position, size, yaw (angle)
-  float y;     // position, size, yaw (angle)
-  float z;     // position, size, yaw (angle)
-  float s;     // position, size, yaw (angle)
-  float a;     // position, size, yaw (angle)
+  float x;     // position
+  float y;     // position
+  float z;     // position
+  float s;     // size
+  float a;     // yaw (angle)
   Buffer* buf; // vertex buffer
 };
 
@@ -211,7 +220,7 @@ Buffer* ultimate_furball = NULL; // base buffer for ultimate furball (with ahir)
 Buffer* casual_furball = NULL;   // base buffer for simple furball
 
 // vertex buffers for world entities
-Buffer* grass = NULL;
+Buffer* g_grass = NULL;
 Buffer* tall_tree = NULL;
 Buffer* withered_bush = NULL;
 Buffer* cactus = NULL;
@@ -228,7 +237,7 @@ float bounce = kBounceRate;      // player bounce rate
 Furball* ballz[kBallz] = {NULL}; // furballs
 int32_t mx = 0;                  // mouse delta position
 int32_t my = 0;                  // mouse delta position
-Blood blood[kParticles] = {0};   // particles
+Blood g_blood[kParticles] = {0}; // particles
 Entity ents[kMaxEntities] = {0}; // entities (map objects) array
 size_t num_ents = 0;             // number of entities
 int32_t game_state = INTRO;      // game state
@@ -248,6 +257,8 @@ int32_t talk_counter = kTalkDelay;
 int32_t talking = 1;           // furball talk timers
 int32_t whistle_timeout = 100; // furball whistle timeout
 
+bool game_over = false;
+
 ////////////////////////////////////////////////////
 //////////////////////////////////////////////////// HELPER FUNCTIONS
 ////////////////////////////////////////////////////
@@ -256,21 +267,17 @@ int32_t whistle_timeout = 100; // furball whistle timeout
 static int
 isExtensionSupported(const char* extension)
 {
-  const uint8_t* extensions;
-  const uint8_t* start;
-  uint8_t* where = NULL;
-  uint8_t* terminator = NULL;
   /* Extension names should not have spaces. */
-  where = (uint8_t*)strchr(extension, ' ');
+  uint8_t* where = (uint8_t*)strchr(extension, ' ');
   if (where || *extension == '\0')
   {
     return 0;
   }
-  extensions = glGetString(GL_EXTENSIONS);
+  const uint8_t* extensions = glGetString(GL_EXTENSIONS);
   /* It takes a bit of care to be fool-proof about parsing the
      OpenGL extensions string. Don't be fooled by sub-strings,
      etc. */
-  start = extensions;
+  const uint8_t* start = extensions;
   for (;;)
   {
     where = (uint8_t*)strstr((const char*)start, extension);
@@ -278,7 +285,7 @@ isExtensionSupported(const char* extension)
     {
       break;
     }
-    terminator = where + strlen(extension);
+    uint8_t* terminator = where + strlen(extension);
     if (where == start || *(where - 1) == ' ')
     {
       if (*terminator == ' ' || *terminator == '\0')
@@ -297,7 +304,7 @@ isExtensionSupported(const char* extension)
 
 // vector length
 static float
-length3v(float* a)
+length3v(const float* a)
 {
   return sqrtf(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);
 }
@@ -306,16 +313,6 @@ length3v(float* a)
 static float
 vec3_dist(Vec3 a, Vec3 b)
 {
-  /*
-  float x = 0.0f;
-  float y = 0.0f;
-  float z = 0.0f;
-  x = a[0] - b[0];
-  y = a[1] - b[1];
-  z = a[2] - b[2];
-
-  return sqrtf(x * x + y * y + z * z);
-  */
   float dx = b.x - a.x;
   float dy = b.y - a.y;
   float dz = b.z - a.z;
@@ -353,7 +350,6 @@ vboize(Buffer* b)
     nb_elements = (ptrdiff_t)sizeof(float) * 3 * b->size;
   }
 
-  // printf("Vboizing buffer with %d elements\n", b->size);
   b->hardware = 1;
   glGenBuffers(1, &(b->vtx_handle));
   glBindBuffer(GL_ARRAY_BUFFER, b->vtx_handle);
@@ -364,10 +360,9 @@ vboize(Buffer* b)
   glBindBuffer(GL_ARRAY_BUFFER, b->clr_handle);
   glBufferData(GL_ARRAY_BUFFER, nb_elements, b->clr, GL_STATIC_DRAW);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
-  // printf("Removing arrays...\n");
+
   free(b->vtx);
   free(b->clr);
-  // printf("Done!\n");
 }
 
 // renders a Buffer at desired position
@@ -473,50 +468,40 @@ draw_eyes(Furball* f)
 // pretty much more CPU intensive than it seems
 // thus ultimate furballs are disabled in LOFI mode
 static void
-draw_furball_ultimate(Furball* f)
+draw_furball_ultimate(Furball* furball)
 {
-  float* vertex = NULL;
-  float* basevertex = NULL;
   float dir[3] = {0.0f};
-  float dist = 0.0f;
-  float lsize = 0.0f;
-  float* colour = NULL;
-  float* basecolour = NULL;
 
   // fetches base vertex buffer for augmentation
-  vertex = f->mine->vtx;
-  basevertex = f->buf->vtx;
-  colour = f->mine->clr;
-  basecolour = f->buf->clr;
+  float* vertex = furball->mine->vtx;
+  float* basevertex = furball->buf->vtx;
 
   // augments the buffer
-  for (size_t x = 0; x < f->density; x++)
+  for (size_t x = 0; x < furball->density; ++x)
   {
-    for (size_t y = 0; y < f->density; y++)
+    for (size_t y = 0; y < furball->density; ++y)
     {
-      for (size_t z = 0; z < f->density; z++)
+      for (size_t z = 0; z < furball->density; ++z)
       {
-        for (size_t c = 0; c < kTrail; c++)
+        for (size_t i = 0; i < kTrail; ++i)
         {
-          dir[0] = (f->trail[c][0] - f->x);
-          dir[1] = (f->trail[c][1] - f->y);
-          dir[2] = (f->trail[c][2] - f->z);
-          for (size_t v = 0; v < 3; v++)
+          dir[0] = (furball->trail[i][0] - furball->x);
+          dir[1] = (furball->trail[i][1] - furball->y);
+          dir[2] = (furball->trail[i][2] - furball->z);
+          for (size_t v = 0; v < 3; ++v)
           {
             vertex[v] = basevertex[v] + (dir[v]);
           }
 
-          dir[0] = f->trail[c + 1][0] - f->x;
-          dir[1] = f->trail[c + 1][1] - f->y;
-          dir[2] = f->trail[c + 1][2] - f->z;
-          for (size_t v = 0; v < 3; v++)
+          dir[0] = furball->trail[i + 1][0] - furball->x;
+          dir[1] = furball->trail[i + 1][1] - furball->y;
+          dir[2] = furball->trail[i + 1][2] - furball->z;
+          for (size_t v = 0; v < 3; ++v)
           {
             vertex[3 + v] = basevertex[3 + v] + (dir[v]);
           }
           vertex += 6;
           basevertex += 6;
-          colour += 6;
-          basecolour += 6;
         }
       }
     }
@@ -524,72 +509,74 @@ draw_furball_ultimate(Furball* f)
 
   // calculates line width and draws
 
-  dist = sqrtf((f->x - player.x) * (f->x - player.x) + (f->y - player.y) * (f->y - player.y) + (f->z - player.z) * (f->z - player.z));
-  lsize = kScreenWidth / dist;
+  float dist = sqrtf((furball->x - player.x) * (furball->x - player.x) + (furball->y - player.y) * (furball->y - player.y) + (furball->z - player.z) * (furball->z - player.z));
+  float lsize = kScreenWidth / dist;
   // if it's too small, no use drawing
   if (lsize < 0.01f)
   {
     return;
   }
   glLineWidth(lsize);
-  draw_buffer(f->mine, f->x, f->y, f->z, f->scale, 0);
+  draw_buffer(furball->mine, furball->x, furball->y, furball->z, furball->scale, 0);
 }
 
 // draws a simple furball from a vertex buffer
 // stretches it a bit according to vertical velocity
 // and displaces a bit (actually eyes look displaced this way)
 static void
-draw_furball_normal(Furball* f)
+draw_furball_normal(Furball* furball)
 {
-  float stretch = 1.0f + powf(ABS(f->y - f->trail[1][1]) * 0.1f, 2.0f);
-  float displace = f->y - f->trail[1][1];
+  float stretch = 1.0f + powf(ABS(furball->y - furball->trail[1][1]) * 0.1f, 2.0f);
+  float displace = furball->y - furball->trail[1][1];
   if (stretch - 3.0f > FLT_EPSILON)
   {
     stretch = 3.0f;
   }
 
-  draw_buffer_ex(f->mine, f->x, f->y - displace, f->z, f->scale, f->scale * stretch, f->scale, 1.0f, 0.0f);
+  draw_buffer_ex(furball->mine, furball->x, furball->y - displace, furball->z, furball->scale, furball->scale * stretch, furball->scale, 1.0f, 0.0f);
 }
 
 // draws a blood particles array and makes coffee
 static void
-draw_blood(Blood* b, size_t num)
+draw_blood(Blood* blood, size_t num)
 {
   glPointSize(20.0f);
   glBegin(GL_POINTS);
-  for (size_t c = 0; c < num; c++)
+  for (size_t i = 0; i < num; ++i)
   {
-    glColor3fv(&(b[c].r));
-    glVertex3fv(&(b[c].x));
+    glColor3fv(&(blood[i].r));
+    glVertex3fv(&(blood[i].x));
   }
   glEnd();
 }
 
 // draws a furball (picks one of the above and checks distance)
 static void
-draw_furball(Furball* f)
+draw_furball(Furball* furball)
 {
-  float x = f->x - player.x;
-  float y = f->y - player.y;
-  float z = f->z - player.z;
+  Vec3 position = {
+    .x = furball->x - player.x,
+    .y = furball->y - player.y,
+    .z = furball->z - player.z};
 
-  if ((x * x + y * y + z * z) < kDrawDist * kDrawDist)
+  // if ((position.x * position.x + position.y * position.y + position.z * position.z) < kDrawDist * kDrawDist)
+  if (vec3_dot(position, position) < kDrawDist * kDrawDist)
   {
-    if (f->exists)
+    if (furball->exists)
     {
-      if (f->ultimate)
+      if (furball->ultimate)
       {
-        draw_furball_ultimate(f);
+        draw_furball_ultimate(furball);
       }
       else
       {
-        draw_furball_normal(f);
+        draw_furball_normal(furball);
       }
-      draw_eyes(f);
+      draw_eyes(furball);
     }
-    if (f->dying)
+    if (furball->dying)
     {
-      draw_blood(f->blood, kParticles);
+      draw_blood(furball->blood, kParticles);
     }
   }
 }
@@ -598,9 +585,9 @@ draw_furball(Furball* f)
 static void
 draw_ballz(void)
 {
-  for (size_t c = 0; c < kBallz; c++)
+  for (size_t i = 0; i < kBallz; ++i)
   {
-    draw_furball(ballz[c]);
+    draw_furball(ballz[i]);
   }
   glLineWidth(kLineWidth);
 }
@@ -610,14 +597,14 @@ draw_ballz(void)
 static void
 draw_ents(void)
 {
-  for (size_t c = 0; c < num_ents; c++)
+  for (size_t i = 0; i < num_ents; ++i)
   {
-    float x = ents[c].x - player.x;
-    float z = (ents[c].z) - player.z;
-    float dist = (x * x + z * z) - 32 * 32 * ents[c].s * ents[c].s;
+    float x = ents[i].x - player.x;
+    float z = (ents[i].z) - player.z;
+    float dist = (x * x + z * z) - 32.0f * 32.0f * ents[i].s * ents[i].s;
     if (dist < kDrawDist * kDrawDist)
     {
-      draw_buffer(ents[c].buf, ents[c].x, ents[c].y, ents[c].z, ents[c].s, ents[c].a);
+      draw_buffer(ents[i].buf, ents[i].x, ents[i].y, ents[i].z, ents[i].s, ents[i].a);
     }
   }
 }
@@ -632,12 +619,12 @@ draw_tree(void)
 {
   // draws array of ground quads
   glBegin(GL_QUADS);
-  for (int32_t x = 0; x < ground_bmp->w; x++)
+  for (int32_t x = 0; x < ground_bmp->w; ++x)
   {
-    for (int32_t y = 0; y < ground_bmp->h; y++)
+    for (int32_t y = 0; y < ground_bmp->h; ++y)
     {
       float fx = ((float)x * kWorldSize) / (float)ground_bmp->w;
-      float fy = ((float)y * (int32_t)kWorldSize) / (float)ground_bmp->w;
+      float fy = ((float)y * kWorldSize) / (float)ground_bmp->w;
       float fs = kWorldSize / (float)ground_bmp->w;
       float xx = fx - player.x;
       float yy = fy - player.z;
@@ -672,13 +659,13 @@ draw_tree(void)
   draw_ents();
 
   // draws grass
-  draw_buffer(grass, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
+  draw_buffer(g_grass, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
 
   // draws furballs
   draw_ballz();
 
   // and particles
-  draw_blood(blood, kParticles);
+  draw_blood(g_blood, kParticles);
 }
 
 ////////////////////////////////////////////////////
@@ -699,60 +686,57 @@ generate_cloud_single(const char* filename, size_t density)
   float colour_deviation = 0.03f;
 
   BITMAP* bmp = load_bmp(filename, NULL);
-  int32_t size_x = bmp->w;
-  int32_t size_y = bmp->h;
-  int32_t size_z = bmp->w;
 
-  if (size_x < 0)
+  Vec3i size = {.x = bmp->w, .y = bmp->h, .z = bmp->w};
+  if (size.x < 0)
   {
-    size_x = 0;
+    size.x = 0;
   }
-  if (size_y < 0)
+  if (size.y < 0)
   {
-    size_y = 0;
+    size.y = 0;
   }
-  if (size_z < 0)
+  if (size.z < 0)
   {
-    size_z = 0;
+    size.z = 0;
   }
 
   // allocates a too large buffer, or too small, if of higher density
   Buffer* b = malloc(sizeof(*b));
-  b->vtx = malloc((size_t)(size_x * size_y * size_z) * 3 * sizeof(*b->vtx));
-  b->clr = malloc((size_t)(size_x * size_y * size_z) * 3 * sizeof(*b->clr));
+  b->vtx = malloc((size_t)(size.x * size.y * size.z) * 3 * sizeof(*b->vtx));
+  b->clr = malloc((size_t)(size.x * size.y * size.z) * 3 * sizeof(*b->clr));
   b->hardware = 0;
 
   int32_t point_counter = 0;
   float* vertex = b->vtx;
   float* colour = b->clr;
-  float c_x = (float)size_x / 2.0f;
-  float c_z = (float)size_z / 2.0f;
+  Vec3 c = {.x = (float)size.x / 2.0f, .y = 0.0f, .z = (float)size.z / 2.0f};
 
-  for (float x = 0.0f; x < size_x; x += 1.0f)
+  for (int32_t x = 0; x < size.x; ++x)
   {
-    for (float y = 0.0f; y < size_y; y += 1.0f)
+    for (int32_t y = 0; y < size.y; ++y)
     {
-      for (float z = 0.0f; z < size_z; z += 1.0f)
+      for (int32_t z = 0; z < size.z; ++z)
       {
-        for (size_t d = 0; d < density; d++)
+        for (size_t d = 0; d < density; ++d)
         {
           // tests a voxel against image, where y is y
           // and x is distance from centre
           // if ok, sets colour and displaces a bit
-          int32_t img_x = (int32_t)floorf(sqrtf((x - c_x) * (x - c_x) + (z - c_z) * (z - c_z)) + c_x);
-          int32_t img_y = bmp->h - (int32_t)y - 1;
+          int32_t img_x = (int32_t)floorf(sqrtf(((float)x - c.x) * ((float)x - c.x) + ((float)z - c.z) * ((float)z - c.z)) + c.x);
+          int32_t img_y = bmp->h - y - 1;
           int32_t col = getpixel(bmp, img_x, img_y);
           if (col != makecol(255, 0, 255) && img_x < bmp->w)
           {
-            vertex[0] = (1.0f * x) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * deviation) - c_x;
-            vertex[1] = (1.0f * y) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * deviation);
-            vertex[2] = (1.0f * z) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * deviation) - c_z;
+            vertex[0] = (float)x + ((((float)(rand() % 512) / 256.0f) - 1.0f) * deviation) - c.x;
+            vertex[1] = (float)y + ((((float)(rand() % 512) / 256.0f) - 1.0f) * deviation);
+            vertex[2] = (float)z + ((((float)(rand() % 512) / 256.0f) - 1.0f) * deviation) - c.z;
             colour[0] = ((float)getr(col) / 256.0f) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
             colour[1] = ((float)getg(col) / 256.0f) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
             colour[2] = ((float)getb(col) / 256.0f) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
             vertex += 3;
             colour += 3;
-            point_counter++;
+            ++point_counter;
           }
         }
       }
@@ -780,61 +764,58 @@ generate_cloud_double(const char* filename_x, const char* filename_z, size_t den
 
   BITMAP* bmpx = load_bmp(filename_x, NULL);
   BITMAP* bmpz = load_bmp(filename_z, NULL);
-  int32_t size_x = bmpx->w;
-  int32_t size_y = bmpx->h;
-  int32_t size_z = bmpz->w;
 
-  if (size_x < 0)
+  Vec3i size = {.x = bmpx->w, .y = bmpx->h, .z = bmpz->w};
+  if (size.x < 0)
   {
-    size_x = 0;
+    size.x = 0;
   }
-  if (size_y < 0)
+  if (size.y < 0)
   {
-    size_y = 0;
+    size.y = 0;
   }
-  if (size_z < 0)
+  if (size.z < 0)
   {
-    size_z = 0;
+    size.z = 0;
   }
 
   // another bad malloc
   Buffer* b = malloc(sizeof(*b));
-  b->vtx = malloc((size_t)(size_x * size_y * size_z) * 3 * sizeof(*b->vtx));
-  b->clr = malloc((size_t)(size_x * size_y * size_z) * 3 * sizeof(*b->clr));
+  b->vtx = malloc((size_t)(size.x * size.y * size.z) * 3 * sizeof(*b->vtx));
+  b->clr = malloc((size_t)(size.x * size.y * size.z) * 3 * sizeof(*b->clr));
   b->hardware = 0;
 
   int32_t point_counter = 0;
   float* vertex = b->vtx;
   float* colour = b->clr;
-  float c_x = (float)size_x / 2.0f;
-  float c_z = (float)size_z / 2.0f;
+  Vec3 c = {.x = (float)size.x / 2.0f, .y = 0.0f, .z = (float)size.z / 2.0f};
 
-  for (float x = 0.0f; x < size_x; x += 1.0f)
+  for (int32_t x = 0.; x < size.x; ++x)
   {
-    for (float y = 0.0f; y < size_y; y += 1.0f)
+    for (int32_t y = 0; y < size.y; ++y)
     {
-      for (float z = 0.0f; z < size_z; z += 1.0f)
+      for (int32_t z = 0; z < size.z; ++z)
       {
-        for (size_t d = 0; d < density; d++)
+        for (size_t d = 0; d < density; ++d)
         {
           // this tests the pixel against two projection images
           // and sets the colour by averaging from those
-          int32_t img_x = (int32_t)x;
-          int32_t img_z = (int32_t)z;
-          int32_t img_y = bmpx->h - (int32_t)y - 1;
+          int32_t img_x = x;
+          int32_t img_z = z;
+          int32_t img_y = bmpx->h - y - 1;
           int32_t col1 = getpixel(bmpx, img_x, img_y);
           int32_t col2 = getpixel(bmpz, img_z, img_y);
           if (col1 != makecol(255, 0, 255) && col2 != makecol(255, 0, 255) && img_x < bmpx->w && img_z < bmpz->w)
           {
-            vertex[0] = (1.0f * x) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * deviation) - c_x;
-            vertex[1] = (1.0f * y) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * deviation);
-            vertex[2] = (1.0f * z) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * deviation) - c_z;
+            vertex[0] = (float)x + ((((float)(rand() % 512) / 256.0f) - 1.0f) * deviation) - c.x;
+            vertex[1] = (float)y + ((((float)(rand() % 512) / 256.0f) - 1.0f) * deviation);
+            vertex[2] = (float)z + ((((float)(rand() % 512) / 256.0f) - 1.0f) * deviation) - c.z;
             colour[0] = ((float)(getr(col1) + getr(col2)) / 512.0f) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
             colour[1] = ((float)(getg(col1) + getg(col2)) / 512.0f) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
             colour[2] = ((float)(getb(col1) + getb(col2)) / 512.0f) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
             vertex += 3;
             colour += 3;
-            point_counter++;
+            ++point_counter;
           }
         }
       }
@@ -863,49 +844,59 @@ generate_cloud_triple(const char* filename_x, const char* filename_z, const char
   BITMAP* bmpx = load_bmp(filename_x, NULL);
   BITMAP* bmpz = load_bmp(filename_z, NULL);
   BITMAP* bmpy = load_bmp(filename_y, NULL);
-  int32_t size_x = bmpx->w;
-  int32_t size_y = bmpx->h;
-  int32_t size_z = bmpz->w;
+
+  Vec3i size = {.x = bmpx->w, .y = bmpx->h, .z = bmpz->w};
+  if (size.x < 0)
+  {
+    size.x = 0;
+  }
+  if (size.y < 0)
+  {
+    size.y = 0;
+  }
+  if (size.z < 0)
+  {
+    size.z = 0;
+  }
 
   // bad malloc Mk.3
   Buffer* b = malloc(sizeof(*b));
-  b->vtx = malloc((size_t)(size_x * size_y * size_z) * 3 * sizeof(*b->vtx));
-  b->clr = malloc((size_t)(size_x * size_y * size_z) * 3 * sizeof(*b->clr));
+  b->vtx = malloc((size_t)(size.x * size.y * size.z) * 3 * sizeof(*b->vtx));
+  b->clr = malloc((size_t)(size.x * size.y * size.z) * 3 * sizeof(*b->clr));
   b->hardware = 0;
 
   int32_t point_counter = 0;
   float* vertex = b->vtx;
   float* colour = b->clr;
-  float c_x = (float)size_x / 2.0f;
-  float c_z = (float)size_z / 2.0f;
+  Vec3 c = {.x = (float)size.x / 2.0f, .y = 0.0f, .z = (float)size.z / 2.0f};
 
-  for (float x = 0; x < size_x; x += 1.0f)
+  for (int32_t x = 0; x < size.x; ++x)
   {
-    for (float y = 0; y < size_y; y += 1.0f)
+    for (int32_t y = 0; y < size.y; ++y)
     {
-      for (float z = 0; z < size_z; z += 1.0f)
+      for (int32_t z = 0; z < size.z; ++z)
       {
-        for (size_t d = 0; d < density; d++)
+        for (size_t d = 0; d < density; ++d)
         {
           // similar to the above, tests against 3 images and
           // averages the colour
-          int32_t img_x = (int32_t)x;
-          int32_t img_z = (int32_t)z;
-          int32_t img_y = bmpx->h - (int32_t)y - 1;
+          int32_t img_x = x;
+          int32_t img_z = z;
+          int32_t img_y = bmpx->h - y - 1;
           int32_t col1 = getpixel(bmpx, img_x, img_y);
           int32_t col2 = getpixel(bmpz, img_z, img_y);
           int32_t col3 = getpixel(bmpy, img_x, img_z);
           if (col3 != makecol(255, 0, 255) && col1 != makecol(255, 0, 255) && col2 != makecol(255, 0, 255) && img_x < bmpx->w && img_z < bmpz->w)
           {
-            vertex[0] = (1.0f * x) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * deviation) - c_x;
-            vertex[1] = (1.0f * y) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * deviation);
-            vertex[2] = (1.0f * z) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * deviation) - c_z;
+            vertex[0] = (float)x + ((((float)(rand() % 512) / 256.0f) - 1.0f) * deviation) - c.x;
+            vertex[1] = (float)y + ((((float)(rand() % 512) / 256.0f) - 1.0f) * deviation);
+            vertex[2] = (float)z + ((((float)(rand() % 512) / 256.0f) - 1.0f) * deviation) - c.z;
             colour[0] = ((float)(getr(col1) + getr(col2)) / 512.0f) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
             colour[1] = ((float)(getg(col1) + getg(col2)) / 512.0f) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
             colour[2] = ((float)(getb(col1) + getb(col2)) / 512.0f) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
             vertex += 3;
             colour += 3;
-            point_counter++;
+            ++point_counter;
           }
         }
       }
@@ -924,28 +915,28 @@ static Furball*
 spawn_furball(float x, float y, float z, Buffer* b, size_t density, bool ultimate, float red, float green, float blue)
 {
   // allocates memory
-  Furball* f = malloc(sizeof(*f));
-  f->mine = malloc(sizeof(*f->mine));
+  Furball* furball = malloc(sizeof(*furball));
+  furball->mine = malloc(sizeof(*furball->mine));
 
   // number of mesh vertices is specified through density
   // it represents, slices, sectors and depth
-  size_t bufsize = density * density * density * kTrail * (ultimate ? 12 : 3) * sizeof(*f->mine->vtx);
+  size_t bufsize = density * density * density * kTrail * (ultimate ? 12 : 3) * sizeof(*furball->mine->vtx);
 
-  f->mine->vtx = malloc(bufsize);
-  f->mine->clr = malloc(bufsize);
-  f->buf = b;
-  f->mine->size = b->size;
-  f->mine->mode = b->mode;
-  f->mine->hardware = 0;
+  furball->mine->vtx = malloc(bufsize);
+  furball->mine->clr = malloc(bufsize);
+  furball->buf = b;
+  furball->mine->size = b->size;
+  furball->mine->mode = b->mode;
+  furball->mine->hardware = 0;
 
   // copies the buffer from base for dynamic updates
-  memcpy(f->mine->vtx, f->buf->vtx, bufsize);
-  memcpy(f->mine->clr, f->buf->clr, bufsize);
+  memcpy(furball->mine->vtx, furball->buf->vtx, bufsize);
+  memcpy(furball->mine->clr, furball->buf->clr, bufsize);
 
   // sets colour
-  float* colour = f->mine->clr;
-  float* basecolour = f->buf->clr;
-  for (int32_t c = 0; c < f->mine->size; c++)
+  float* colour = furball->mine->clr;
+  float* basecolour = furball->buf->clr;
+  for (int32_t i = 0; i < furball->mine->size; ++i)
   {
     colour[0] = basecolour[0] * red;
     colour[1] = basecolour[1] * green;
@@ -955,17 +946,17 @@ spawn_furball(float x, float y, float z, Buffer* b, size_t density, bool ultimat
   }
 
   // sets position and other properties
-  f->x = x;
-  f->y = y;
-  f->z = z;
-  f->r = red;
-  f->g = green;
-  f->b = blue;
-  f->density = density;
-  f->scale = 3.0f;
-  f->ultimate = ultimate;
-  f->exists = 1;
-  return f;
+  furball->x = x;
+  furball->y = y;
+  furball->z = z;
+  furball->r = red;
+  furball->g = green;
+  furball->b = blue;
+  furball->density = density;
+  furball->scale = 3.0f;
+  furball->ultimate = ultimate;
+  furball->exists = 1;
+  return furball;
 }
 
 // generates a base buffer for hairy furball
@@ -984,11 +975,11 @@ generate_furball_ultimate(float size, size_t cuts, size_t density)
   float* vertex = b->vtx;
   float* colour = b->clr;
 
-  for (size_t x = 0; x < density; x++)
+  for (size_t x = 0; x < density; ++x)
   {
-    for (size_t y = 0; y < density; y++)
+    for (size_t y = 0; y < density; ++y)
     {
-      for (size_t z = 0; z < density; z++)
+      for (size_t z = 0; z < density; ++z)
       {
         // generates a sphere of vertices
         float fx = ((float)x * kPiMultipliedBy2) / (float)(density - 1);
@@ -996,16 +987,16 @@ generate_furball_ultimate(float size, size_t cuts, size_t density)
         float fz = ((float)z * kPiMultipliedBy2) / (float)(density - 1);
 
         // generates protruding hair
-        for (size_t c = 0; c < cuts; c++)
+        for (size_t i = 0; i < cuts; ++i)
         {
 
-          float hair_colour = 0.5f + 0.5f * (float)c / (float)(cuts);
-          float hair_distance = size + ((float)c * size) / (float)(cuts);
+          float hair_colour = 0.5f + 0.5f * (float)i / (float)(cuts);
+          float hair_distance = size + ((float)i * size) / (float)(cuts);
 
           // generates position only for the hair beginning
           // rest is determined by velocity
           // this generates startpoint
-          if (!c)
+          if (i == 0)
           {
             vertex[0] = hair_distance * cosf(fx) * sinf(fy) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * deviation);
             vertex[1] = hair_distance * cosf(fy) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * deviation);
@@ -1026,8 +1017,8 @@ generate_furball_ultimate(float size, size_t cuts, size_t density)
 
           // sets up hair endpoint
           // hair is actually line list as opposed to a strip
-          hair_colour = ((float)(c + 1) * 1.0f) / (float)cuts;
-          hair_distance = size + ((float)(c + 1) * size) / (float)cuts;
+          hair_colour = ((float)(i + 1) * 1.0f) / (float)cuts;
+          hair_distance = size + ((float)(i + 1) * size) / (float)cuts;
           vertex[3] = hair_distance * cosf(fx) * sinf(fy) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * deviation);
           vertex[4] = hair_distance * cosf(fy) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * deviation);
           vertex[5] = hair_distance * sinf(fz) * sinf(fy) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * deviation);
@@ -1066,17 +1057,17 @@ generate_furball_normal(float size, size_t cuts, size_t density)
   float* vertex = b->vtx;
   float* colour = b->clr;
 
-  for (size_t x = 0; x < density; x++)
+  for (size_t x = 0; x < density; ++x)
   {
-    for (size_t y = 0; y < density; y++)
+    for (size_t y = 0; y < density; ++y)
     {
-      for (size_t z = 0; z < density; z++)
+      for (size_t z = 0; z < density; ++z)
       {
         // gnerates vertex position in a sphere, and displaces a bit
         float fx = ((float)x * kPiMultipliedBy2) / (float)(density - 1);
         float fy = ((float)y * kPi) / (float)(density - 1);
         float fz = ((float)z * kPiMultipliedBy2) / (float)(density - 1);
-        for (size_t c = 0; c < cuts; c++)
+        for (size_t i = 0; i < cuts; ++i)
         {
           vertex[0] = size * cosf(fx) * sinf(fy) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * deviation);
           vertex[1] = size * cosf(fy) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * deviation);
@@ -1103,12 +1094,10 @@ generate_furball_normal(float size, size_t cuts, size_t density)
 static void
 create_ballz(void)
 {
-  bool is_good = false;
-
-  for (size_t c = 0; c < kBallz; c++)
+  for (size_t i = 0; i < kBallz; ++i)
   {
     // if is_good, then it's 'ultimate' == hairy
-    is_good = !(rand() % 8);
+    bool is_good = !(rand() % 8);
 
     // no hairy furballs for lofi version
     if (LOFI)
@@ -1117,34 +1106,34 @@ create_ballz(void)
     }
 
     // randomises colour and position
-    float r = ((float)(rand() % 256) / 256.0f);
-    float g = ((float)(rand() % 256) / 256.0f);
-    float b = ((float)(rand() % 256) / 256.0f);
+    float r = (float)(rand() % 256) / 256.0f;
+    float g = (float)(rand() % 256) / 256.0f;
+    float b = (float)(rand() % 256) / 256.0f;
     float x = ((float)(rand() % 1024) / 1024.0f) * kWorldSize;
     float y = kHeight;
     float z = ((float)(rand() % 1024) / 1024.0f) * kWorldSize;
 
     // creates the instance
-    ballz[c] = spawn_furball(x, y, z, is_good ? ultimate_furball : casual_furball, 8, is_good, r, g, b);
+    ballz[i] = spawn_furball(x, y, z, is_good ? ultimate_furball : casual_furball, 8, is_good, r, g, b);
 
     // sets up ai
-    ballz[c]->iq = 0;
-    ballz[c]->smart = 0.05f + ((float)(rand() % 256) / 256.0f) * 0.15f;
+    ballz[i]->iq = 0;
+    ballz[i]->smart = 0.05f + ((float)(rand() % 256) / 256.0f) * 0.15f;
 
     // adjusts ai for hairy furball
     if (is_good)
     {
-      ballz[c]->smart *= 0.2f;
+      ballz[i]->smart *= 0.2f;
     }
     if (!is_good)
     {
-      ballz[c]->scale = 0.2f + ((float)(rand() % 256) / 256.0f) * 0.15f;
+      ballz[i]->scale = 0.2f + ((float)(rand() % 256) / 256.0f) * 0.15f;
     }
     else
     {
-      ballz[c]->scale = 1.0f + ((float)(rand() % 256) / 256.0f) * 3.0f;
+      ballz[i]->scale = 1.0f + ((float)(rand() % 256) / 256.0f) * 3.0f;
     }
-    ballz[c]->dying = 0;
+    ballz[i]->dying = 0;
   }
 }
 
@@ -1156,20 +1145,20 @@ create_ballz(void)
 static void
 explode(Blood* b, size_t num, float x, float y, float z)
 {
-  for (size_t c = 0; c < num; c++)
+  for (size_t i = 0; i < num; ++i)
   {
     // sets position
-    b[c].x = x;
-    b[c].y = y;
-    b[c].z = z;
+    b[i].x = x;
+    b[i].y = y;
+    b[i].z = z;
     // random velocity and colour
-    b[c].vx = ((((float)(rand() % 512) / 256.0f) - 1.0f) * 4.0f);
-    b[c].vy = ((((float)(rand() % 512) / 256.0f) - 1.0f) * 8.0f);
-    b[c].vz = ((((float)(rand() % 512) / 256.0f) - 1.0f) * 4.0f);
-    b[c].r = 0.6f + ((((float)(rand() % 512) / 256.0f) - 1.0f) * 0.4f);
-    b[c].g = 0.0f;
-    b[c].b = 0.0f;
-    b[c].alive = true;
+    b[i].vx = (((float)(rand() % 512) / 256.0f) - 1.0f) * 4.0f;
+    b[i].vy = (((float)(rand() % 512) / 256.0f) - 1.0f) * 8.0f;
+    b[i].vz = (((float)(rand() % 512) / 256.0f) - 1.0f) * 4.0f;
+    b[i].r = 0.6f + ((((float)(rand() % 512) / 256.0f) - 1.0f) * 0.4f);
+    b[i].g = 0.0f;
+    b[i].b = 0.0f;
+    b[i].alive = true;
   }
 }
 
@@ -1178,44 +1167,39 @@ static int
 shoot(void)
 {
   int32_t h = 0;
-  Furball* hitball = 0;
-  Vec3 p_minus_b = {.x = 0.0f, .y = 0.0f, .z = 0.0f};
-  float t0 = 0.0f;
-  float rdist = 0.0f;
+  Furball* hitball = NULL;
   float rhit[3] = {0.0f};
 
   play_sample(shot, 255, 128, 1000, 0);
   // gets shoot position and direction
-  Vec3 p = {.x = 0.0f, .y = 0.0f, .z = 0.0f};
   Vec3 m = {.x = cosf(looky) * cosf(lookx), .y = -sinf(lookx), .z = sinf(looky) * cosf(lookx)};
-  // float pdist = 999999.0f;
   float pdist = 3.40282347e+38F; // XXX: MAXFLOAT
-  for (size_t c = 0; c < kBallz; c++)
+  for (size_t i = 0; i < kBallz; ++i)
   {
     // picks furball closest to the ray
-    if (ballz[c]->exists)
+    if (ballz[i]->exists)
     {
-      p.x = ballz[c]->x;
-      p.y = ballz[c]->y;
-      p.z = ballz[c]->z;
-      p_minus_b.x = p.x - player.x;
-      p_minus_b.y = p.y - player.y;
-      p_minus_b.z = p.z - player.z;
-      t0 = vec3_dot(m, p_minus_b) / vec3_dot(m, m);
+      Vec3 p = {
+        .x = ballz[i]->x,
+        .y = ballz[i]->y,
+        .z = ballz[i]->z};
+      Vec3 p_minus_b = {
+        .x = p.x - player.x,
+        .y = p.y - player.y,
+        .z = p.z - player.z};
+      float t0 = vec3_dot(m, p_minus_b) / vec3_dot(m, m);
       if (t0 > 0)
       {
         rhit[0] = p.x - (player.x + t0 * m.x);
         rhit[1] = p.y - (player.y + t0 * m.y);
         rhit[2] = p.z - (player.z + t0 * m.z);
-        rdist = length3v(rhit);
-        if (rdist < 10.0f)
+        if (length3v(rhit) < 10.0f)
         {
-          // printf("hit with rdist: %g\n", (double)rdist);
           if (vec3_dist(player, p) < pdist)
           {
             pdist = vec3_dist(player, p);
             h = 1;
-            hitball = ballz[c];
+            hitball = ballz[i];
           }
         }
       }
@@ -1244,34 +1228,34 @@ shoot(void)
 static void
 update_blood(Blood* b, size_t num)
 {
-  for (size_t c = 0; c < num; c++)
+  for (size_t i = 0; i < num; ++i)
   {
     // if the particle is alive...
-    if (b[c].alive)
+    if (b[i].alive)
     {
       // updates position
-      b[c].x += b[c].vx;
-      b[c].y += b[c].vy;
-      b[c].z += b[c].vz;
+      b[i].x += b[i].vx;
+      b[i].y += b[i].vy;
+      b[i].z += b[i].vz;
 
       // adds gravity
-      b[c].vy -= 0.6f;
+      b[i].vy -= 0.6f;
 
       // if it hits the ground
-      if (b[c].y < 0.0f)
+      if (b[i].y < 0.0f)
       {
         // no more updates for this one
-        b[c].alive = false;
+        b[i].alive = false;
 
         // if was inside world sware, colours a pixel red
-        int32_t pic_x = ((int32_t)b[c].x * ground_bmp->w) / (int32_t)kWorldSize;
-        int32_t pic_y = ((int32_t)b[c].z * ground_bmp->h) / (int32_t)kWorldSize;
+        int32_t pic_x = ((int32_t)b[i].x * ground_bmp->w) / (int32_t)kWorldSize;
+        int32_t pic_y = ((int32_t)b[i].z * ground_bmp->h) / (int32_t)kWorldSize;
         if (pic_x >= 0 && pic_y >= 0 && pic_x < ground_bmp->w && pic_y < ground_bmp->h)
         {
           int32_t pix = getpixel(ground_bmp, pic_x, pic_y);
-          int32_t pr = (int32_t)(((float)getr(pix) + b[c].r * 128.0f) / 1.5f);
-          int32_t pg = (int32_t)(((float)getg(pix) + b[c].g * 128.0f) / 1.5f);
-          int32_t pb = (int32_t)(((float)getb(pix) + b[c].b * 128.0f) / 1.5f);
+          int32_t pr = (int32_t)(((float)getr(pix) + b[i].r * 128.0f) / 1.5f);
+          int32_t pg = (int32_t)(((float)getg(pix) + b[i].g * 128.0f) / 1.5f);
+          int32_t pb = (int32_t)(((float)getb(pix) + b[i].b * 128.0f) / 1.5f);
           putpixel(ground_bmp, pic_x, pic_y, makecol(pr, pg, pb));
         }
       }
@@ -1283,66 +1267,66 @@ update_blood(Blood* b, size_t num)
 static void
 update_ballz(void)
 {
-  for (size_t c = 0; c < kBallz; c++)
+  for (size_t i = 0; i < kBallz; ++i)
   {
     // if it's still alive
-    if (ballz[c]->exists)
+    if (ballz[i]->exists)
     {
-      Furball* fur = ballz[c];
+      Furball* furball = ballz[i];
 
       // decreases direction change counter
       // and changes movement direction if needed
-      fur->iq -= fur->smart;
-      if (fur->iq <= 0)
+      furball->iq -= furball->smart;
+      if (furball->iq <= 0)
       {
-        fur->iq = (kIQ + (float)(rand() % kIQ)) * 3; // kPi;
-        fur->speed = ((float)(rand() % 256) / 256.0f) * kSpeed;
-        fur->a = ((float)(rand() % 256) / 256.0f) * kPiMultipliedBy2;
-        fur->bounce_rate = 10.0f + ((float)(rand() % 256) / 256.0f) * 40.0f;
+        furball->iq = (kIQ + (float)(rand() % kIQ)) * 3; // kPi;
+        furball->speed = ((float)(rand() % 256) / 256.0f) * kSpeed;
+        furball->a = ((float)(rand() % 256) / 256.0f) * kPiMultipliedBy2;
+        furball->bounce_rate = 10.0f + ((float)(rand() % 256) / 256.0f) * 40.0f;
       }
 
       // adjusts bounce rate
-      fur->bounce += 0.1f * kSpeed;
+      furball->bounce += 0.1f * kSpeed;
 
       // updates position
-      fur->x += cosf(fur->a) * fur->speed;
-      fur->z += sinf(fur->a) * fur->speed;
-      fur->y = fur->scale * (fur->ultimate ? 1 : 8) + ABS(sinf(fur->iq) * fur->bounce_rate);
+      furball->x += cosf(furball->a) * furball->speed;
+      furball->z += sinf(furball->a) * furball->speed;
+      furball->y = furball->scale * (furball->ultimate ? 1 : 8) + ABS(sinf(furball->iq) * furball->bounce_rate);
 
       // keeps inside the world
-      if (fur->x < FLT_EPSILON)
+      if (furball->x < FLT_EPSILON)
       {
-        fur->x = 0;
+        furball->x = 0;
       }
-      if (fur->z < FLT_EPSILON)
+      if (furball->z < FLT_EPSILON)
       {
-        fur->z = 0;
+        furball->z = 0;
       }
-      if (fur->x > kWorldSize)
+      if (furball->x > kWorldSize)
       {
-        fur->x = kWorldSize;
+        furball->x = kWorldSize;
       }
-      if (fur->z > kWorldSize)
+      if (furball->z > kWorldSize)
       {
-        fur->z = kWorldSize;
+        furball->z = kWorldSize;
       }
 
       // wites down trail for hair rendering
-      for (ssize_t i = kTrail; i > 0; i--)
+      for (size_t j = kTrail; j > 0; --j)
       {
-        fur->trail[i][0] = fur->trail[i - 1][0];
-        fur->trail[i][1] = fur->trail[i - 1][1];
-        fur->trail[i][2] = fur->trail[i - 1][2];
+        furball->trail[j][0] = furball->trail[j - 1][0];
+        furball->trail[j][1] = furball->trail[j - 1][1];
+        furball->trail[j][2] = furball->trail[j - 1][2];
       }
-      fur->trail[0][0] = fur->x;
-      fur->trail[0][1] = fur->y;
-      fur->trail[0][2] = fur->z;
+      furball->trail[0][0] = furball->x;
+      furball->trail[0][1] = furball->y;
+      furball->trail[0][2] = furball->z;
     }
-    else if (ballz[c]->dying)
+    else if (ballz[i]->dying)
     {
       // if it's dying, only particles get updated
-      update_blood(ballz[c]->blood, kParticles);
-      ballz[c]->dying--;
+      update_blood(ballz[i]->blood, kParticles);
+      ballz[i]->dying--;
     }
   }
 }
@@ -1355,14 +1339,7 @@ update_ballz(void)
 static Buffer*
 generate_world_map(const char* grass_file, const char* height_file, const char* entity_file, size_t density)
 {
-  Buffer* b = NULL;
-  int32_t col = 0;
-  float grass_x = 0.0f;
-  float grass_y = 0.0f;
-  float grass_h = 0.0f;
-  float patch_size = 0.0f;
-
-  // printf("Creating grass from %s...\n", grass_file);
+  Vec3 grass = {.x = 0.0f, .y = 0.0f, .z = 0.0f};
 
   // randomisation constants
   float colour_deviation = 0.1f;
@@ -1388,36 +1365,35 @@ generate_world_map(const char* grass_file, const char* height_file, const char* 
   }
   int32_t size_x = bmpg->w;
   int32_t size_y = bmpg->h;
-  // printf("Dimensions are: %d x %d x %lu\n", size_x, size_y, density);
 
   // allocates grass buffer
-  b = malloc(sizeof(Buffer));
+  Buffer* b = malloc(sizeof(Buffer));
   b->vtx = malloc((size_t)(size_x * size_y) * density * 6 * sizeof(float));
   b->clr = malloc((size_t)(size_x * size_y) * density * 6 * sizeof(float));
   b->hardware = 0;
   size_t line_counter = 0;
   float* vertex = b->vtx;
   float* colour = b->clr;
-  patch_size = kWorldSize / (float)bmpg->w;
-  // printf("Beggining clouding...\n"); // actually grassing
-  for (int32_t x = 0; x < size_x; x++)
+  float patch_size = kWorldSize / (float)bmpg->w;
+
+  for (int32_t x = 0; x < size_x; ++x)
   {
-    for (int32_t y = 0; y < size_y; y++)
+    for (int32_t y = 0; y < size_y; ++y)
     {
-      for (size_t d = 0; d < density; d++)
+      for (size_t d = 0; d < density; ++d)
       {
         // for each bitmap pixel it creates [density] grass blades
         // colour and height get randomised a bit
-        grass_x = (((float)x * kWorldSize) / (float)size_x) + ((((float)(rand() % 512) / 512.0f)) * patch_size);
-        grass_y = (((float)y * kWorldSize) / (float)size_x) + ((((float)(rand() % 512) / 512.0f)) * patch_size);
-        grass_h = (0.1f * (float)getr(getpixel(bmph, x, y))) + ((((float)(rand() % 512) / 512.0f)) * (grass_h * 0.3f));
-        vertex[0] = grass_x;
+        grass.x = (((float)x * kWorldSize) / (float)size_x) + ((((float)(rand() % 512) / 512.0f)) * patch_size);
+        grass.y = (((float)y * kWorldSize) / (float)size_x) + ((((float)(rand() % 512) / 512.0f)) * patch_size);
+        grass.z = (0.1f * (float)getr(getpixel(bmph, x, y))) + ((((float)(rand() % 512) / 512.0f)) * (grass.z * 0.3f));
+        vertex[0] = grass.x;
         vertex[1] = 0;
-        vertex[2] = grass_y;
-        vertex[3] = grass_x;
-        vertex[4] = grass_h;
-        vertex[5] = grass_y;
-        col = getpixel(bmpg, x, y);
+        vertex[2] = grass.y;
+        vertex[3] = grass.x;
+        vertex[4] = grass.z;
+        vertex[5] = grass.y;
+        int32_t col = getpixel(bmpg, x, y);
         colour[3] = ((float)(getr(col)) / 256.0f) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
         colour[4] = ((float)(getg(col)) / 256.0f) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
         colour[5] = ((float)(getb(col)) / 256.0f) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
@@ -1430,7 +1406,7 @@ generate_world_map(const char* grass_file, const char* height_file, const char* 
       }
     }
   }
-  // printf("Generated %lu lines!\n", line_counter);
+
   b->mode = GL_LINES;
   b->size = (int32_t)line_counter;
   vboize(b);
@@ -1442,94 +1418,94 @@ generate_world_map(const char* grass_file, const char* height_file, const char* 
   bmph = load_bmp(entity_file, 0);
   size_x = bmph->w;
   size_y = bmph->h;
-  for (int32_t x = 0; x < size_x; x++)
+  for (int32_t x = 0; x < size_x; ++x)
   {
-    for (int32_t y = 0; y < size_y; y++)
+    for (int32_t y = 0; y < size_y; ++y)
     {
       // iterates through pixel looking for values representing entities
-      grass_x = (((float)x * kWorldSize) / (float)size_x) + ((((float)(rand() % 512) / 512.0f)) * patch_size);
-      grass_y = (((float)y * kWorldSize) / (float)size_x) + ((((float)(rand() % 512) / 512.0f)) * patch_size);
-      grass_h = 1.0f + ((((float)(rand() % 512) / 512.0f)) * 1.0f);
-      col = getpixel(bmph, x, y);
+      grass.x = (((float)x * kWorldSize) / (float)size_x) + ((((float)(rand() % 512) / 512.0f)) * patch_size);
+      grass.y = (((float)y * kWorldSize) / (float)size_x) + ((((float)(rand() % 512) / 512.0f)) * patch_size);
+      grass.z = 1.0f + ((((float)(rand() % 512) / 512.0f)) * 1.0f);
+      int32_t col = getpixel(bmph, x, y);
       if (col == makecol(0, 255, 0))
       {
         ents[num_ents].buf = tall_tree;
-        ents[num_ents].x = grass_x;
-        ents[num_ents].y = 0;
-        ents[num_ents].z = grass_y;
-        ents[num_ents].s = grass_h * 4.0f;
-        ents[num_ents].a = ((((float)(rand() % 512) / 512.0f)) * 360);
+        ents[num_ents].x = grass.x;
+        ents[num_ents].y = 0.0f;
+        ents[num_ents].z = grass.y;
+        ents[num_ents].s = grass.z * 4.0f;
+        ents[num_ents].a = ((((float)(rand() % 512) / 512.0f)) * 360.0f);
         num_ents++;
       }
       if (col == makecol(255, 255, 128))
       {
         ents[num_ents].buf = cactus;
-        ents[num_ents].x = grass_x;
-        ents[num_ents].y = 0;
-        ents[num_ents].z = grass_y;
-        ents[num_ents].s = grass_h * 2.0f;
-        ents[num_ents].a = ((((float)(rand() % 512) / 512.0f)) * 360);
+        ents[num_ents].x = grass.x;
+        ents[num_ents].y = 0.0f;
+        ents[num_ents].z = grass.y;
+        ents[num_ents].s = grass.z * 2.0f;
+        ents[num_ents].a = (((float)(rand() % 512) / 512.0f)) * 360.0f;
         num_ents++;
       }
       if (col == makecol(0, 128, 0))
       {
         ents[num_ents].buf = palm;
-        ents[num_ents].x = grass_x;
-        ents[num_ents].y = 0;
-        ents[num_ents].z = grass_y;
-        ents[num_ents].s = grass_h * 3.0f;
-        ents[num_ents].a = ((((float)(rand() % 512) / 512.0f)) * 360);
+        ents[num_ents].x = grass.x;
+        ents[num_ents].y = 0.0f;
+        ents[num_ents].z = grass.y;
+        ents[num_ents].s = grass.z * 3.0f;
+        ents[num_ents].a = (((float)(rand() % 512) / 512.0f)) * 360.0f;
         num_ents++;
       }
       if (col == makecol(128, 64, 64))
       {
         ents[num_ents].buf = stick;
-        ents[num_ents].x = grass_x;
-        ents[num_ents].y = 0;
-        ents[num_ents].z = grass_y;
-        ents[num_ents].s = grass_h * 1.5f;
-        ents[num_ents].a = ((((float)(rand() % 512) / 512.0f)) * 360);
+        ents[num_ents].x = grass.x;
+        ents[num_ents].y = 0.0f;
+        ents[num_ents].z = grass.y;
+        ents[num_ents].s = grass.z * 1.5f;
+        ents[num_ents].a = (((float)(rand() % 512) / 512.0f)) * 360.0f;
         num_ents++;
       }
       if (col == makecol(0, 255, 255))
       {
         ents[num_ents].buf = pine;
-        ents[num_ents].x = grass_x;
-        ents[num_ents].y = 0;
-        ents[num_ents].z = grass_y;
-        ents[num_ents].s = grass_h * 3.0f;
-        ents[num_ents].a = ((((float)(rand() % 512) / 512.0f)) * 360);
+        ents[num_ents].x = grass.x;
+        ents[num_ents].y = 0.0f;
+        ents[num_ents].z = grass.y;
+        ents[num_ents].s = grass.z * 3.0f;
+        ents[num_ents].a = (((float)(rand() % 512) / 512.0f)) * 360.0f;
         num_ents++;
       }
       if (col == makecol(255, 0, 0))
       {
         ents[num_ents].buf = hut;
-        ents[num_ents].x = grass_x;
-        ents[num_ents].y = 0;
-        ents[num_ents].z = grass_y;
-        ents[num_ents].s = grass_h * 2.0f;
-        ents[num_ents].a = (((float)(rand() % 4)) * 90.0f);
+        ents[num_ents].x = grass.x;
+        ents[num_ents].y = 0.0f;
+        ents[num_ents].z = grass.y;
+        ents[num_ents].s = grass.z * 2.0f;
+        ents[num_ents].a = ((float)(rand() % 4)) * 90.0f;
         num_ents++;
       }
       if (col == makecol(255, 128, 128))
       {
         ents[num_ents].buf = church;
-        ents[num_ents].x = grass_x;
-        ents[num_ents].y = 0;
-        ents[num_ents].z = grass_y;
-        ents[num_ents].s = grass_h * 6.0f;
+        ents[num_ents].x = grass.x;
+        ents[num_ents].y = 0.0f;
+        ents[num_ents].z = grass.y;
+        ents[num_ents].s = grass.z * 6.0f;
         // ents[num_ents].a = 90.0f; //XXX: Original value
-        ents[num_ents].a = ((((float)(rand() % 512) / 512.0f)) * 360.0f);
+        ents[num_ents].a = (((float)(rand() % 512) / 512.0f)) * 360.0f;
         num_ents++;
       }
       if (col == makecol(128, 0, 0))
       {
         ents[num_ents].buf = brickhouse;
-        ents[num_ents].x = grass_x;
-        ents[num_ents].y = 0;
-        ents[num_ents].z = grass_y;
-        ents[num_ents].s = grass_h * 1.5f;
-        ents[num_ents].a = (((float)(rand() % 4)) * 90.0f);
+        ents[num_ents].x = grass.x;
+        ents[num_ents].y = 0.0f;
+        ents[num_ents].z = grass.y;
+        ents[num_ents].s = grass.z * 1.5f;
+        ents[num_ents].a = ((float)(rand() % 4)) * 90.0f;
         num_ents++;
       }
     }
@@ -1555,7 +1531,7 @@ generate_stuff(void)
   fence = generate_cloud_triple("fence_side.bmp", "fence_side.bmp", "fence_top.bmp", 3);
   church = generate_cloud_double("church_front.bmp", "church_side.bmp", 1);
   brickhouse = generate_cloud_double("brickhouse_front.bmp", "brickhouse_side.bmp", 1);
-  grass = generate_world_map("grassmap.bmp", "grassheight.bmp", "entitymap.bmp", LOFI ? 2 : 4);
+  g_grass = generate_world_map("grassmap.bmp", "grassheight.bmp", "entitymap.bmp", LOFI ? 2 : 4);
   create_ballz();
 }
 
@@ -1601,10 +1577,10 @@ timer_proc(void)
       {
         whistle_timeout = 100;
         play_sample(whistle, 255, 128, 1000, 0);
-        for (size_t c = 0; c < kBallz; c++)
+        for (size_t i = 0; i < kBallz; ++i)
         {
-          ballz[c]->a = atan2f(-ballz[c]->z + player.z, -ballz[c]->x + player.x);
-          ballz[c]->iq += kPiMultipliedBy4;
+          ballz[i]->a = atan2f(-ballz[i]->z + player.z, -ballz[i]->x + player.x);
+          ballz[i]->iq += kPiMultipliedBy4;
         }
       }
     }
@@ -1614,13 +1590,15 @@ timer_proc(void)
       move_spd *= 2;
     }
 
+    if (key[KEY_ESC])
+    {
+      game_over = true;
+    }
+
     // rotates camera using mouse input
     get_mouse_mickeys(&mx, &my);
     position_mouse(kScreenWidth / 2, mouse_y);
-    update_blood(blood, kParticles);
-    // XXX: Original
-    //  lookx = kPiDividedBy2 * (1.0f * (float)(mouse_y - (kScreenHeight / 2))) / (float)(kScreenHeight / 2);
-    //  looky += kPi * ((float)mx * 1.0f) / (kScreenWidth / 2.0f);
+    update_blood(g_blood, kParticles);
     lookx = kPiDividedBy2 * (float)(mouse_y - (kScreenHeight / 2)) / (float)(kScreenHeight / 2);
     looky += kPi * (float)mx / (kScreenWidth / 2.0f);
 
@@ -1722,9 +1700,9 @@ draw(void)
   int32_t left = 0;
 
   // checks for number of furballs left
-  for (size_t c = 0; c < kBallz; c++)
+  for (size_t i = 0; i < kBallz; ++i)
   {
-    if (ballz[c]->exists)
+    if (ballz[i]->exists)
     {
       left++;
     }
@@ -1750,9 +1728,9 @@ draw(void)
   sprintf(nums, "%03i:%03i", left, kBallz);
 
   // up sets furball count display
-  for (size_t c = 0; c < 7; c++)
+  for (size_t i = 0; i < 7; ++i)
   {
-    nums[c] -= 0x30;
+    nums[i] -= 0x30;
   }
 
   // basic gl frame setup
@@ -1848,16 +1826,16 @@ draw(void)
     glBegin(GL_QUADS);
 
     float ns = 0.0f;
-    for (size_t c = 0; c < 7; c++, ns += kNumSize)
+    for (size_t i = 0; i < 7; ++i, ns += kNumSize)
     {
 
-      glTexCoord2f(nums[c] * 0.090909f, 1.0f);
+      glTexCoord2f(nums[i] * 0.090909f, 1.0f);
       glVertex2f(-1.0f + ns, 1.0f);
-      glTexCoord2f((float)(nums[c] + 1) * 0.090909f, 1.0f);
+      glTexCoord2f((float)(nums[i] + 1) * 0.090909f, 1.0f);
       glVertex2f(-1.0f + ns + (kNumSize * 1.2f), 1.0f);
-      glTexCoord2f((float)(nums[c] + 1) * 0.090909f, 0.0f);
+      glTexCoord2f((float)(nums[i] + 1) * 0.090909f, 0.0f);
       glVertex2f(-1.0f + ns + (kNumSize * 1.2f), 1.0f - kNumSize);
-      glTexCoord2f(nums[c] * 0.090909f, 0.0);
+      glTexCoord2f(nums[i] * 0.090909f, 0.0f);
       glVertex2f(-1.0f + ns, 1.0f - kNumSize);
     }
 
@@ -1924,7 +1902,6 @@ main(int argc, char** argv)
   float fogc[] = {1.0f, 0.8f, 0.4f, 0.0f};
   char samp[64] = {0};
 
-  // printf("Width: %d\nHeight: %d\n", w, h);
   //  allegro setup
   allegro_init();
   install_allegro_gl();
@@ -2005,14 +1982,12 @@ main(int argc, char** argv)
   shot = load_wav("shoot.wav");
   whistle = load_wav("whistle.wav");
 
-  for (size_t c = 0; c < kSamps; c++)
+  for (size_t i = 0; i < kSamps; ++i)
   {
-    sprintf(samp, "fur%lu.wav", c + 1);
-    // printf("Loading %s\n", samp);
-    furtalk[c] = load_wav(samp);
-    sprintf(samp, "die%lu.wav", c + 1);
-    // printf("Loading %s\n", samp);
-    die[c] = load_wav(samp);
+    sprintf(samp, "fur%zu.wav", i + 1);
+    furtalk[i] = load_wav(samp);
+    sprintf(samp, "die%zu.wav", i + 1);
+    die[i] = load_wav(samp);
   }
 
   // sets player initial position and direction
@@ -2035,8 +2010,7 @@ main(int argc, char** argv)
       tim--;
     }
     draw();
-    // Sleep(5);
-  } while (1); //! GetAsyncKeyState(VK_ESCAPE));
+  } while (!game_over);
 
   set_gfx_mode(GFX_TEXT, 0, 0, 0, 0);
 
