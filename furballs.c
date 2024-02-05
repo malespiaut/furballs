@@ -49,7 +49,7 @@
 #define kHaystack 100.0f   // player height above the ground modifier
 
 // defines for calculation simplification
-#define FRAND(x) (((rand() % (int)x) * 1024.0f) / 1024.0f)
+#define FRAND(x) (((xrnd() % (int)x) * 1024.0f) / 1024.0f)
 #define DEG(n) ((n)*180.0f / kPi)
 
 // player states
@@ -296,6 +296,29 @@ isExtensionSupported(const char* extension)
     start = terminator;
   }
   return 0;
+}
+
+uint64_t rngstate[4];
+
+static inline uint64_t
+rotl(const uint64_t x, int32_t k)
+{
+  return (x << k) | (x >> (64 - k));
+}
+
+// xoshiro256++
+static uint64_t
+xrnd(void)
+{
+  const uint64_t result = rotl(rngstate[0] + rngstate[3], 23) + rngstate[0];
+  const uint64_t t = rngstate[1] << 17;
+  rngstate[2] ^= rngstate[0];
+  rngstate[3] ^= rngstate[1];
+  rngstate[1] ^= rngstate[2];
+  rngstate[0] ^= rngstate[3];
+  rngstate[2] ^= t;
+  rngstate[3] = rotl(rngstate[3], 45);
+  return result;
 }
 
 ////////////////////////////////////////////////////
@@ -727,12 +750,12 @@ generate_cloud_single(const char* filename, size_t density)
           int32_t col = getpixel(bmp, img_x, img_y);
           if (col != makecol(255, 0, 255) && img_x < bmp->w)
           {
-            vertex[0] = (float)x + ((((float)(rand() % 512) / 256.0f) - 1.0f) * deviation) - c.x;
-            vertex[1] = (float)y + ((((float)(rand() % 512) / 256.0f) - 1.0f) * deviation);
-            vertex[2] = (float)z + ((((float)(rand() % 512) / 256.0f) - 1.0f) * deviation) - c.z;
-            colour[0] = ((float)getr(col) / 256.0f) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
-            colour[1] = ((float)getg(col) / 256.0f) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
-            colour[2] = ((float)getb(col) / 256.0f) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
+            vertex[0] = (float)x + ((((float)(xrnd() % 512) / 256.0f) - 1.0f) * deviation) - c.x;
+            vertex[1] = (float)y + ((((float)(xrnd() % 512) / 256.0f) - 1.0f) * deviation);
+            vertex[2] = (float)z + ((((float)(xrnd() % 512) / 256.0f) - 1.0f) * deviation) - c.z;
+            colour[0] = ((float)getr(col) / 256.0f) + ((((float)(xrnd() % 512) / 256.0f) - 1.0f) * colour_deviation);
+            colour[1] = ((float)getg(col) / 256.0f) + ((((float)(xrnd() % 512) / 256.0f) - 1.0f) * colour_deviation);
+            colour[2] = ((float)getb(col) / 256.0f) + ((((float)(xrnd() % 512) / 256.0f) - 1.0f) * colour_deviation);
             vertex += 3;
             colour += 3;
             ++point_counter;
@@ -806,12 +829,12 @@ generate_cloud_double(const char* filename_x, const char* filename_z, size_t den
           int32_t col2 = getpixel(bmpz, img_z, img_y);
           if (col1 != makecol(255, 0, 255) && col2 != makecol(255, 0, 255) && img_x < bmpx->w && img_z < bmpz->w)
           {
-            vertex[0] = (float)x + ((((float)(rand() % 512) / 256.0f) - 1.0f) * deviation) - c.x;
-            vertex[1] = (float)y + ((((float)(rand() % 512) / 256.0f) - 1.0f) * deviation);
-            vertex[2] = (float)z + ((((float)(rand() % 512) / 256.0f) - 1.0f) * deviation) - c.z;
-            colour[0] = ((float)(getr(col1) + getr(col2)) / 512.0f) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
-            colour[1] = ((float)(getg(col1) + getg(col2)) / 512.0f) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
-            colour[2] = ((float)(getb(col1) + getb(col2)) / 512.0f) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
+            vertex[0] = (float)x + ((((float)(xrnd() % 512) / 256.0f) - 1.0f) * deviation) - c.x;
+            vertex[1] = (float)y + ((((float)(xrnd() % 512) / 256.0f) - 1.0f) * deviation);
+            vertex[2] = (float)z + ((((float)(xrnd() % 512) / 256.0f) - 1.0f) * deviation) - c.z;
+            colour[0] = ((float)(getr(col1) + getr(col2)) / 512.0f) + ((((float)(xrnd() % 512) / 256.0f) - 1.0f) * colour_deviation);
+            colour[1] = ((float)(getg(col1) + getg(col2)) / 512.0f) + ((((float)(xrnd() % 512) / 256.0f) - 1.0f) * colour_deviation);
+            colour[2] = ((float)(getb(col1) + getb(col2)) / 512.0f) + ((((float)(xrnd() % 512) / 256.0f) - 1.0f) * colour_deviation);
             vertex += 3;
             colour += 3;
             ++point_counter;
@@ -887,12 +910,12 @@ generate_cloud_triple(const char* filename_x, const char* filename_z, const char
           int32_t col3 = getpixel(bmpy, img_x, img_z);
           if (col3 != makecol(255, 0, 255) && col1 != makecol(255, 0, 255) && col2 != makecol(255, 0, 255) && img_x < bmpx->w && img_z < bmpz->w)
           {
-            vertex[0] = (float)x + ((((float)(rand() % 512) / 256.0f) - 1.0f) * deviation) - c.x;
-            vertex[1] = (float)y + ((((float)(rand() % 512) / 256.0f) - 1.0f) * deviation);
-            vertex[2] = (float)z + ((((float)(rand() % 512) / 256.0f) - 1.0f) * deviation) - c.z;
-            colour[0] = ((float)(getr(col1) + getr(col2)) / 512.0f) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
-            colour[1] = ((float)(getg(col1) + getg(col2)) / 512.0f) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
-            colour[2] = ((float)(getb(col1) + getb(col2)) / 512.0f) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
+            vertex[0] = (float)x + ((((float)(xrnd() % 512) / 256.0f) - 1.0f) * deviation) - c.x;
+            vertex[1] = (float)y + ((((float)(xrnd() % 512) / 256.0f) - 1.0f) * deviation);
+            vertex[2] = (float)z + ((((float)(xrnd() % 512) / 256.0f) - 1.0f) * deviation) - c.z;
+            colour[0] = ((float)(getr(col1) + getr(col2)) / 512.0f) + ((((float)(xrnd() % 512) / 256.0f) - 1.0f) * colour_deviation);
+            colour[1] = ((float)(getg(col1) + getg(col2)) / 512.0f) + ((((float)(xrnd() % 512) / 256.0f) - 1.0f) * colour_deviation);
+            colour[2] = ((float)(getb(col1) + getb(col2)) / 512.0f) + ((((float)(xrnd() % 512) / 256.0f) - 1.0f) * colour_deviation);
             vertex += 3;
             colour += 3;
             ++point_counter;
@@ -997,12 +1020,12 @@ generate_furball_ultimate(float size, size_t cuts, size_t density)
           // this generates startpoint
           if (i == 0)
           {
-            vertex[0] = hair_distance * cosf(fx) * sinf(fy) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * deviation);
-            vertex[1] = hair_distance * cosf(fy) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * deviation);
-            vertex[2] = hair_distance * sinf(fz) * sinf(fy) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * deviation);
-            colour[0] = hair_colour + ((((float)(rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
-            colour[1] = hair_colour + ((((float)(rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
-            colour[2] = hair_colour + ((((float)(rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
+            vertex[0] = hair_distance * cosf(fx) * sinf(fy) + ((((float)(xrnd() % 512) / 256.0f) - 1.0f) * deviation);
+            vertex[1] = hair_distance * cosf(fy) + ((((float)(xrnd() % 512) / 256.0f) - 1.0f) * deviation);
+            vertex[2] = hair_distance * sinf(fz) * sinf(fy) + ((((float)(xrnd() % 512) / 256.0f) - 1.0f) * deviation);
+            colour[0] = hair_colour + ((((float)(xrnd() % 512) / 256.0f) - 1.0f) * colour_deviation);
+            colour[1] = hair_colour + ((((float)(xrnd() % 512) / 256.0f) - 1.0f) * colour_deviation);
+            colour[2] = hair_colour + ((((float)(xrnd() % 512) / 256.0f) - 1.0f) * colour_deviation);
           }
           else
           {
@@ -1018,12 +1041,12 @@ generate_furball_ultimate(float size, size_t cuts, size_t density)
           // hair is actually line list as opposed to a strip
           hair_colour = ((float)(i + 1) * 1.0f) / (float)cuts;
           hair_distance = size + ((float)(i + 1) * size) / (float)cuts;
-          vertex[3] = hair_distance * cosf(fx) * sinf(fy) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * deviation);
-          vertex[4] = hair_distance * cosf(fy) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * deviation);
-          vertex[5] = hair_distance * sinf(fz) * sinf(fy) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * deviation);
-          colour[3] = hair_colour + ((((float)(rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
-          colour[4] = hair_colour + ((((float)(rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
-          colour[5] = hair_colour + ((((float)(rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
+          vertex[3] = hair_distance * cosf(fx) * sinf(fy) + ((((float)(xrnd() % 512) / 256.0f) - 1.0f) * deviation);
+          vertex[4] = hair_distance * cosf(fy) + ((((float)(xrnd() % 512) / 256.0f) - 1.0f) * deviation);
+          vertex[5] = hair_distance * sinf(fz) * sinf(fy) + ((((float)(xrnd() % 512) / 256.0f) - 1.0f) * deviation);
+          colour[3] = hair_colour + ((((float)(xrnd() % 512) / 256.0f) - 1.0f) * colour_deviation);
+          colour[4] = hair_colour + ((((float)(xrnd() % 512) / 256.0f) - 1.0f) * colour_deviation);
+          colour[5] = hair_colour + ((((float)(xrnd() % 512) / 256.0f) - 1.0f) * colour_deviation);
 
           // witty pointer iterators
           vertex += 6;
@@ -1068,14 +1091,14 @@ generate_furball_normal(float size, size_t cuts, size_t density)
         float fz = ((float)z * kPiMultipliedBy2) / (float)(density - 1);
         for (size_t i = 0; i < cuts; ++i)
         {
-          vertex[0] = size * cosf(fx) * sinf(fy) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * deviation);
-          vertex[1] = size * cosf(fy) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * deviation);
-          vertex[2] = size * sinf(fz) * sinf(fy) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * deviation);
+          vertex[0] = size * cosf(fx) * sinf(fy) + ((((float)(xrnd() % 512) / 256.0f) - 1.0f) * deviation);
+          vertex[1] = size * cosf(fy) + ((((float)(xrnd() % 512) / 256.0f) - 1.0f) * deviation);
+          vertex[2] = size * sinf(fz) * sinf(fy) + ((((float)(xrnd() % 512) / 256.0f) - 1.0f) * deviation);
 
           float colour_factor = sqrtf(vertex[0] * vertex[0] + vertex[1] * vertex[1] + vertex[2] * vertex[2]) / size;
-          colour[0] = colour_factor + ((((float)(rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
-          colour[1] = colour_factor + ((((float)(rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
-          colour[2] = colour_factor + ((((float)(rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
+          colour[0] = colour_factor + ((((float)(xrnd() % 512) / 256.0f) - 1.0f) * colour_deviation);
+          colour[1] = colour_factor + ((((float)(xrnd() % 512) / 256.0f) - 1.0f) * colour_deviation);
+          colour[2] = colour_factor + ((((float)(xrnd() % 512) / 256.0f) - 1.0f) * colour_deviation);
           vertex += 3;
           colour += 3;
           point_counter++;
@@ -1096,7 +1119,7 @@ create_ballz(void)
   for (size_t i = 0; i < kBallz; ++i)
   {
     // if is_good, then it's 'ultimate' == hairy
-    bool is_good = !(rand() % 8);
+    bool is_good = !(xrnd() % 8);
 
     // no hairy furballs for lofi version
     if (LOFI)
@@ -1105,19 +1128,19 @@ create_ballz(void)
     }
 
     // randomises colour and position
-    float r = (float)(rand() % 256) / 256.0f;
-    float g = (float)(rand() % 256) / 256.0f;
-    float b = (float)(rand() % 256) / 256.0f;
-    float x = ((float)(rand() % 1024) / 1024.0f) * kWorldSize;
+    float r = (float)(xrnd() % 256) / 256.0f;
+    float g = (float)(xrnd() % 256) / 256.0f;
+    float b = (float)(xrnd() % 256) / 256.0f;
+    float x = ((float)(xrnd() % 1024) / 1024.0f) * kWorldSize;
     float y = kHeight;
-    float z = ((float)(rand() % 1024) / 1024.0f) * kWorldSize;
+    float z = ((float)(xrnd() % 1024) / 1024.0f) * kWorldSize;
 
     // creates the instance
     ballz[i] = spawn_furball(x, y, z, is_good ? ultimate_furball : casual_furball, 8, is_good, r, g, b);
 
     // sets up ai
     ballz[i]->iq = 0;
-    ballz[i]->smart = 0.05f + ((float)(rand() % 256) / 256.0f) * 0.15f;
+    ballz[i]->smart = 0.05f + ((float)(xrnd() % 256) / 256.0f) * 0.15f;
 
     // adjusts ai for hairy furball
     if (is_good)
@@ -1126,11 +1149,11 @@ create_ballz(void)
     }
     if (!is_good)
     {
-      ballz[i]->scale = 0.2f + ((float)(rand() % 256) / 256.0f) * 0.15f;
+      ballz[i]->scale = 0.2f + ((float)(xrnd() % 256) / 256.0f) * 0.15f;
     }
     else
     {
-      ballz[i]->scale = 1.0f + ((float)(rand() % 256) / 256.0f) * 3.0f;
+      ballz[i]->scale = 1.0f + ((float)(xrnd() % 256) / 256.0f) * 3.0f;
     }
     ballz[i]->dying = 0;
   }
@@ -1151,10 +1174,10 @@ explode(Blood* b, size_t num, float x, float y, float z)
     b[i].y = y;
     b[i].z = z;
     // random velocity and colour
-    b[i].vx = (((float)(rand() % 512) / 256.0f) - 1.0f) * 4.0f;
-    b[i].vy = (((float)(rand() % 512) / 256.0f) - 1.0f) * 8.0f;
-    b[i].vz = (((float)(rand() % 512) / 256.0f) - 1.0f) * 4.0f;
-    b[i].r = 0.6f + ((((float)(rand() % 512) / 256.0f) - 1.0f) * 0.4f);
+    b[i].vx = (((float)(xrnd() % 512) / 256.0f) - 1.0f) * 4.0f;
+    b[i].vy = (((float)(xrnd() % 512) / 256.0f) - 1.0f) * 8.0f;
+    b[i].vz = (((float)(xrnd() % 512) / 256.0f) - 1.0f) * 4.0f;
+    b[i].r = 0.6f + ((((float)(xrnd() % 512) / 256.0f) - 1.0f) * 0.4f);
     b[i].g = 0.0f;
     b[i].b = 0.0f;
     b[i].alive = true;
@@ -1217,8 +1240,8 @@ shoot(void)
     explode(hitball->blood, kParticles, hitball->x, hitball->y, hitball->z);
 
     // plays sound
-    play_sample(slash, 255, 128, 900 + (rand() % 200), 0);
-    play_sample(die[rand() % 8], 255, 128, 1000, 0);
+    play_sample(slash, 255, 128, 900 + (xrnd() % 200), 0);
+    play_sample(die[xrnd() % 8], 255, 128, 1000, 0);
   }
   return h;
 }
@@ -1278,10 +1301,10 @@ update_ballz(void)
       furball->iq -= furball->smart;
       if (furball->iq <= 0)
       {
-        furball->iq = (kIQ + (float)(rand() % kIQ)) * 3; // kPi;
-        furball->speed = ((float)(rand() % 256) / 256.0f) * kSpeed;
-        furball->a = ((float)(rand() % 256) / 256.0f) * kPiMultipliedBy2;
-        furball->bounce_rate = 10.0f + ((float)(rand() % 256) / 256.0f) * 40.0f;
+        furball->iq = (kIQ + (float)(xrnd() % kIQ)) * 3; // kPi;
+        furball->speed = ((float)(xrnd() % 256) / 256.0f) * kSpeed;
+        furball->a = ((float)(xrnd() % 256) / 256.0f) * kPiMultipliedBy2;
+        furball->bounce_rate = 10.0f + ((float)(xrnd() % 256) / 256.0f) * 40.0f;
       }
 
       // adjusts bounce rate
@@ -1383,9 +1406,9 @@ generate_world_map(const char* grass_file, const char* height_file, const char* 
       {
         // for each bitmap pixel it creates [density] grass blades
         // colour and height get randomised a bit
-        grass.x = (((float)x * kWorldSize) / (float)size_x) + ((((float)(rand() % 512) / 512.0f)) * patch_size);
-        grass.y = (((float)y * kWorldSize) / (float)size_x) + ((((float)(rand() % 512) / 512.0f)) * patch_size);
-        grass.z = (0.1f * (float)getr(getpixel(bmph, x, y))) + ((((float)(rand() % 512) / 512.0f)) * (grass.z * 0.3f));
+        grass.x = (((float)x * kWorldSize) / (float)size_x) + ((((float)(xrnd() % 512) / 512.0f)) * patch_size);
+        grass.y = (((float)y * kWorldSize) / (float)size_x) + ((((float)(xrnd() % 512) / 512.0f)) * patch_size);
+        grass.z = (0.1f * (float)getr(getpixel(bmph, x, y))) + ((((float)(xrnd() % 512) / 512.0f)) * (grass.z * 0.3f));
         vertex[0] = grass.x;
         vertex[1] = 0;
         vertex[2] = grass.y;
@@ -1393,9 +1416,9 @@ generate_world_map(const char* grass_file, const char* height_file, const char* 
         vertex[4] = grass.z;
         vertex[5] = grass.y;
         int32_t col = getpixel(bmpg, x, y);
-        colour[3] = ((float)(getr(col)) / 256.0f) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
-        colour[4] = ((float)(getg(col)) / 256.0f) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
-        colour[5] = ((float)(getb(col)) / 256.0f) + ((((float)(rand() % 512) / 256.0f) - 1.0f) * colour_deviation);
+        colour[3] = ((float)(getr(col)) / 256.0f) + ((((float)(xrnd() % 512) / 256.0f) - 1.0f) * colour_deviation);
+        colour[4] = ((float)(getg(col)) / 256.0f) + ((((float)(xrnd() % 512) / 256.0f) - 1.0f) * colour_deviation);
+        colour[5] = ((float)(getb(col)) / 256.0f) + ((((float)(xrnd() % 512) / 256.0f) - 1.0f) * colour_deviation);
         colour[0] = colour[3] * 0.5f;
         colour[1] = colour[4] * 0.5f;
         colour[2] = colour[5] * 0.5f;
@@ -1422,9 +1445,9 @@ generate_world_map(const char* grass_file, const char* height_file, const char* 
     for (int32_t y = 0; y < size_y; ++y)
     {
       // iterates through pixel looking for values representing entities
-      grass.x = (((float)x * kWorldSize) / (float)size_x) + ((((float)(rand() % 512) / 512.0f)) * patch_size);
-      grass.y = (((float)y * kWorldSize) / (float)size_x) + ((((float)(rand() % 512) / 512.0f)) * patch_size);
-      grass.z = 1.0f + ((((float)(rand() % 512) / 512.0f)) * 1.0f);
+      grass.x = (((float)x * kWorldSize) / (float)size_x) + ((((float)(xrnd() % 512) / 512.0f)) * patch_size);
+      grass.y = (((float)y * kWorldSize) / (float)size_x) + ((((float)(xrnd() % 512) / 512.0f)) * patch_size);
+      grass.z = 1.0f + ((((float)(xrnd() % 512) / 512.0f)) * 1.0f);
       int32_t col = getpixel(bmph, x, y);
       if (col == makecol(0, 255, 0))
       {
@@ -1433,7 +1456,7 @@ generate_world_map(const char* grass_file, const char* height_file, const char* 
         ents[num_ents].y = 0.0f;
         ents[num_ents].z = grass.y;
         ents[num_ents].s = grass.z * 4.0f;
-        ents[num_ents].a = ((((float)(rand() % 512) / 512.0f)) * 360.0f);
+        ents[num_ents].a = ((((float)(xrnd() % 512) / 512.0f)) * 360.0f);
         num_ents++;
       }
       if (col == makecol(255, 255, 128))
@@ -1443,7 +1466,7 @@ generate_world_map(const char* grass_file, const char* height_file, const char* 
         ents[num_ents].y = 0.0f;
         ents[num_ents].z = grass.y;
         ents[num_ents].s = grass.z * 2.0f;
-        ents[num_ents].a = (((float)(rand() % 512) / 512.0f)) * 360.0f;
+        ents[num_ents].a = (((float)(xrnd() % 512) / 512.0f)) * 360.0f;
         num_ents++;
       }
       if (col == makecol(0, 128, 0))
@@ -1453,7 +1476,7 @@ generate_world_map(const char* grass_file, const char* height_file, const char* 
         ents[num_ents].y = 0.0f;
         ents[num_ents].z = grass.y;
         ents[num_ents].s = grass.z * 3.0f;
-        ents[num_ents].a = (((float)(rand() % 512) / 512.0f)) * 360.0f;
+        ents[num_ents].a = (((float)(xrnd() % 512) / 512.0f)) * 360.0f;
         num_ents++;
       }
       if (col == makecol(128, 64, 64))
@@ -1463,7 +1486,7 @@ generate_world_map(const char* grass_file, const char* height_file, const char* 
         ents[num_ents].y = 0.0f;
         ents[num_ents].z = grass.y;
         ents[num_ents].s = grass.z * 1.5f;
-        ents[num_ents].a = (((float)(rand() % 512) / 512.0f)) * 360.0f;
+        ents[num_ents].a = (((float)(xrnd() % 512) / 512.0f)) * 360.0f;
         num_ents++;
       }
       if (col == makecol(0, 255, 255))
@@ -1473,7 +1496,7 @@ generate_world_map(const char* grass_file, const char* height_file, const char* 
         ents[num_ents].y = 0.0f;
         ents[num_ents].z = grass.y;
         ents[num_ents].s = grass.z * 3.0f;
-        ents[num_ents].a = (((float)(rand() % 512) / 512.0f)) * 360.0f;
+        ents[num_ents].a = (((float)(xrnd() % 512) / 512.0f)) * 360.0f;
         num_ents++;
       }
       if (col == makecol(255, 0, 0))
@@ -1483,7 +1506,7 @@ generate_world_map(const char* grass_file, const char* height_file, const char* 
         ents[num_ents].y = 0.0f;
         ents[num_ents].z = grass.y;
         ents[num_ents].s = grass.z * 2.0f;
-        ents[num_ents].a = ((float)(rand() % 4)) * 90.0f;
+        ents[num_ents].a = ((float)(xrnd() % 4)) * 90.0f;
         num_ents++;
       }
       if (col == makecol(255, 128, 128))
@@ -1494,7 +1517,7 @@ generate_world_map(const char* grass_file, const char* height_file, const char* 
         ents[num_ents].z = grass.y;
         ents[num_ents].s = grass.z * 6.0f;
         // ents[num_ents].a = 90.0f; //XXX: Original value
-        ents[num_ents].a = (((float)(rand() % 512) / 512.0f)) * 360.0f;
+        ents[num_ents].a = (((float)(xrnd() % 512) / 512.0f)) * 360.0f;
         num_ents++;
       }
       if (col == makecol(128, 0, 0))
@@ -1504,7 +1527,7 @@ generate_world_map(const char* grass_file, const char* height_file, const char* 
         ents[num_ents].y = 0.0f;
         ents[num_ents].z = grass.y;
         ents[num_ents].s = grass.z * 1.5f;
-        ents[num_ents].a = ((float)(rand() % 4)) * 90.0f;
+        ents[num_ents].a = ((float)(xrnd() % 4)) * 90.0f;
         num_ents++;
       }
     }
@@ -1559,8 +1582,8 @@ timer_proc(void)
       talk_counter--;
       if (talk_counter <= 0)
       {
-        talk_counter = kTalkDelay + (rand() % kTalkDelay);
-        // play_sample(furtalk[(rand()%16)>>1],128,128,1000,0);
+        talk_counter = kTalkDelay + (xrnd() % kTalkDelay);
+        // play_sample(furtalk[(xrnd()%16)>>1],128,128,1000,0);
       }
     }
 
@@ -1953,7 +1976,8 @@ main(int argc, char** argv)
 
   // timer setup
   install_int_ex(timer, BPS_TO_TIMER(30));
-  srand((unsigned int)time(NULL));
+  // srand((unsigned int)time(NULL));
+  rngstate[0] = (uint64_t)time(NULL);
 
   // generates everything
   glEnable(GL_TEXTURE_2D);
