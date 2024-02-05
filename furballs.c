@@ -298,26 +298,52 @@ isExtensionSupported(const char* extension)
   return 0;
 }
 
-uint64_t rngstate[4];
+// xoshiro256+
+
+// xoshiro256+ (a single plus sign) is used here,
+// rather than xoshiro256++ (two plus signs), because
+// it is described by its designers as the “best and
+// fastest generator for floating-point numbers”
+
+uint64_t rngstate[4] = {0};
 
 static inline uint64_t
-rotl(const uint64_t x, int32_t k)
+rotl(const uint64_t x, int k)
 {
   return (x << k) | (x >> (64 - k));
 }
 
-// xoshiro256++
+// using an implementation of splitmix64, as recommended
+// by the authors of xoshiro256+, to fill the rngstate array.
+static void
+xrnd_seed(uint64_t seed)
+{
+  rngstate[0] = seed;
+  for (size_t i = 1; i < 4; ++i)
+  {
+    rngstate[i] = (rngstate[i - 1] += 0x9e3779b97f4a7c15);
+    rngstate[i] = (rngstate[i] ^ (rngstate[i] >> 30)) * 0xbf58476d1ce4e5b9;
+    rngstate[i] = (rngstate[i] ^ (rngstate[i] >> 27)) * 0x94d049bb133111eb;
+    rngstate[i] ^ (rngstate[i] >> 31);
+  }
+}
+
 static uint64_t
 xrnd(void)
 {
-  const uint64_t result = rotl(rngstate[0] + rngstate[3], 23) + rngstate[0];
+  const uint64_t result = rngstate[0] + rngstate[3];
+
   const uint64_t t = rngstate[1] << 17;
+
   rngstate[2] ^= rngstate[0];
   rngstate[3] ^= rngstate[1];
   rngstate[1] ^= rngstate[2];
   rngstate[0] ^= rngstate[3];
+
   rngstate[2] ^= t;
+
   rngstate[3] = rotl(rngstate[3], 45);
+
   return result;
 }
 
@@ -1977,7 +2003,8 @@ main(int argc, char** argv)
   // timer setup
   install_int_ex(timer, BPS_TO_TIMER(30));
   // srand((unsigned int)time(NULL));
-  rngstate[0] = (uint64_t)time(NULL);
+  // rngstate[0] = (uint64_t)time(NULL);
+  xrnd_seed(time(NULL));
 
   // generates everything
   glEnable(GL_TEXTURE_2D);
