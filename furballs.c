@@ -1037,7 +1037,6 @@ generate_furball_ultimate(float size, size_t cuts, size_t density)
         // generates protruding hair
         for (size_t i = 0; i < cuts; ++i)
         {
-
           float hair_colour = 0.5f + 0.5f * (float)i / (float)(cuts);
           float hair_distance = size + ((float)i * size) / (float)(cuts);
 
@@ -1861,7 +1860,6 @@ draw(void)
   glDisable(GL_DEPTH_TEST);
   if (game_state == PLAY)
   {
-
     // draws crosshair
     glBegin(GL_POINTS);
     glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
@@ -1876,7 +1874,6 @@ draw(void)
     float ns = 0.0f;
     for (size_t i = 0; i < 7; ++i, ns += kNumSize)
     {
-
       glTexCoord2f(nums[i] * 0.090909f, 1.0f);
       glVertex2f(-1.0f + ns, 1.0f);
       glTexCoord2f((float)(nums[i] + 1) * 0.090909f, 1.0f);
