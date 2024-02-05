@@ -1265,7 +1265,7 @@ shoot(void)
     explode(hitball->blood, kParticles, hitball->x, hitball->y, hitball->z);
 
     // plays sound
-    play_sample(slash, 255, 128, 900 + (xrnd() % 200), 0);
+    play_sample(slash, 255, 128, 900 + (int32_t)(xrnd() % 200), 0);
     play_sample(die[xrnd() % 8], 255, 128, 1000, 0);
   }
   return h;
@@ -1607,7 +1607,7 @@ timer_proc(void)
       talk_counter--;
       if (talk_counter <= 0)
       {
-        talk_counter = kTalkDelay + (xrnd() % kTalkDelay);
+        talk_counter = kTalkDelay + (int32_t)(xrnd() % kTalkDelay);
         // play_sample(furtalk[(xrnd()%16)>>1],128,128,1000,0);
       }
     }
@@ -2001,7 +2001,7 @@ main(int argc, char** argv)
   install_int_ex(timer, BPS_TO_TIMER(30));
   // srand((unsigned int)time(NULL));
   // rngstate[0] = (uint64_t)time(NULL);
-  xrnd_seed(time(NULL));
+  xrnd_seed((uint64_t)time(NULL));
 
   // generates everything
   glEnable(GL_TEXTURE_2D);
