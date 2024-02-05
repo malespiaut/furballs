@@ -1777,7 +1777,7 @@ draw(void)
   // up sets furball count display
   for (size_t i = 0; i < 7; ++i)
   {
-    nums[i] -= 0x30;
+    nums[i] = (char)(nums[i] - '0');
   }
 
   // basic gl frame setup
