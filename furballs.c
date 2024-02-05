@@ -324,7 +324,7 @@ xrnd_seed(uint64_t seed)
     rngstate[i] = (rngstate[i - 1] += 0x9e3779b97f4a7c15);
     rngstate[i] = (rngstate[i] ^ (rngstate[i] >> 30)) * 0xbf58476d1ce4e5b9;
     rngstate[i] = (rngstate[i] ^ (rngstate[i] >> 27)) * 0x94d049bb133111eb;
-    rngstate[i] ^ (rngstate[i] >> 31);
+    rngstate[i] = rngstate[i] ^ (rngstate[i] >> 31);
   }
 }
 
