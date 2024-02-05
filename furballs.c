@@ -186,7 +186,7 @@ struct Furball
   bool exists;                // render flag
   int32_t dying;              // blood render flag
   Blood blood[kParticles];    // blood particles
-  float iq;                   // directiona change interval
+  float iq;                   // direction change interval
   float smart;                // iq base value
 };
 
