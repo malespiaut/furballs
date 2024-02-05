@@ -183,7 +183,7 @@ struct Furball
   float bounce_rate;          // base bounce rate
   float trail[kTrail + 1][3]; // 'hair' trail (only ultimate)
   size_t density;             // points per voxel
-  int32_t exists;             // render flag
+  bool exists;                // render flag
   int32_t dying;              // blood render flag
   Blood blood[kParticles];    // blood particles
   float iq;                   // directiona change interval
@@ -1003,7 +1003,7 @@ spawn_furball(float x, float y, float z, Buffer* b, size_t density, bool ultimat
   furball->density = density;
   furball->scale = 3.0f;
   furball->ultimate = ultimate;
-  furball->exists = 1;
+  furball->exists = true;
   return furball;
 }
 
@@ -1256,7 +1256,7 @@ shoot(void)
   if (h && pdist < 300.0f)
   {
     // disables furball rendering
-    hitball->exists = 0;
+    hitball->exists = false;
 
     // enables blood renderign for 100 frames
     hitball->dying = 100;
